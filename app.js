@@ -1,7 +1,10 @@
 const express = require('express');
 const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
 const userRoutes = require('./routes/userRoutes.js');
+const productRoutes = require('./routes/productRoutes.js');
 const sequelize = require('./config/db/dataBase.js');
+const Product = require('./models/product.js');
+
 
 const app = express();
 const port = 3000;
@@ -12,6 +15,7 @@ app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use('/users', userRoutes);
+app.use('/products', productRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {

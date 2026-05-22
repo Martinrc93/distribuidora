@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const sequelize = require('./config/db/dataBase.js');
 const User = require('./models/user.js'); // Importar el modelo para registrarlo en Sequelize
+const Product = require('./models/product.js'); // Importar el modelo de Producto
+
 
 async function ejecutarSembrado() {
   try {
-    // Sincronizar la base de datos primero para asegurar que las tablas existan
-    await sequelize.sync({ force: false });
+    // Sincronizar la base de datos recreando las tablas (force: true) para aplicar cambios de esquema automáticamente
+    await sequelize.sync({ force: true });
 
     // Leer el archivo seed.sql
     const rutaSql = path.join(__dirname, 'seed.sql');
