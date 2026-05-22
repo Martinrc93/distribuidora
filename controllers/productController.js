@@ -1,5 +1,6 @@
 const productService = require('../services/productService');
 const { ProductCreateDto } = require('../dtos/product/request');
+const { ProductResponseDto } = require('../dtos/product/response');
 
 /**
  * Obtener todos los productos con paginación opcional.
@@ -9,6 +10,10 @@ exports.getAll = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query;
         const result = await productService.getAll(page, limit);
+        
+        // Mapear los datos de los productos utilizando el Response DTO
+        result.data = ProductResponseDto.fromModel(result.data);
+        
         res.json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -25,7 +30,7 @@ exports.getById = async (req, res) => {
         if (!producto) {
             return res.status(404).json({ mensaje: 'Producto no encontrado' });
         }
-        res.json(producto);
+        res.json(ProductResponseDto.fromModel(producto));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -45,7 +50,7 @@ exports.create = async (req, res) => {
         }
 
         const nuevoProducto = await productService.create(productDto);
-        res.status(201).json(nuevoProducto);
+        res.status(201).json(ProductResponseDto.fromModel(nuevoProducto));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -69,7 +74,7 @@ exports.update = async (req, res) => {
             return res.status(404).json({ mensaje: 'Producto no encontrado para actualizar' });
         }
 
-        res.json(productoActualizado);
+        res.json(ProductResponseDto.fromModel(productoActualizado));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
