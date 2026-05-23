@@ -8,10 +8,20 @@ const DetalleResponseDto = require('./detalleResponseDto');
 class VentaResponseDto {
     constructor(venta) {
         this.id = venta.id;
-        this.fechaEmision = venta.fechaEmision;
+        if (venta.fechaEmision) {
+            const date = new Date(venta.fechaEmision);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            this.fechaEmision = `${day}-${month}-${year}`;
+        } else {
+            this.fechaEmision = null;
+        }
         this.total = parseFloat(parseFloat(venta.total).toFixed(2));
         this.active = venta.active;
         this.empleadoId = venta.empleadoId;
+        this.empleadoNombre = venta.empleado ? venta.empleado.nombre : null;
+        this.empleadoApellido = venta.empleado ? venta.empleado.apellido : null;
         
         // Mapea la lista de detalles si están incluidos/eager-loaded en la consulta
         this.detalles = venta.detalles 

@@ -39,8 +39,7 @@ components:
           description: ID único autogenerado de la venta.
         fechaEmision:
           type: string
-          format: date-time
-          description: Fecha y hora de emisión del comprobante de venta.
+          description: Fecha de emisión del comprobante de venta formateada en DD-MM-YYYY.
         total:
           type: number
           format: double
@@ -51,16 +50,24 @@ components:
         empleadoId:
           type: integer
           description: ID del empleado que registró la venta.
+        empleadoNombre:
+          type: string
+          description: Nombre del empleado que realizó la venta.
+        empleadoApellido:
+          type: string
+          description: Apellido del empleado que realizó la venta.
         detalles:
           type: array
           items:
             $ref: '#/components/schemas/DetalleResponse'
       example:
         id: 1
-        fechaEmision: "2026-05-22T21:00:00.000Z"
+        fechaEmision: "22-05-2026"
         total: 4621.50
         active: true
         empleadoId: 2
+        empleadoNombre: "Florencia"
+        empleadoApellido: "Díaz"
         detalles:
           - id: 1
             productId: 2

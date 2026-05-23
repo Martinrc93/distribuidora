@@ -3,6 +3,7 @@ const sequelize = require('../config/db/dataBase');
 const Venta = require('../models/venta.js');
 const Detalle = require('../models/detalle.js');
 const Price = require('../models/price.js');
+const Empleado = require('../models/empleado.js');
 const detalleService = require('./detalleService.js');
 
 /**
@@ -45,7 +46,10 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '') => {
         where,
         limit: limitNum,
         offset: offsetNum,
-        include: [{ model: Detalle, as: 'detalles' }], // Eager loading de los detalles
+        include: [
+            { model: Detalle, as: 'detalles' },
+            { model: Empleado, as: 'empleado' }
+        ],
         order: [['fechaEmision', 'DESC']]
     });
 
@@ -111,9 +115,12 @@ exports.createVenta = async (ventaData) => {
         // 4. Confirmar la transacción
         await t.commit();
 
-        // 5. Devolver la venta completa con sus detalles cargados
+        // 5. Devolver la venta completa con sus detalles y empleado cargados
         return await Venta.findByPk(nuevaVenta.id, {
-            include: [{ model: Detalle, as: 'detalles' }]
+            include: [
+                { model: Detalle, as: 'detalles' },
+                { model: Empleado, as: 'empleado' }
+            ]
         });
 
     } catch (error) {
