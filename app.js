@@ -2,8 +2,18 @@ const express = require('express');
 const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
 const userRoutes = require('./routes/userRoutes.js');
 const productRoutes = require('./routes/productRoutes.js');
+const empleadoRoutes = require('./routes/empleadoRoutes.js');
+const priceRoutes = require('./routes/priceRoutes.js');
+const ventaRoutes = require('./routes/ventaRoutes.js');
 const sequelize = require('./config/db/dataBase.js');
 const Product = require('./models/product.js');
+const Empleado = require('./models/empleado.js');
+const Price = require('./models/price.js');
+const Venta = require('./models/venta.js');
+const Detalle = require('./models/detalle.js');
+
+
+
 
 
 const app = express();
@@ -16,6 +26,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use('/users', userRoutes);
 app.use('/products', productRoutes);
+app.use('/empleados', empleadoRoutes);
+app.use('/prices', priceRoutes);
+app.use('/ventas', ventaRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
