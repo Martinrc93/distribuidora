@@ -3,9 +3,11 @@
  * Se encarga de limpiar, estructurar y validar los datos que envía el cliente para crear un producto.
  */
 class ProductCreateDto {
-    constructor({ nombre, marca }) {
+    constructor({ nombre, marca, costo }) {
         this.nombre = typeof nombre === 'string' ? nombre.trim() : null;
         this.marca = typeof marca === 'string' ? marca.trim() : null;
+        const parsedCosto = typeof costo === 'number' ? costo : Number.parseFloat(costo);
+        this.costo = Number.isNaN(parsedCosto) ? parsedCosto : Number.parseFloat(parsedCosto.toFixed(2));
     }
 
     /**
@@ -21,6 +23,12 @@ class ProductCreateDto {
 
         if (!this.marca || this.marca === '') {
             errors.push('El campo "marca" es obligatorio y debe ser una cadena de texto no vacía.');
+        }
+
+        if (this.costo === undefined || this.costo === null || Number.isNaN(this.costo)) {
+            errors.push('El campo "costo" es obligatorio y debe ser un número decimal.');
+        } else if (this.costo < 0) {
+            errors.push('El campo "costo" no puede ser negativo.');
         }
 
         return {

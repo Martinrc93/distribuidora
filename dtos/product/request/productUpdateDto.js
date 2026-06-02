@@ -10,6 +10,10 @@ class ProductUpdateDto {
         if (data.marca !== undefined) {
             this.marca = typeof data.marca === 'string' ? data.marca.trim() : null;
         }
+        if (data.costo !== undefined) {
+            const parsedCosto = typeof data.costo === 'number' ? data.costo : Number.parseFloat(data.costo);
+            this.costo = Number.isNaN(parsedCosto) ? parsedCosto : Number.parseFloat(parsedCosto.toFixed(2));
+        }
     }
 
     /**
@@ -25,6 +29,14 @@ class ProductUpdateDto {
 
         if (this.marca !== undefined && (!this.marca || this.marca === '')) {
             errors.push('El campo "marca" no puede estar vacío si se proporciona.');
+        }
+
+        if (this.costo !== undefined) {
+            if (this.costo === null || this.costo === undefined || Number.isNaN(this.costo)) {
+                errors.push('El campo "costo" debe ser un número decimal si se proporciona.');
+            } else if (this.costo < 0) {
+                errors.push('El campo "costo" no puede ser negativo.');
+            }
         }
 
         return {

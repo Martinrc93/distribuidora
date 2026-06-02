@@ -8,17 +8,22 @@ INSERT INTO "Users" (nombre, createdAt, updatedAt) VALUES
 ('Ana Martínez', datetime('now'), datetime('now')),
 ('Lucía Fernández', datetime('now'), datetime('now'));
 
-INSERT INTO "Products" (nombre, marca, createdAt, updatedAt) VALUES
-('Leche Entera 1L', 'La Serenísima', datetime('now'), datetime('now')),
-('Pan Lactal Familiar', 'Bimbo', datetime('now'), datetime('now')),
-('Gaseosa Cola 2.25L', 'Coca-Cola', datetime('now'), datetime('now')),
-('Arroz Integral 1kg', 'Gallo', datetime('now'), datetime('now')),
-('Aceite de Girasol 1.5L', 'Natura', datetime('now'), datetime('now')),
-('Fideos Tallarines 500g', 'Lucchetti', datetime('now'), datetime('now')),
-('Café Molido 500g', 'Cabrales', datetime('now'), datetime('now')),
-('Azúcar Común 1kg', 'Ledesma', datetime('now'), datetime('now')),
-('Yerba Mate 1kg', 'Playadito', datetime('now'), datetime('now')),
-('Galletitas de Chocolate', 'Chocolinas', datetime('now'), datetime('now'));
+INSERT INTO "Clientes" (nombre, direccion, createdAt, updatedAt) VALUES
+('Supermercado Alborada', 'Av. Rivadavia 1234', datetime('now'), datetime('now')),
+('MiniMarket Express', 'Calle Corrientes 567', datetime('now'), datetime('now')),
+('Almacén de Don Pepe', 'Belgrano 890', datetime('now'), datetime('now'));
+
+INSERT INTO "Products" (nombre, marca, costo, createdAt, updatedAt) VALUES
+('Leche Entera 1L', 'La Serenísima', 1.00, datetime('now'), datetime('now')),
+('Pan Lactal Familiar', 'Bimbo', 1.60, datetime('now'), datetime('now')),
+('Gaseosa Cola 2.25L', 'Coca-Cola', 2.10, datetime('now'), datetime('now')),
+('Arroz Integral 1kg', 'Gallo', 1.20, datetime('now'), datetime('now')),
+('Aceite de Girasol 1.5L', 'Natura', 3.10, datetime('now'), datetime('now')),
+('Fideos Tallarines 500g', 'Lucchetti', 0.70, datetime('now'), datetime('now')),
+('Café Molido 500g', 'Cabrales', 4.30, datetime('now'), datetime('now')),
+('Azúcar Común 1kg', 'Ledesma', 0.60, datetime('now'), datetime('now')),
+('Yerba Mate 1kg', 'Playadito', 3.50, datetime('now'), datetime('now')),
+('Galletitas de Chocolate', 'Chocolinas', 1.20, datetime('now'), datetime('now'));
 
 INSERT INTO "Empleados" (nombre, apellido, createdAt, updatedAt) VALUES
 ('Martín', 'Gómez', datetime('now'), datetime('now')),

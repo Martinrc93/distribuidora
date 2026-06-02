@@ -4,7 +4,9 @@ const Venta = require('../models/venta.js');
 const Detalle = require('../models/detalle.js');
 const Price = require('../models/price.js');
 const Empleado = require('../models/empleado.js');
+const Cliente = require('../models/cliente.js');
 const detalleService = require('./detalleService.js');
+const productService = require('./productService.js');
 
 /**
  * Obtiene todas las ventas de un empleado con paginación, filtro por día y que solo estén activas.
@@ -14,8 +16,8 @@ const detalleService = require('./detalleService.js');
  * @param {string} dia Fecha en formato YYYY-MM-DD para filtrar por ese día específico.
  */
 exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '') => {
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 10;
+    const pageNum = Number.parseInt(page, 10) || 1;
+    const limitNum = Number.parseInt(limit, 10) || 10;
     const offsetNum = (pageNum - 1) * limitNum;
 
     // Si no se especifica un filtro por día, se asume por defecto el día de hoy (fecha actual local)
@@ -48,12 +50,19 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '') => {
         offset: offsetNum,
         include: [
             { model: Detalle, as: 'detalles' },
-            { model: Empleado, as: 'empleado' }
+            { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' }
         ],
         order: [['fechaEmision', 'DESC']]
     });
 
     const totalPages = Math.ceil(count / limitNum);
+
+    // Calcular ganancia para cada venta devuelta
+    for (const venta of rows) {
+        const ganancia = await exports.calcularGananciaVenta(venta);
+        venta.setDataValue('ganancia', ganancia);
+    }
 
     return {
         total: count,
@@ -75,6 +84,7 @@ exports.createVenta = async (ventaData) => {
         // 1. Crear la cabecera de la Venta con total inicial en 0
         const nuevaVenta = await Venta.create({
             empleadoId: ventaData.empleadoId,
+            clienteId: ventaData.clienteId,
             total: 0,
             active: true
         }, { transaction: t });
@@ -95,7 +105,7 @@ exports.createVenta = async (ventaData) => {
                 throw new Error(`El precio con ID ${item.priceId} no pertenece al producto con ID ${item.productId}.`);
             }
 
-            const unitPrice = parseFloat(priceRecord.precio);
+            const unitPrice = Number.parseFloat(priceRecord.precio);
             const subtotal = item.cantidad * unitPrice;
             totalVenta += subtotal;
 
@@ -116,12 +126,18 @@ exports.createVenta = async (ventaData) => {
         await t.commit();
 
         // 5. Devolver la venta completa con sus detalles y empleado cargados
-        return await Venta.findByPk(nuevaVenta.id, {
+        const ventaCompleta = await Venta.findByPk(nuevaVenta.id, {
             include: [
                 { model: Detalle, as: 'detalles' },
-                { model: Empleado, as: 'empleado' }
+                { model: Empleado, as: 'empleado' },
+                { model: Cliente, as: 'cliente' }
             ]
         });
+
+        const ganancia = await exports.calcularGananciaVenta(ventaCompleta);
+        ventaCompleta.setDataValue('ganancia', ganancia);
+
+        return ventaCompleta;
 
     } catch (error) {
         // En caso de cualquier error, hacemos rollback para deshacer los cambios
@@ -137,11 +153,36 @@ exports.createVenta = async (ventaData) => {
  */
 exports.updateStatus = async (id, active) => {
     const venta = await Venta.findByPk(id, {
-        include: [{ model: Detalle, as: 'detalles' }]
+        include: [
+            { model: Detalle, as: 'detalles' },
+            { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' }
+        ]
     });
     
     if (!venta) return null;
 
     // Actualizamos únicamente el campo active
-    return await venta.update({ active });
+    await venta.update({ active });
+
+    const ganancia = await exports.calcularGananciaVenta(venta);
+    venta.setDataValue('ganancia', ganancia);
+
+    return venta;
+};
+
+/**
+ * Calcula la ganancia total de una venta sumando las ganancias individuales de cada producto vendido.
+ * @param {Object} venta Instancia de Venta con detalles cargados.
+ * @returns {Promise<number>} La ganancia total de la venta.
+ */
+exports.calcularGananciaVenta = async (venta) => {
+    let gananciaTotal = 0;
+    if (venta?.detalles) {
+        for (const detalle of venta.detalles) {
+            const gananciaUnidad = await productService.getGanancia(detalle.productId, detalle.priceId);
+            gananciaTotal += gananciaUnidad * detalle.cantidad;
+        }
+    }
+    return Number.parseFloat(gananciaTotal.toFixed(2));
 };

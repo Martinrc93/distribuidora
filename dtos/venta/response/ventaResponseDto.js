@@ -17,11 +17,15 @@ class VentaResponseDto {
         } else {
             this.fechaEmision = null;
         }
-        this.total = parseFloat(parseFloat(venta.total).toFixed(2));
+        this.total = Number.parseFloat(Number.parseFloat(venta.total).toFixed(2));
         this.active = venta.active;
         this.empleadoId = venta.empleadoId;
         this.empleadoNombre = venta.empleado ? venta.empleado.nombre : null;
         this.empleadoApellido = venta.empleado ? venta.empleado.apellido : null;
+        this.clienteId = venta.clienteId;
+        this.clienteNombre = venta.cliente ? venta.cliente.nombre : null;
+        const rawGanancia = venta.getDataValue ? venta.getDataValue('ganancia') : venta.ganancia;
+        this.ganancia = rawGanancia !== undefined && rawGanancia !== null ? Number.parseFloat(Number.parseFloat(rawGanancia).toFixed(2)) : null;
         
         // Mapea la lista de detalles si están incluidos/eager-loaded en la consulta
         this.detalles = venta.detalles 

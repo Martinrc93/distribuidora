@@ -42,6 +42,19 @@ Product.init({
                 this.setDataValue('marca', value.trim());
             }
         }
+    },
+    costo: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        validate: {
+            notNull: {
+                msg: 'El costo es obligatorio.'
+            },
+            min: {
+                args: [0],
+                msg: 'El costo no puede ser negativo.'
+            }
+        }
     }
 },
     {

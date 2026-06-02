@@ -5,19 +5,22 @@ const productRoutes = require('./routes/productRoutes.js');
 const empleadoRoutes = require('./routes/empleadoRoutes.js');
 const priceRoutes = require('./routes/priceRoutes.js');
 const ventaRoutes = require('./routes/ventaRoutes.js');
+const clienteRoutes = require('./routes/clienteRoutes.js');
 const sequelize = require('./config/db/dataBase.js');
 const Product = require('./models/product.js');
 const Empleado = require('./models/empleado.js');
 const Price = require('./models/price.js');
 const Venta = require('./models/venta.js');
 const Detalle = require('./models/detalle.js');
+const Cliente = require('./models/cliente.js');
 
 
 
 
 
 const app = express();
-const port = 3000;
+app.disable('x-powered-by');
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -29,6 +32,7 @@ app.use('/products', productRoutes);
 app.use('/empleados', empleadoRoutes);
 app.use('/prices', priceRoutes);
 app.use('/ventas', ventaRoutes);
+app.use('/clientes', clienteRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {

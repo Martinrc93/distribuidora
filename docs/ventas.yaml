@@ -56,6 +56,16 @@ components:
         empleadoApellido:
           type: string
           description: Apellido del empleado que realizó la venta.
+        clienteId:
+          type: integer
+          description: ID del cliente asociado a la venta.
+        clienteNombre:
+          type: string
+          description: Nombre del cliente.
+        ganancia:
+          type: number
+          format: double
+          description: Ganancia total generada por la venta (decimal 10,2).
         detalles:
           type: array
           items:
@@ -68,6 +78,9 @@ components:
         empleadoId: 2
         empleadoNombre: "Florencia"
         empleadoApellido: "Díaz"
+        clienteId: 1
+        clienteNombre: "Supermercado Alborada"
+        ganancia: 1200.00
         detalles:
           - id: 1
             productId: 2
@@ -110,11 +123,15 @@ paths:
               type: object
               required:
                 - empleadoId
+                - clienteId
                 - detalles
               properties:
                 empleadoId:
                   type: integer
                   description: ID del empleado que realiza la venta.
+                clienteId:
+                  type: integer
+                  description: ID del cliente asociado a la venta.
                 detalles:
                   type: array
                   description: Lista de artículos a vender.
@@ -136,6 +153,7 @@ paths:
                         description: Cantidad a vender.
               example:
                 empleadoId: 2
+                clienteId: 1
                 detalles:
                   - productId: 1
                     priceId: 1

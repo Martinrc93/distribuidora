@@ -1,6 +1,7 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/db/dataBase');
 const Empleado = require('./empleado.js');
+const Cliente = require('./cliente.js');
 
 // 1. Definición del modelo Venta
 class Venta extends Model {
@@ -45,6 +46,19 @@ Venta.init({
                 msg: 'El ID de empleado es obligatorio.'
             }
         }
+    },
+    clienteId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'Clientes', // Tabla física de Clientes
+            key: 'id'
+        },
+        validate: {
+            notNull: {
+                msg: 'El ID de cliente es obligatorio.'
+            }
+        }
     }
 }, {
     sequelize,         // Instancia de conexión
@@ -56,5 +70,8 @@ Venta.init({
 // 3. Relaciones (Asociaciones)
 Venta.belongsTo(Empleado, { foreignKey: 'empleadoId', as: 'empleado' });
 Empleado.hasMany(Venta, { foreignKey: 'empleadoId', as: 'ventas' });
+
+Venta.belongsTo(Cliente, { foreignKey: 'clienteId', as: 'cliente' });
+Cliente.hasMany(Venta, { foreignKey: 'clienteId', as: 'ventas' });
 
 module.exports = Venta;

@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const sequelize = require('./config/db/dataBase.js');
 const User = require('./models/user.js'); // Importar el modelo para registrarlo en Sequelize
 const Product = require('./models/product.js'); // Importar el modelo de Producto
@@ -7,6 +7,7 @@ const Empleado = require('./models/empleado.js'); // Importar el modelo de Emple
 const Price = require('./models/price.js'); // Importar el modelo de Price
 const Venta = require('./models/venta.js'); // Importar el modelo de Venta
 const Detalle = require('./models/detalle.js'); // Importar el modelo de Detalle
+const Cliente = require('./models/cliente.js'); // Importar el modelo de Cliente
 
 
 
@@ -19,6 +20,7 @@ async function ejecutarSembrado() {
     await sequelize.query('DROP TABLE IF EXISTS `Detalles`;');
     await sequelize.query('DROP TABLE IF EXISTS `Venta`;');
     await sequelize.query('DROP TABLE IF EXISTS `Ventas`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Clientes`;');
     await sequelize.query('DROP TABLE IF EXISTS `Prices`;');
     await sequelize.query('DROP TABLE IF EXISTS `Empleados`;');
     await sequelize.query('DROP TABLE IF EXISTS `Products`;');
