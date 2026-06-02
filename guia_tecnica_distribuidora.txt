@@ -1,0 +1,72 @@
+GUIA TECNICA DE IMPLEMENTACION Y PROMPTS MAESTROS - SERVIDOR DISTRIBUIDORA
+========================================================================
+
+Este documento contiene el contexto absoluto, las reglas de arquitectura limpia y los 3 prompts secuenciales listos para alimentar al asistente de IA del IDE (Gemini en VS Code).
+
+------------------------------------------------------------------------
+CONTEXTO GENERAL DEL PROYECTO
+------------------------------------------------------------------------
+* Objetivo: Crear una API REST offline local para una distribuidora de cigarrillos.
+* Stack: Node.js, Express, Sequelize ORM, y base de datos embebida SQLite (archivo local).
+* Negocio clave: Manejo de marcas de cigarrillos, costo manual, y 7 columnas individuales de listas de precios editables manualmente. Control de recorridos de empleados (vendedores), generación de remito en formato texto/PDF y consolidación de ganancias diarias (Costo vs. Precio de Lista seleccionado).
+
+------------------------------------------------------------------------
+REGLAS ESTRICTAS DE LA ARQUITECTURA EN CAPAS
+------------------------------------------------------------------------
+1. routes/ (Rutas): Solo interceptan peticiones HTTP, definen endpoints y delegan al controlador. No contienen lógica ni manipulan respuestas directamente.
+2. controllers/ (Controladores): Gestionan el ciclo Request-Response (req, res). Reciben parámetros, llaman al servicio, pasan el resultado por el DTO y devuelven la respuesta HTTP con su código de estado nativo (200, 201, 404, 500). Nunca consultan la base de datos de forma directa.
+3. services/ (Servicios): El cerebro de la aplicación. Contiene reglas de negocio y algoritmos de ganancias. Llama a los modelos para persistir u obtener datos. Es agnóstico al protocolo de red (está prohibido usar req o res de Express aquí).
+4. models/ (Modelos): Definición de entidades, restricciones de tipos y asociaciones usando Sequelize. Representa la fuente de verdad de los datos.
+5. dtos/ (Data Transfer Objects): Funciones puras que moldean el formato de entrada (Input DTO) y salida (Output DTO) para limpiar metadatos del ORM antes de mandarlos al front.
+
+========================================================================
+PROMPT N°1: CREACION DE MODELOS CON SEQUELIZE (FASE DE CIMIENTOS)
+========================================================================
+Copia y pega el siguiente bloque entero en tu asistente del IDE:
+
+Actúa como un Ingeniero de Software Backend Senior. Necesito que generes EXCLUSIVAMENTE los archivos de la capa de modelos dentro del directorio 'models/' utilizando Sequelize y SQLite local. Genera código limpio, estructurado y sin saltarte pasos.
+
+Requisitos específicos de las entidades a programar:
+1. 'models/Producto.js': Define la entidad 'Producto' (tabla 'productos'). Campos: 'id' (PK auto-incremental), 'marca' (String, obligatorio), 'costo' (Decimal 10,2 obligatorio), y 7 columnas individuales del tipo Decimal(10,2) llamadas 'precioLista1', 'precioLista2', ..., 'precioLista7', todas con valor por defecto 0. No uses variaciones en texto ni arrays.
+2. 'models/Empleado.js': Tabla 'empleados'. Campos: 'id' (PK), 'nombreCompleto' (String obligatorio), 'activo' (Boolean, por defecto true).
+3. 'models/Pedido.js': Tabla 'pedidos'. Campos: 'id' (PK), 'fecha' (Date, por defecto NOW), 'clienteDestino' (String), 'total' (Decimal 10,2), 'ganancia' (Decimal 10,2). Debe pertenecer a un Empleado (empleadoId).
+4. 'models/DetallePedido.js': Tabla intermedia 'detalle_pedidos'. Campos: 'id' (PK), 'cantidad' (Integer), 'precioListaSeleccionado' (String, ej: 'Lista 3'), 'precioUnitario' (Decimal 10,2), 'subtotal' (Decimal 10,2). Debe relacionar 'pedidoId' y 'productoId'.
+
+Establece explícitamente las relaciones de Sequelize al final de los archivos o en un inicializador de asociaciones:
+- Un Empleado tiene muchos Pedidos. Un Pedido pertenece a un Empleado.
+- Un Pedido tiene muchos Detalles. Un Detalle pertenece a un Pedido.
+- Un Producto tiene muchos Detalles. Un Detalle pertenece a un Producto.
+
+Devuelve el código modularizado listo para guardar en la carpeta 'models/'.
+
+========================================================================
+PROMPT N°2: DESARROLLO DE CAPA DE SERVICIOS Y DTOS (FASE LOGICA)
+========================================================================
+Copia y pega el siguiente bloque entero una vez que los modelos estén listos:
+
+Asisteme en el desarrollo del backend siguiendo estrictamente las reglas de nuestra arquitectura limpia. Vamos a programar la lógica del negocio de los Productos.
+
+Genera los siguientes archivos respetando sus carpetas correspondientes:
+1. 'dtos/productoDto.js': Crea una función pura 'toProductoOutputDTO' que reciba un registro crudo de Sequelize y devuelva un objeto estructurado plano (JSON puro) conteniendo únicamente: id, marca, costo y un sub-objeto o mapeo limpio con los 7 precios de lista. Crea también un 'toProductoInputDTO' para filtrar datos entrantes del formulario de nuevo producto.
+2. 'services/productoService.js': Crea las funciones de negocio utilizando el modelo 'Producto'. 
+   - 'crearProducto(datos)': Debe recibir el input sanitizado por el DTO, aplicar cualquier regla y persistir en SQLite usando el modelo.
+   - 'obtenerTodos()': Retorna todos los productos de la base de datos mapeados a su DTO de salida.
+   - 'actualizarPrecios(id, nuevosPrecios)': Busca el producto por ID y actualiza manualmente los valores de costo o de cualquiera de las 7 listas de precios.
+
+REGLA DE ORO MÁXIMA: En 'services/' está terminantemente PROHIBIDO hacer uso de 'req' o 'res' de Express, ni manejar códigos de estado HTTP o respuestas de red. Debe retornar datos puros o lanzar errores si algo falla. Devuelve la estructura de archivos limpia.
+
+========================================================================
+PROMPT N°3: CONTROLADORES Y RUTAS DE PRODUCTOS (FASE DE EXPOSICION)
+========================================================================
+Copia y pega el siguiente bloque entero para conectar el flujo al frontend:
+
+Procedamos a cerrar el ciclo de desarrollo de la entidad Productos mapeando la interfaz de red local. Necesito que generes los archivos de controladores y rutas.
+
+Por favor, escribe:
+1. 'controllers/productoController.js': Debe contener los métodos HTTP para manejar las peticiones utilizando Express.
+   - 'getAllProductos': Llama a 'productoService.obtenerTodos()', procesa los resultados a través del Output DTO para formatear la respuesta limpia, y responde al frontend estático con 'res.status(200).json(data)'.
+   - 'createProducto': Ataja el 'req.body', realiza una validación de que marca y costo existan, llama al servicio y responde con 'res.status(201).json(...)'.
+   Maneja los errores con bloques try/catch y responde con 'res.status(500).json({ error: error.message })' en caso de fallo.
+2. 'routes/productoRoutes.js': Configura el Router de Express. Mapea 'GET /' hacia 'getAllProductos' y 'POST /' hacia 'createProducto'.
+
+REGLA DE ORO: Las rutas no tienen lógica. Los controladores no consultan la base de datos directamente, solo coordinan el flujo HTTP delegando al servicio. Devuelve los archivos listos para implementar.

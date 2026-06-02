@@ -1,12 +1,25 @@
 const fs = require('fs');
 const path = require('path');
-const sequelize = require('./config/db/dataBase.js');
-const User = require('./models/user.js'); // Importar el modelo para registrarlo en Sequelize
+const { sequelize, User, Producto, Empleado, Price, Pedido, DetallePedido } = require('./models/index.js');
+
+
+
 
 async function ejecutarSembrado() {
   try {
-    // Sincronizar la base de datos primero para asegurar que las tablas existan
-    await sequelize.sync({ force: false });
+    // Desactivar llaves foráneas y eliminar tablas antiguas (incluyendo la huérfana 'Venta' singular) para evitar conflictos de restricciones
+    await sequelize.query('PRAGMA foreign_keys = OFF;');
+    await sequelize.query('DROP TABLE IF EXISTS `Detalles`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Venta`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Ventas`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Prices`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Empleados`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Productos`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Users`;');
+    await sequelize.query('PRAGMA foreign_keys = ON;');
+
+    // Sincronizar la base de datos recreando las tablas (force: true) para aplicar cambios de esquema automáticamente
+    await sequelize.sync({ force: true });
 
     // Leer el archivo seed.sql
     const rutaSql = path.join(__dirname, 'seed.sql');

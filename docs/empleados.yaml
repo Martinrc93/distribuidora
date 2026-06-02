@@ -1,0 +1,194 @@
+components:
+  schemas:
+    Empleado:
+      type: object
+      required:
+        - nombre
+        - apellido
+      properties:
+        id:
+          type: string
+          description: ID único autogenerado para el empleado.
+        nombre:
+          type: string
+          description: Nombre del empleado.
+        apellido:
+          type: string
+          description: Apellido del empleado.
+      example:
+        id: "1"
+        nombre: Juan
+        apellido: Pérez
+
+    PaginatedEmpleados:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total de empleados registrados.
+        paginas:
+          type: integer
+          description: Total de páginas disponibles.
+        paginaActual:
+          type: integer
+          description: Número de página actual.
+        limite:
+          type: integer
+          description: Cantidad de empleados por página.
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Empleado'
+
+paths:
+  /empleados:
+    get:
+      summary: Obtener todos los empleados con paginación y búsqueda parcial por nombre
+      tags:
+        - Empleados
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Número de la página a obtener.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Cantidad de elementos por página.
+        - in: query
+          name: nombre
+          schema:
+            type: string
+          description: Filtro para realizar búsquedas parciales por el nombre del empleado.
+      responses:
+        200:
+          description: Lista paginada de empleados obtenida correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmpleados'
+        500:
+          description: Error interno del servidor.
+
+    post:
+      summary: Registrar un nuevo empleado
+      tags:
+        - Empleados
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+                - apellido
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre del empleado.
+                apellido:
+                  type: string
+                  description: Apellido del empleado.
+              example:
+                nombre: Martín
+                apellido: Gómez
+      responses:
+        201:
+          description: Empleado creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empleado'
+        400:
+          description: Error de validación en los campos provistos.
+        500:
+          description: Error interno del servidor.
+
+  /empleados/{id}:
+    get:
+      summary: Obtener un empleado por su ID
+      tags:
+        - Empleados
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único del empleado.
+      responses:
+        200:
+          description: Datos del empleado solicitado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empleado'
+        404:
+          description: Empleado no encontrado.
+        500:
+          description: Error interno del servidor.
+
+    put:
+      summary: Actualizar datos de un empleado existente
+      tags:
+        - Empleados
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único del empleado a actualizar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre del empleado.
+                apellido:
+                  type: string
+                  description: Apellido del empleado.
+              example:
+                nombre: Martín Roberto
+                apellido: Gómez
+      responses:
+        200:
+          description: Empleado actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empleado'
+        400:
+          description: Datos de entrada inválidos.
+        404:
+          description: Empleado no encontrado.
+        500:
+          description: Error interno del servidor.
+
+    delete:
+      summary: Eliminar un empleado
+      tags:
+        - Empleados
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID del empleado a eliminar.
+      responses:
+        200:
+          description: Empleado eliminado exitosamente.
+        404:
+          description: Empleado no encontrado.
+        500:
+          description: Error interno del servidor.

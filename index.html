@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cierre de Jornada - Sistema Distribuidora</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Barra de navegación superior -->
+    <header>
+        <div class="logo">Distribuidora <span>[Modo Local]</span></div>
+        <nav class="tabs">
+            <a href="#" class="tab" data-target="seccion-productos">Productos</a>
+            <a href="#" class="tab active" data-target="seccion-empleados">Empleados</a>
+            <a href="#" class="tab" data-target="seccion-pedidos">Pedidos</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Pestaña: Productos -->
+        <div id="seccion-productos" class="pantalla" style="display: none;">
+            <header class="page-header header-flex">
+                <h1>Gestión de Productos</h1>
+                <button id="btn-nuevo-producto" class="btn-nuevo">Nuevo Producto</button>
+            </header>
+            
+            <section class="table-container">
+                <table id="tabla-productos">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Nombre</th>
+                            <th>Marca</th>
+                            <th>Costo</th>
+                            <th class="col-action">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los productos se inyectarán dinámicamente con JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- Pestaña: Empleados -->
+        <div id="seccion-empleados" class="pantalla">
+        <!-- Cabecera de la sección -->
+        <header class="page-header">
+            <h1>Resumen de Cierre de Jornada (Empleados)</h1>
+        </header>
+        
+        <!-- Tarjetas de Métricas Globales -->
+        <section class="metrics">
+            <div class="card">
+                <h3>Total Vendido</h3>
+                <p class="value" id="metric-total">$0.00</p>
+            </div>
+            <div class="card">
+                <h3>Costo Total</h3>
+                <p class="value" id="metric-costo">$0.00</p>
+            </div>
+            <div class="card">
+                <h3>Ganancia Total</h3>
+                <p class="value" id="metric-ganancia">$0.00</p>
+            </div>
+        </section>
+
+        <!-- Tabla Central -->
+        <section class="table-container">
+            <table id="tabla-empleados">
+                <thead>
+                    <tr>
+                        <th>Nombre Empleado</th>
+                        <th>Recorridos Completados</th>
+                        <th>Total Vendido</th>
+                        <th>Ganancia Generada</th>
+                        <th class="col-action">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- El contenido dinámico se inyectará aquí desde JS -->
+                </tbody>
+            </table>
+        </section>
+        </div>
+
+        <!-- Pestaña: Pedidos -->
+        <div id="seccion-pedidos" class="pantalla" style="display: none;">
+            <header class="page-header">
+                <h1>Listado de Pedidos</h1>
+            </header>
+            
+            <section class="table-container">
+                <table id="tabla-pedidos">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Empleado</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th class="col-action">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- El contenido dinámico se inyectará aquí desde JS -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal para Registrar Recorrido -->
+    <div id="modal-recorrido" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Registrar Recorrido: <span id="nombre-empleado-modal"></span></h2>
+            
+            <div class="modal-form">
+                <select id="select-producto">
+                    <option value="" disabled selected>Seleccione un producto</option>
+                    <!-- Las opciones se cargarán por JS -->
+                </select>
+                
+                <input type="number" id="input-cantidad" placeholder="Cantidad" min="1">
+                
+                <select id="select-lista">
+                    <option value="" disabled selected>Seleccione lista</option>
+                    <option value="precioLista1">Lista 1</option>
+                    <option value="precioLista2">Lista 2</option>
+                    <option value="precioLista3">Lista 3</option>
+                    <option value="precioLista4">Lista 4</option>
+                    <option value="precioLista5">Lista 5</option>
+                    <option value="precioLista6">Lista 6</option>
+                    <option value="precioLista7">Lista 7</option>
+                </select>
+                
+                <button id="btn-agregar-remito" type="button">Agregar al Remito</button>
+            </div>
+
+            <div class="table-container table-modal">
+                <table id="tabla-remito">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Lista</th>
+                            <th>Subtotal</th>
+                            <th class="col-action">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- El detalle del remito se inyectará aquí -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <p class="total-general">Total General: <span id="total-general-remito">$0</span></p>
+                <div class="modal-actions">
+                    <button id="btn-cancelar-modal" class="btn-cancelar">Cancelar</button>
+                    <button id="btn-confirmar-recorrido" class="btn-confirmar">Confirmar Recorrido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Registrar/Editar Producto -->
+    <div id="modal-producto" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-pequeno">
+            <h2 id="titulo-modal-producto">Nuevo Producto</h2>
+            
+            <form id="form-producto">
+                <input type="hidden" id="input-producto-id">
+                
+                <div class="form-group">
+                    <label for="input-producto-nombre">Nombre del Producto</label>
+                    <input type="text" id="input-producto-nombre" placeholder="Ej. Yerba Mate 1kg" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="input-producto-marca">Marca</label>
+                    <input type="text" id="input-producto-marca" placeholder="Ej. Playadito" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="input-producto-costo">Costo ($)</label>
+                    <input type="number" id="input-producto-costo" step="0.01" min="0" placeholder="Ej. 3.80" required>
+                </div>
+                
+                <div class="form-group">
+                    <label style="margin-bottom: 2px;">Precios de Lista (Opcional)</label>
+                    <div class="form-grid-precios">
+                        <div class="precio-item">
+                            <label for="precio-lista-1">Lista 1</label>
+                            <input type="number" id="precio-lista-1" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="precio-lista-2">Lista 2</label>
+                            <input type="number" id="precio-lista-2" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="precio-lista-3">Lista 3</label>
+                            <input type="number" id="precio-lista-3" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="precio-lista-4">Lista 4</label>
+                            <input type="number" id="precio-lista-4" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="precio-lista-5">Lista 5</label>
+                            <input type="number" id="precio-lista-5" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="precio-lista-6">Lista 6</label>
+                            <input type="number" id="precio-lista-6" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="precio-lista-7">Lista 7</label>
+                            <input type="number" id="precio-lista-7" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer modal-footer-producto">
+                    <div class="modal-actions" style="width: 100%; display: flex; justify-content: flex-end; gap: 15px;">
+                        <button type="button" id="btn-cancelar-producto" class="btn-cancelar">Cancelar</button>
+                        <button type="submit" id="btn-guardar-producto" class="btn-confirmar">Guardar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Gestionar Precios de un Producto -->
+    <div id="modal-precios" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 550px;">
+            <h2>Precios de: <span id="nombre-producto-precios"></span></h2>
+            
+            <form id="form-precios">
+                <div class="form-group">
+                    <label for="modal-precios-costo">Costo ($)</label>
+                    <input type="number" id="modal-precios-costo" step="0.01" min="0" placeholder="Ej. 100.00" required>
+                </div>
+                
+                <div class="form-group">
+                    <label style="margin-bottom: 2px;">Precios de Lista</label>
+                    <div class="form-grid-precios">
+                        <div class="precio-item">
+                            <label for="modal-precios-lista-1">Lista 1</label>
+                            <input type="number" id="modal-precios-lista-1" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="modal-precios-lista-2">Lista 2</label>
+                            <input type="number" id="modal-precios-lista-2" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="modal-precios-lista-3">Lista 3</label>
+                            <input type="number" id="modal-precios-lista-3" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="modal-precios-lista-4">Lista 4</label>
+                            <input type="number" id="modal-precios-lista-4" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="modal-precios-lista-5">Lista 5</label>
+                            <input type="number" id="modal-precios-lista-5" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="modal-precios-lista-6">Lista 6</label>
+                            <input type="number" id="modal-precios-lista-6" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="precio-item">
+                            <label for="modal-precios-lista-7">Lista 7</label>
+                            <input type="number" id="modal-precios-lista-7" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px;">
+                    <button type="button" id="btn-cerrar-precios" class="btn-cancelar">Cancelar</button>
+                    <button type="submit" id="btn-guardar-precios" class="btn-confirmar">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Ver Detalles del Pedido -->
+    <div id="modal-detalle-pedido" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Detalle del Pedido #<span id="detalle-pedido-id"></span></h2>
+            
+            <div class="info-pedido-header" style="display: flex; justify-content: space-between; gap: 20px; font-size: 0.95rem; background: var(--bg-color); padding: 12px 15px; border-radius: 4px; border: 1px solid var(--border-color);">
+                <p><strong>Empleado:</strong> <span id="detalle-pedido-empleado"></span></p>
+                <p><strong>Fecha:</strong> <span id="detalle-pedido-fecha"></span></p>
+                <p><strong>Total:</strong> <span id="detalle-pedido-total"></span></p>
+            </div>
+
+            <div class="table-container table-modal">
+                <table id="tabla-detalle-pedido">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Marca</th>
+                            <th>Cantidad</th>
+                            <th>Lista</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los detalles del pedido se inyectarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer" style="justify-content: flex-end;">
+                <button id="btn-cerrar-detalle-pedido" class="btn-cancelar" style="background-color: var(--text-color); color: var(--bg-color); border: 1px solid var(--text-color);">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script src="main.js"></script>
+</body>
+</html>

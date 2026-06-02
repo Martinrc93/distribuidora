@@ -1,0 +1,46 @@
+/**
+ * DTO para la actualización de un Precio (Price Update Request DTO)
+ * Se encarga de recibir, sanitizar y validar los datos para actualizar un precio,
+ * exigiendo obligatoriamente el id del precio, el nuevo precio decimal y el productId.
+ */
+class PriceUpdateDto {
+    constructor({ id, precio, productId }) {
+        this.id = typeof id === 'number' ? id : parseInt(id, 10);
+        const parsedPrecio = typeof precio === 'number' ? precio : parseFloat(precio);
+        this.precio = isNaN(parsedPrecio) ? parsedPrecio : parseFloat(parsedPrecio.toFixed(2));
+        this.productId = typeof productId === 'number' ? productId : parseInt(productId, 10);
+    }
+
+    /**
+     * Valila los campos obligatorios para la actualización del precio.
+     * @returns {{isValid: boolean, errors: string[]}} Un objeto indicando si es válido y la lista de errores si los hay.
+     */
+    validate() {
+        const errors = [];
+
+        if (!this.id || isNaN(this.id)) {
+            errors.push('El campo "id" es obligatorio y debe ser un número entero válido.');
+        } else if (this.id <= 0) {
+            errors.push('El campo "id" debe ser un ID positivo.');
+        }
+
+        if (this.precio === undefined || this.precio === null || isNaN(this.precio)) {
+            errors.push('El campo "precio" es obligatorio y debe ser un número decimal.');
+        } else if (this.precio < 0) {
+            errors.push('El campo "precio" no puede ser negativo.');
+        }
+
+        if (!this.productId || isNaN(this.productId)) {
+            errors.push('El campo "productId" es obligatorio y debe ser un número entero válido.');
+        } else if (this.productId <= 0) {
+            errors.push('El campo "productId" debe ser un ID de producto positivo.');
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors
+        };
+    }
+}
+
+module.exports = PriceUpdateDto;

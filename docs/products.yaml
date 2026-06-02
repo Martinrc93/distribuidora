@@ -1,0 +1,200 @@
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - nombre
+        - marca
+      properties:
+        id:
+          type: integer
+          description: ID autogenerado para el producto en la base de datos.
+        nombre:
+          type: string
+          description: Nombre del producto.
+        marca:
+          type: string
+          description: Marca del producto.
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del producto.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última modificación del producto.
+      example:
+        id: 1
+        nombre: Leche Entera 1L
+        marca: La Serenísima
+        createdAt: "2026-05-22T20:00:00.000Z"
+        updatedAt: "2026-05-22T20:00:00.000Z"
+
+    PaginatedProducts:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total de productos en la base de datos.
+        paginas:
+          type: integer
+          description: Total de páginas disponibles.
+        paginaActual:
+          type: integer
+          description: Número de página actual.
+        limite:
+          type: integer
+          description: Cantidad de elementos por página.
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+
+paths:
+  /products:
+    get:
+      summary: Obtener todos los productos con paginación
+      tags:
+        - Productos
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Número de página a consultar.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Cantidad de productos por página.
+      responses:
+        200:
+          description: Lista paginada de productos obtenida correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProducts'
+        500:
+          description: Error interno del servidor.
+
+    post:
+      summary: Crear un nuevo producto
+      tags:
+        - Productos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+                - marca
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre del producto.
+                marca:
+                  type: string
+                  description: Marca del producto.
+              example:
+                nombre: Café Molido 500g
+                marca: Cabrales
+      responses:
+        201:
+          description: Producto creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        400:
+          description: Error de validación en los datos provistos.
+        500:
+          description: Error interno del servidor.
+
+  /products/{id}:
+    get:
+      summary: Obtener un producto por su ID
+      tags:
+        - Productos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único del producto.
+      responses:
+        200:
+          description: Datos del producto solicitado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        404:
+          description: Producto no encontrado.
+        500:
+          description: Error interno del servidor.
+
+    put:
+      summary: Reemplazar por completo un producto existente
+      tags:
+        - Productos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único del producto a actualizar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+                - marca
+              properties:
+                nombre:
+                  type: string
+                marca:
+                  type: string
+              example:
+                nombre: Café Espresso Premium 500g
+                marca: Cabrales
+      responses:
+        200:
+          description: Producto actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        400:
+          description: Datos de entrada no válidos o incompletos.
+        404:
+          description: Producto no encontrado.
+        500:
+          description: Error interno del servidor.
+
+    delete:
+      summary: Eliminar un producto
+      tags:
+        - Productos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID del producto a eliminar.
+      responses:
+        200:
+          description: Producto eliminado con éxito.
+        404:
+          description: Producto no encontrado.
+        500:
+          description: Error interno del servidor.
