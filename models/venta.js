@@ -59,6 +59,20 @@ Venta.init({
                 msg: 'El ID de cliente es obligatorio.'
             }
         }
+    },
+    ganancia: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+            notNull: {
+                msg: 'La ganancia es obligatoria.'
+            },
+            min: {
+                args: [0],
+                msg: 'La ganancia de la venta no puede ser negativa.'
+            }
+        }
     }
 }, {
     sequelize,         // Instancia de conexión

@@ -100,3 +100,26 @@ INSERT INTO "Prices" (precio, productId, createdAt, updatedAt) VALUES
 (1.60, 10, datetime('now', '-2 days'), datetime('now', '-2 days')),
 (1.70, 10, datetime('now', '-1 days'), datetime('now', '-1 days')),
 (1.75, 10, datetime('now'), datetime('now'));
+
+INSERT INTO "Ventas" (fecha_emision, total, ganancia, active, empleadoId, clienteId, createdAt, updatedAt) VALUES
+(datetime('now', '-2 days'), 23.50, 5.50, 1, 1, 1, datetime('now'), datetime('now')),
+(datetime('now', '-1 days'), 40.20, 11.40, 1, 2, 2, datetime('now'), datetime('now')),
+(datetime('now'), 18.00, 5.60, 1, 1, 3, datetime('now'), datetime('now')),
+(datetime('now'), 18.20, 5.80, 1, 2, 1, datetime('now'), datetime('now')),
+(datetime('now'), 30.00, 9.00, 1, 2, 2, datetime('now'), datetime('now')),
+(datetime('now'), 18.00, 5.80, 1, 2, 3, datetime('now'), datetime('now')),
+(datetime('now'), 22.00, 8.00, 1, 2, 1, datetime('now'), datetime('now'));
+
+INSERT INTO "Detalles" (sellId, productId, priceId, cantidad, precio, createdAt, updatedAt) VALUES
+(1, 1, 3, 10, 1.30, datetime('now'), datetime('now')),
+(1, 2, 8, 5, 2.10, datetime('now'), datetime('now')),
+(2, 3, 14, 8, 2.90, datetime('now'), datetime('now')),
+(2, 4, 19, 10, 1.70, datetime('now'), datetime('now')),
+(3, 5, 25, 4, 4.50, datetime('now'), datetime('now')),
+(4, 1, 5, 6, 1.50, datetime('now'), datetime('now')),
+(4, 2, 10, 4, 2.30, datetime('now'), datetime('now')),
+(5, 3, 15, 10, 3.00, datetime('now'), datetime('now')),
+(6, 4, 20, 5, 1.80, datetime('now'), datetime('now')),
+(6, 5, 25, 2, 4.50, datetime('now'), datetime('now')),
+(7, 6, 30, 20, 1.10, datetime('now'), datetime('now'));
+

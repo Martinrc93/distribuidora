@@ -58,12 +58,6 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '') => {
 
     const totalPages = Math.ceil(count / limitNum);
 
-    // Calcular ganancia para cada venta devuelta
-    for (const venta of rows) {
-        const ganancia = await exports.calcularGananciaVenta(venta);
-        venta.setDataValue('ganancia', ganancia);
-    }
-
     return {
         total: count,
         paginas: totalPages,
@@ -81,15 +75,17 @@ exports.createVenta = async (ventaData) => {
     const t = await sequelize.transaction();
 
     try {
-        // 1. Crear la cabecera de la Venta con total inicial en 0
+        // 1. Crear la cabecera de la Venta con total y ganancia iniciales en 0
         const nuevaVenta = await Venta.create({
             empleadoId: ventaData.empleadoId,
             clienteId: ventaData.clienteId,
             total: 0,
+            ganancia: 0,
             active: true
         }, { transaction: t });
 
         let totalVenta = 0;
+        let totalGanancia = 0;
 
         // 2. Iterar por cada detalle del DTO, verificar producto y precio, y guardarlo mediante el detalleService
         for (const item of ventaData.detalles) {
@@ -109,6 +105,10 @@ exports.createVenta = async (ventaData) => {
             const subtotal = item.cantidad * unitPrice;
             totalVenta += subtotal;
 
+            // Calcular ganancia unitaria para acumular
+            const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId);
+            totalGanancia += gananciaUnidad * item.cantidad;
+
             // Guardamos el detalle en la base de datos a través de detalleService
             await detalleService.createDetalle({
                 sellId: nuevaVenta.id,
@@ -119,25 +119,23 @@ exports.createVenta = async (ventaData) => {
             }, { transaction: t });
         }
 
-        // 3. Actualizar la cabecera de la Venta con el total final calculado
-        await nuevaVenta.update({ total: totalVenta }, { transaction: t });
+        // 3. Actualizar la cabecera de la Venta con el total y ganancia finales calculados
+        await nuevaVenta.update({
+            total: totalVenta,
+            ganancia: Number.parseFloat(totalGanancia.toFixed(2))
+        }, { transaction: t });
 
         // 4. Confirmar la transacción
         await t.commit();
 
         // 5. Devolver la venta completa con sus detalles y empleado cargados
-        const ventaCompleta = await Venta.findByPk(nuevaVenta.id, {
+        return await Venta.findByPk(nuevaVenta.id, {
             include: [
                 { model: Detalle, as: 'detalles' },
                 { model: Empleado, as: 'empleado' },
                 { model: Cliente, as: 'cliente' }
             ]
         });
-
-        const ganancia = await exports.calcularGananciaVenta(ventaCompleta);
-        ventaCompleta.setDataValue('ganancia', ganancia);
-
-        return ventaCompleta;
 
     } catch (error) {
         // En caso de cualquier error, hacemos rollback para deshacer los cambios
@@ -163,26 +161,92 @@ exports.updateStatus = async (id, active) => {
     if (!venta) return null;
 
     // Actualizamos únicamente el campo active
-    await venta.update({ active });
-
-    const ganancia = await exports.calcularGananciaVenta(venta);
-    venta.setDataValue('ganancia', ganancia);
-
-    return venta;
+    return await venta.update({ active });
 };
 
 /**
- * Calcula la ganancia total de una venta sumando las ganancias individuales de cada producto vendido.
- * @param {Object} venta Instancia de Venta con detalles cargados.
- * @returns {Promise<number>} La ganancia total de la venta.
+ * Obtiene la última venta activa realizada para un cliente específico.
+ * @param {number} clienteId ID del cliente.
  */
-exports.calcularGananciaVenta = async (venta) => {
-    let gananciaTotal = 0;
-    if (venta?.detalles) {
-        for (const detalle of venta.detalles) {
-            const gananciaUnidad = await productService.getGanancia(detalle.productId, detalle.priceId);
-            gananciaTotal += gananciaUnidad * detalle.cantidad;
-        }
+exports.getUltimaVenta = async (clienteId) => {
+    const clId = Number.parseInt(clienteId, 10);
+    if (Number.isNaN(clId)) {
+        throw new TypeError('El ID de cliente debe ser un número válido.');
     }
-    return Number.parseFloat(gananciaTotal.toFixed(2));
+
+    return await Venta.findOne({
+        where: {
+            clienteId: clId,
+            active: true
+        },
+        include: [
+            { model: Detalle, as: 'detalles' },
+            { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' }
+        ],
+        order: [['fechaEmision', 'DESC']]
+    });
+};
+
+/**
+ * Obtiene todas las ventas activas de un cliente con paginación y filtros opcionales de fecha.
+ * @param {number} clienteId ID del cliente.
+ * @param {number} page Página actual (1-based).
+ * @param {number} limit Límite de elementos por página.
+ * @param {string} fechaMin Fecha mínima (YYYY-MM-DD).
+ * @param {string} fechaMax Fecha máxima (YYYY-MM-DD).
+ */
+exports.getByCliente = async (clienteId, page = 1, limit = 10, fechaMin = '', fechaMax = '') => {
+    const clId = Number.parseInt(clienteId, 10);
+    if (Number.isNaN(clId)) {
+        throw new TypeError('El ID de cliente debe ser un número válido.');
+    }
+
+    const pageNum = Number.parseInt(page, 10) || 1;
+    const limitNum = Number.parseInt(limit, 10) || 10;
+    const offsetNum = (pageNum - 1) * limitNum;
+
+    const where = {
+        clienteId: clId,
+        active: true
+    };
+
+    const dateFilter = {};
+    let hasDateFilter = false;
+
+    if (fechaMin && fechaMin.trim() !== '') {
+        dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000Z`);
+        hasDateFilter = true;
+    }
+
+    if (fechaMax && fechaMax.trim() !== '') {
+        dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999Z`);
+        hasDateFilter = true;
+    }
+
+    if (hasDateFilter) {
+        where.fechaEmision = dateFilter;
+    }
+
+    const { count, rows } = await Venta.findAndCountAll({
+        where,
+        limit: limitNum,
+        offset: offsetNum,
+        include: [
+            { model: Detalle, as: 'detalles' },
+            { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' }
+        ],
+        order: [['fechaEmision', 'DESC']]
+    });
+
+    const totalPages = Math.ceil(count / limitNum);
+
+    return {
+        total: count,
+        paginas: totalPages,
+        paginaActual: pageNum,
+        limite: limitNum,
+        data: rows
+    };
 };

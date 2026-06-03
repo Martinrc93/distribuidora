@@ -252,3 +252,49 @@ paths:
           description: Venta no encontrada.
         500:
           description: Error interno del servidor.
+
+  /ventas/cliente/{clienteId}:
+    get:
+      summary: Obtener todas las ventas activas asociadas a un cliente con paginación y filtros opcionales de fecha
+      tags:
+        - Ventas
+      parameters:
+        - in: path
+          name: clienteId
+          required: true
+          schema:
+            type: integer
+          description: ID único del cliente.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Página de consulta.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Límite de ventas por página.
+        - in: query
+          name: fechaMin
+          schema:
+            type: string
+            format: date
+          description: Filtro opcional de fecha mínima (YYYY-MM-DD).
+        - in: query
+          name: fechaMax
+          schema:
+            type: string
+            format: date
+          description: Filtro opcional de fecha máxima (YYYY-MM-DD).
+      responses:
+        200:
+          description: Lista paginada de ventas del cliente solicitada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVentas'
+        500:
+          description: Error interno del servidor.

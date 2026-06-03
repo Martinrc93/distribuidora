@@ -66,3 +66,42 @@ exports.updateStatus = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+/**
+ * Obtener la última venta activa de un cliente por su ID.
+ * Ruta: GET /clientes/:id/ultima-venta
+ */
+exports.getUltimaVentaByCliente = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ultimaVenta = await ventaService.getUltimaVenta(id);
+        
+        if (!ultimaVenta) {
+            return res.status(404).json({ mensaje: 'No se encontraron ventas activas para este cliente.' });
+        }
+
+        res.json(VentaResponseDto.fromModel(ultimaVenta));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * Obtener todas las ventas activas de un cliente con paginación y filtros opcionales de fecha.
+ * Ruta: GET /ventas/cliente/:clienteId?page=1&limit=10&fechaMin=YYYY-MM-DD&fechaMax=YYYY-MM-DD
+ */
+exports.getVentasByCliente = async (req, res) => {
+    try {
+        const { clienteId } = req.params;
+        const { page = 1, limit = 10, fechaMin = '', fechaMax = '' } = req.query;
+
+        const result = await ventaService.getByCliente(clienteId, page, limit, fechaMin, fechaMax);
+        
+        // Mapear los datos al Response DTO
+        result.data = VentaResponseDto.fromModel(result.data);
+
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

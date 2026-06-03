@@ -5,6 +5,9 @@ const ventaController = require('../controllers/ventaController.js');
 // Obtener todas las ventas activas de un empleado
 router.get('/empleado/:empleadoId', ventaController.getByEmpleado);
 
+// Obtener todas las ventas activas de un cliente con paginación y filtros de fecha
+router.get('/cliente/:clienteId', ventaController.getVentasByCliente);
+
 // Registrar una nueva venta completa
 router.post('/', ventaController.create);
 
