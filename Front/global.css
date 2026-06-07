@@ -151,20 +151,23 @@ body {
 
 .main-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
 }
 
 .header-titles h1 {
     font-size: 2.25rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0;
+    text-align: center;
 }
 
-.header-titles p {
-    color: var(--text-secondary);
-    font-size: 1rem;
+.main-header .btn-primary {
+    position: absolute;
+    right: 0;
 }
 
 .btn-primary {
@@ -187,7 +190,6 @@ body {
 .btn-primary:hover {
     background-color: #1d4ed8;
     box-shadow: 0 0 25px rgba(37, 99, 235, 0.6);
-    transform: translateY(-2px);
 }
 
 /* Statistics */

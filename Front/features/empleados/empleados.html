@@ -4,65 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Distribuidora - Empleados</title>
-    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="empleados.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        .table-container {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            overflow-x: auto;
-        }
-        .table {
-            color: var(--text-primary);
-            margin-bottom: 0;
-            --bs-table-bg: transparent;
-            --bs-table-color: var(--text-primary);
-            --bs-table-hover-color: var(--text-primary);
-            --bs-table-hover-bg: rgba(37, 99, 235, 0.05);
-        }
-        .table th {
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            color: var(--text-secondary);
-            padding-bottom: 1rem;
-        }
-        .table td {
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-            padding: 1rem 0.5rem;
-        }
-        .table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        .action-btn {
-            color: var(--text-secondary);
-            transition: all 0.3s ease;
-        }
-        .action-btn:hover {
-            color: var(--accent-glow);
-        }
-        .action-btn.delete:hover {
-            color: #ef4444;
-        }
-        
-        /* Tonalidades difuminadas por columna para transición suave */
-        .table th:nth-child(1), .table td:nth-child(1) { background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.015)); }
-        .table th:nth-child(2), .table td:nth-child(2) { background: linear-gradient(to right, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.03)); }
-        .table th:nth-child(3), .table td:nth-child(3) { background: linear-gradient(to right, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.045)); }
-        .table th:nth-child(4), .table td:nth-child(4) { background: linear-gradient(to right, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.06)); }
-        
-        /* Ajuste del hover para mantener el efecto difuminado al pasar el ratón */
-        .table tbody tr:hover td:nth-child(1) { background: linear-gradient(to right, rgba(37, 99, 235, 0.05), rgba(37, 99, 235, 0.075)); }
-        .table tbody tr:hover td:nth-child(2) { background: linear-gradient(to right, rgba(37, 99, 235, 0.075), rgba(37, 99, 235, 0.10)); }
-        .table tbody tr:hover td:nth-child(3) { background: linear-gradient(to right, rgba(37, 99, 235, 0.10), rgba(37, 99, 235, 0.125)); }
-        .table tbody tr:hover td:nth-child(4) { background: linear-gradient(to right, rgba(37, 99, 235, 0.125), rgba(37, 99, 235, 0.15)); }
-    </style>
 </head>
 <body>
     <div class="app-container">
@@ -71,7 +19,6 @@
             <header class="main-header">
                 <div class="header-titles">
                     <h1>EMPLEADOS</h1>
-                    <p>Gestión del personal de la distribuidora</p>
                 </div>
                 <button class="btn-primary"><i class="fas fa-plus"></i> Añadir Empleado</button>
             </header>
@@ -134,14 +81,14 @@
 
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="index.html"><i class="fas fa-home"></i> Dashboard</a></li>
-                    <li><a href="productos.html"><i class="fas fa-box"></i> Productos</a></li>
+                    <li><a href="../dashboard/index.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                    <li><a href="../productos/productos.html"><i class="fas fa-box"></i> Productos</a></li>
                     <li><a href="empleados.html" class="active"><i class="fas fa-users"></i> Empleados</a></li>
-                    <li><a href="pedidos.html"><i class="fas fa-shopping-cart"></i> Pedidos</a></li>
+                    <li><a href="../pedidos/pedidos.html"><i class="fas fa-shopping-cart"></i> Pedidos</a></li>
                 </ul>
             </nav>
         </aside>
     </div>
-    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
