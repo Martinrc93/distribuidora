@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora - Clientes</title>
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="clientes.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h1>CLIENTES</h1>
+                </div>
+                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addClienteModal"><i class="fas fa-plus"></i> Añadir Cliente</button>
+            </header>
+
+            <section class="table-container">
+                <table class="table table-hover table-borderless text-center">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Dirección</th>
+                            <th>Contacto</th>
+                            <th>Pedidos</th>
+                            <th>Lista de precios</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Supermercado Alborada</td>
+                            <td>Av. Rivadavia 1234</td>
+                            <td>+54 11 4444-1111</td>
+                            <td>
+                                <button class="btn btn-sm" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: rgba(37, 99, 235, 0.1); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.25); font-weight: 500; font-size: 0.8rem; padding: 0.35rem 0.65rem; border-radius: 6px;">Lista 1</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>MiniMarket Express</td>
+                            <td>Calle Corrientes 567</td>
+                            <td>+54 11 5555-2222</td>
+                            <td>
+                                <button class="btn btn-sm" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: rgba(37, 99, 235, 0.1); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.25); font-weight: 500; font-size: 0.8rem; padding: 0.35rem 0.65rem; border-radius: 6px;">Lista 2</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Almacén de Don Pepe</td>
+                            <td>Belgrano 890</td>
+                            <td>+54 11 6666-3333</td>
+                            <td>
+                                <button class="btn btn-sm" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: rgba(37, 99, 235, 0.1); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.25); font-weight: 500; font-size: 0.8rem; padding: 0.35rem 0.65rem; border-radius: 6px;">Lista 1</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
+        <div id="sidebar-container"></div>
+    </div>
+
+    <!-- Modal Añadir Cliente -->
+    <div class="modal fade" id="addClienteModal" tabindex="-1" aria-labelledby="addClienteModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="addClienteModalLabel">Añadir Nuevo Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addClienteForm">
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="clienteNombre" class="form-label text-secondary">Nombre del Cliente</label>
+                            <input type="text" class="form-control" id="clienteNombre" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="clienteDireccion" class="form-label text-secondary">Dirección</label>
+                            <input type="text" class="form-control" id="clienteDireccion">
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="clienteContacto" class="form-label text-secondary">Teléfono de Contacto</label>
+                            <input type="tel" class="form-control" id="clienteContacto">
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="clienteListaPrecios" class="form-label text-secondary">Lista de Precios Asignada</label>
+                            <select class="form-select" id="clienteListaPrecios">
+                                <option value="1">Lista 1</option>
+                                <option value="2">Lista 2</option>
+                                <option value="3">Lista 3</option>
+                                <option value="4">Lista 4</option>
+                                <option value="5">Lista 5</option>
+                                <option value="6">Lista 6</option>
+                                <option value="7">Lista 7</option>
+                                <option value="8">Lista 8</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" style="background-color: #2563eb; border: none;">Guardar Cliente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../sidebar.js"></script>
+</body>
+
+</html>

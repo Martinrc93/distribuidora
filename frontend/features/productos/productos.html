@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora - Productos</title>
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="productos.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h1>PRODUCTOS</h1>
+                </div>
+                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal"><i
+                        class="fas fa-plus"></i> Añadir Producto</button>
+            </header>
+
+            <section class="table-container">
+                <table class="table table-hover table-borderless text-center">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Marca</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Bebida Energética 500ml</td>
+                            <td>Red Bull</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i
+                                        class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Galletas de Chocolate 200g</td>
+                            <td>Oreo</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i
+                                        class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Agua Mineral 1L</td>
+                            <td>Villavicencio</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i
+                                        class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Papas Fritas Clásicas 150g</td>
+                            <td>Lay's</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i
+                                        class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
+        <div id="sidebar-container"></div>
+    </div>
+
+    <!-- Modal Añadir Producto -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true"
+        data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="addProductModalLabel">Añadir Nuevo Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm">
+                        <!-- Datos Básicos -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-5">
+                                <label for="productoNombre" class="form-label text-secondary">Nombre del Producto</label>
+                                <input type="text" class="form-control" id="productoNombre" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="productoMarca" class="form-label text-secondary">Marca</label>
+                                <input type="text" class="form-control" id="productoMarca" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="productoCosto" class="form-label text-secondary">Costo ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="productoCosto" required>
+                            </div>
+                        </div>
+
+                        <!-- Separador / Subtítulo -->
+                        <h6 class="text-white mb-3 border-bottom pb-2"
+                            style="font-size: 0.95rem; border-color: var(--border-color) !important;">Listas de Precios
+                        </h6>
+
+                        <!-- Grilla de Precios de Lista 1 a 8 -->
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="precioLista1" class="form-label text-secondary">Lista 1 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="precioLista2" class="form-label text-secondary">Lista 2 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista2">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="precioLista3" class="form-label text-secondary">Lista 3 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista3">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="precioLista4" class="form-label text-secondary">Lista 4 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista4">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="precioLista5" class="form-label text-secondary">Lista 5 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista5">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="precioLista6" class="form-label text-secondary">Lista 6 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista6">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="precioLista7" class="form-label text-secondary">Lista 7 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista7">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="precioLista8" class="form-label text-secondary">Lista 8 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="precioLista8">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary"
+                        style="background-color: #2563eb; border: none;">Guardar Producto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../sidebar.js"></script>
+</body>
+
+</html>

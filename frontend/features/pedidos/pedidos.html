@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora - Pedidos</title>
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="pedidos.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h1>PEDIDOS</h1>
+                </div>
+                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addPedidoModal"><i class="fas fa-plus"></i> Nuevo Pedido</button>
+            </header>
+
+            <section class="table-container">
+                <table class="table table-hover table-borderless text-center">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Supermercado Central</td>
+                            <td>05 Jun 2026</td>
+                            <td>$450.00</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Kiosco Las Flores</td>
+                            <td>04 Jun 2026</td>
+                            <td>$125.50</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Minimarket 24/7</td>
+                            <td>04 Jun 2026</td>
+                            <td>$890.00</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Almacén Don Pepe</td>
+                            <td>03 Jun 2026</td>
+                            <td>$60.00</td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
+        <div id="sidebar-container"></div>
+    </div>
+
+    <!-- Modal Nuevo Pedido -->
+    <div class="modal fade" id="addPedidoModal" tabindex="-1" aria-labelledby="addPedidoModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="addPedidoModalLabel">Crear Nuevo Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPedidoForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="pedidoEmpleado" class="form-label text-secondary">Seleccionar Empleado</label>
+                                <input type="text" class="form-control" list="empleadosList" id="pedidoEmpleado" required placeholder="Escribir o buscar empleado...">
+                                <datalist id="empleadosList">
+                                    <option value="Carlos Gómez"></option>
+                                    <option value="María López"></option>
+                                    <option value="Juan Pérez"></option>
+                                </datalist>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="pedidoCliente" class="form-label text-secondary">Seleccionar Cliente</label>
+                                <input type="text" class="form-control" list="clientesList" id="pedidoCliente" required placeholder="Escribir o buscar cliente...">
+                                <datalist id="clientesList">
+                                    <option value="Supermercado Alborada"></option>
+                                    <option value="MiniMarket Express"></option>
+                                    <option value="Almacén de Don Pepe"></option>
+                                </datalist>
+                            </div>
+                        </div>
+
+                        <!-- Sección para Añadir Productos -->
+                        <h6 class="text-white mt-4 mb-3 border-bottom pb-2" style="font-size: 0.95rem; border-color: var(--border-color) !important;">Añadir Productos al Pedido</h6>
+                        
+                        <div class="row g-3 align-items-end mb-4">
+                            <div class="col-md-6">
+                                <label for="productoSelect" class="form-label text-secondary">Seleccionar Producto</label>
+                                <input type="text" class="form-control" list="productosList" id="productoSelect" placeholder="Escribir o buscar producto...">
+                                <datalist id="productosList">
+                                    <option value="Leche Entera 1L"></option>
+                                    <option value="Pan Lactal Familiar"></option>
+                                    <option value="Gaseosa Cola 2.25L"></option>
+                                    <option value="Arroz Integral 1kg"></option>
+                                    <option value="Aceite de Girasol 1.5L"></option>
+                                    <option value="Fideos Tallarines 500g"></option>
+                                    <option value="Café Molido 500g"></option>
+                                    <option value="Azúcar Común 1kg"></option>
+                                    <option value="Yerba Mate 1kg"></option>
+                                    <option value="Galletitas de Chocolate"></option>
+                                </datalist>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="productoCantidad" class="form-label text-secondary">Cantidad</label>
+                                <input type="number" min="0.5" step="0.5" value="1" class="form-control" id="productoCantidad">
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-sm btn-primary w-100" id="btnAgregarProducto" style="background-color: #2563eb; border: none; padding: 0.35rem 0.5rem; height: 42px; font-size: 0.85rem;">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Productos Agregados -->
+                        <div class="table-responsive mb-3" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table table-hover table-borderless text-center align-middle" id="tablaPedidoDetalles" style="font-size: 1rem; color: var(--text-primary);">
+                                <thead>
+                                    <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                        <th class="text-secondary">Producto</th>
+                                        <th class="text-secondary">Precio Unitario</th>
+                                        <th class="text-secondary">Cantidad</th>
+                                        <th class="text-secondary">Subtotal</th>
+                                        <th class="text-secondary">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pedidoDetallesBody">
+                                    <tr id="filaVacia">
+                                        <td colspan="5" class="text-secondary py-3">No hay productos agregados a este pedido.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Sección de Total -->
+                        <div class="d-flex justify-content-end align-items-center pt-2 border-top" style="border-color: var(--border-color) !important;">
+                            <span class="text-secondary me-2 font-weight-bold" style="font-size: 1rem;">TOTAL:</span>
+                            <span class="text-white font-weight-bold" id="pedidoTotalLabel" style="font-size: 1.25rem;">$0.00</span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" style="background-color: #2563eb; border: none;">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../sidebar.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnAgregar = document.getElementById('btnAgregarProducto');
+            const productoSelect = document.getElementById('productoSelect');
+            const productoCantidad = document.getElementById('productoCantidad');
+            const detallesBody = document.getElementById('pedidoDetallesBody');
+            const totalLabel = document.getElementById('pedidoTotalLabel');
+
+            // Mapeo de precios de productos
+            const productPrices = {
+                "Leche Entera 1L": 1.5,
+                "Pan Lactal Familiar": 2.3,
+                "Gaseosa Cola 2.25L": 3,
+                "Arroz Integral 1kg": 1.8,
+                "Aceite de Girasol 1.5L": 4.5,
+                "Fideos Tallarines 500g": 1.1,
+                "Café Molido 500g": 6.2,
+                "Azúcar Común 1kg": 0.95,
+                "Yerba Mate 1kg": 5,
+                "Galletitas de Chocolate": 1.75
+            };
+
+            let items = [];
+
+            // Fila vacía de respaldo
+            const filaVaciaHtml = `
+                <tr id="filaVacia">
+                    <td colspan="5" class="text-secondary py-3">No hay productos agregados a este pedido.</td>
+                </tr>
+            `;
+
+            function updateTable() {
+                detallesBody.innerHTML = '';
+
+                if (items.length === 0) {
+                    detallesBody.innerHTML = filaVaciaHtml;
+                    totalLabel.textContent = '$0.00';
+                    return;
+                }
+
+                let total = 0;
+                items.forEach((item, index) => {
+                    const subtotal = item.precio * item.cantidad;
+                    total += subtotal;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-white">${item.nombre}</td>
+                        <td class="text-white">$${item.precio.toFixed(2)}</td>
+                        <td class="text-white">${item.cantidad}</td>
+                        <td class="text-white">$${subtotal.toFixed(2)}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm action-btn delete border-0 p-0" data-index="${index}" style="background: none;">
+                                <i class="fas fa-trash-alt text-danger"></i>
+                            </button>
+                        </td>
+                    `;
+                    detallesBody.appendChild(tr);
+                });
+
+                totalLabel.textContent = `$${total.toFixed(2)}`;
+
+                // Agregar oyentes de eventos a botones de eliminación
+                const deleteButtons = detallesBody.querySelectorAll('.delete');
+                deleteButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = Number.parseInt(btn.dataset.index, 10);
+                        items.splice(idx, 1);
+                        updateTable();
+                    });
+                });
+            }
+
+            btnAgregar.addEventListener('click', () => {
+                const nombre = productoSelect.value.trim();
+                const cantidad = Number.parseFloat(productoCantidad.value);
+
+                if (!nombre || !productPrices[nombre]) {
+                    alert('Por favor, selecciona un producto válido de la lista.');
+                    return;
+                }
+
+                if (Number.isNaN(cantidad) || cantidad <= 0 || !Number.isInteger(cantidad * 2)) {
+                    alert('Por favor, ingresa una cantidad válida (enteros o medios, ej. 0.5, 1, 1.5).');
+                    return;
+                }
+
+                // Si ya existe en la lista, sumar cantidad
+                const existingItem = items.find(item => item.nombre === nombre);
+                if (existingItem) {
+                    existingItem.cantidad += cantidad;
+                } else {
+                    items.push({
+                        nombre: nombre,
+                        precio: productPrices[nombre],
+                        cantidad: cantidad
+                    });
+                }
+
+                // Limpiar campos de entrada
+                productoSelect.value = '';
+                productoCantidad.value = '1';
+
+                updateTable();
+            });
+
+            // Limpiar formulario al cerrar modal
+            const addPedidoModal = document.getElementById('addPedidoModal');
+            addPedidoModal.addEventListener('hidden.bs.modal', () => {
+                document.getElementById('addPedidoForm').reset();
+                items = [];
+                updateTable();
+            });
+        });
+    </script>
+</body>
+
+</html>
