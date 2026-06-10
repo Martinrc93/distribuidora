@@ -1,4 +1,5 @@
 const Price = require('../models/price.js');
+const ListaPrecios = require('../models/listaPrecios.js');
 
 /**
  * Obtiene todos los precios asociados a un Product ID.
@@ -7,10 +8,12 @@ const Price = require('../models/price.js');
 exports.findByProductId = async (productId) => {
     return await Price.findAll({
         where: { productId },
+        include: [{ model: ListaPrecios, as: 'listaPrecios' }],
         order: [['createdAt', 'DESC']]
     });
 };
 
+<<<<<<< Updated upstream
 exports.create = async (priceData) => {
     return await Price.create({
         precioLista1: priceData.precioLista1,
@@ -21,18 +24,33 @@ exports.create = async (priceData) => {
         precioLista6: priceData.precioLista6,
         precioLista7: priceData.precioLista7,
         productId: priceData.productId
+=======
+/**
+ * Crea un nuevo registro de precio.
+ * @param {{precio: number, productId: number, listaPreciosId: number}} priceData Datos del DTO.
+ */
+exports.create = async (priceData) => {
+    const nuevoPrecio = await Price.create({
+        precio: priceData.precio,
+        productId: priceData.productId,
+        listaPreciosId: priceData.listaPreciosId
+    });
+    return await nuevoPrecio.reload({
+        include: [{ model: ListaPrecios, as: 'listaPrecios' }]
+>>>>>>> Stashed changes
     });
 };
 
 /**
  * Actualiza un registro de precio específico por su ID único.
  * @param {number} id ID del precio.
- * @param {{precio: number, productId?: number}} priceData Datos del DTO.
+ * @param {{precio: number, productId?: number, listaPreciosId?: number}} priceData Datos del DTO.
  */
 exports.update = async (id, priceData) => {
     const priceRecord = await Price.findByPk(id);
     if (!priceRecord) return null;
 
+<<<<<<< Updated upstream
     return await priceRecord.update({
         precioLista1: priceData.precioLista1 !== undefined ? priceData.precioLista1 : priceRecord.precioLista1,
         precioLista2: priceData.precioLista2 !== undefined ? priceData.precioLista2 : priceRecord.precioLista2,
@@ -42,6 +60,16 @@ exports.update = async (id, priceData) => {
         precioLista6: priceData.precioLista6 !== undefined ? priceData.precioLista6 : priceRecord.precioLista6,
         precioLista7: priceData.precioLista7 !== undefined ? priceData.precioLista7 : priceRecord.precioLista7,
         productId: priceData.productId !== undefined ? priceData.productId : priceRecord.productId
+=======
+    await priceRecord.update({
+        precio: priceData.precio,
+        productId: priceData.productId !== undefined ? priceData.productId : priceRecord.productId,
+        listaPreciosId: priceData.listaPreciosId !== undefined ? priceData.listaPreciosId : priceRecord.listaPreciosId
+    });
+
+    return await priceRecord.reload({
+        include: [{ model: ListaPrecios, as: 'listaPrecios' }]
+>>>>>>> Stashed changes
     });
 };
 

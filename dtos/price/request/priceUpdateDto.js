@@ -4,11 +4,12 @@
  * exigiendo obligatoriamente el id del precio, el nuevo precio decimal y el productId.
  */
 class PriceUpdateDto {
-    constructor({ id, precio, productId }) {
+    constructor({ id, precio, productId, listaPreciosId }) {
         this.id = typeof id === 'number' ? id : parseInt(id, 10);
         const parsedPrecio = typeof precio === 'number' ? precio : parseFloat(precio);
         this.precio = isNaN(parsedPrecio) ? parsedPrecio : parseFloat(parsedPrecio.toFixed(2));
         this.productId = typeof productId === 'number' ? productId : parseInt(productId, 10);
+        this.listaPreciosId = typeof listaPreciosId === 'number' ? listaPreciosId : parseInt(listaPreciosId, 10);
     }
 
     /**
@@ -34,6 +35,12 @@ class PriceUpdateDto {
             errors.push('El campo "productId" es obligatorio y debe ser un número entero válido.');
         } else if (this.productId <= 0) {
             errors.push('El campo "productId" debe ser un ID de producto positivo.');
+        }
+
+        if (!this.listaPreciosId || isNaN(this.listaPreciosId)) {
+            errors.push('El campo "listaPreciosId" es obligatorio y debe ser un número entero válido.');
+        } else if (this.listaPreciosId <= 0) {
+            errors.push('El campo "listaPreciosId" debe ser un ID de lista de precios positivo.');
         }
 
         return {

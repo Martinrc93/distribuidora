@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora - Empleados</title>
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="empleados.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h1>EMPLEADOS</h1>
+                </div>
+                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addEmpleadoModal"><i class="fas fa-plus"></i> Anadir Empleado</button>
+            </header>
+
+            <section class="table-container">
+                <table class="table table-hover table-borderless text-center">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Estado</th>
+                            <th>Pedidos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEmpleadosBody">
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
+        <div id="sidebar-container"></div>
+    </div>
+
+    <!-- Modal Anadir Empleado -->
+    <div class="modal fade" id="addEmpleadoModal" tabindex="-1" aria-labelledby="addEmpleadoModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="addEmpleadoModalLabel">Anadir Nuevo Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEmpleadoForm">
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="empleadoNombre" class="form-label text-secondary">Nombre</label>
+                            <input type="text" class="form-control" id="empleadoNombre" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="empleadoApellido" class="form-label text-secondary">Apellido</label>
+                            <input type="text" class="form-control" id="empleadoApellido" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="empleadoEstado" class="form-label text-secondary">Estado</label>
+                            <select class="form-select" id="empleadoEstado">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" style="background-color: #2563eb; border: none;">Guardar Empleado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Empleado -->
+    <div class="modal fade" id="editEmpleadoModal" tabindex="-1" aria-labelledby="editEmpleadoModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="editEmpleadoModalLabel">Editar Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmpleadoForm">
+                        <input type="hidden" id="editEmpleadoId">
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="editEmpleadoNombre" class="form-label text-secondary">Nombre</label>
+                            <input type="text" class="form-control" id="editEmpleadoNombre" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="editEmpleadoApellido" class="form-label text-secondary">Apellido</label>
+                            <input type="text" class="form-control" id="editEmpleadoApellido" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="editEmpleadoEstado" class="form-label text-secondary">Estado</label>
+                            <select class="form-select" id="editEmpleadoEstado">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnActualizarEmpleado" style="background-color: #2563eb; border: none;">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Pedidos -->
+    <div class="modal fade" id="verPedidosModal" tabindex="-1" aria-labelledby="verPedidosModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="verPedidosModalLabel">Pedidos del Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Filtros de Fecha -->
+                    <div class="row g-3 mb-4 align-items-end">
+                        <div class="col-md-5">
+                            <label for="filtroFechaMin" class="form-label text-secondary">Fecha Mínima</label>
+                            <input type="date" class="form-control" id="filtroFechaMin">
+                        </div>
+                        <div class="col-md-5">
+                            <label for="filtroFechaMax" class="form-label text-secondary">Fecha Máxima</label>
+                            <input type="date" class="form-control" id="filtroFechaMax">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-secondary w-100" id="btnLimpiarFiltros" style="height: 42px; border: 1px solid var(--border-color); background: transparent; font-size: 0.9rem;">Hoy</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Pedidos -->
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
+                            <thead>
+                                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                    <th class="text-secondary">Fecha</th>
+                                    <th class="text-secondary">Cliente</th>
+                                    <th class="text-secondary">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaPedidosEmpleadoBody">
+                                <!-- Pedidos dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../sidebar.js"></script>
+    <script type="module" src="empleados.js"></script>
+</body>
+</html>

@@ -1,4 +1,9 @@
 const Product = require('../models/product.js');
+<<<<<<< Updated upstream
+=======
+const Price = require('../models/price.js');
+const Detalle = require('../models/detalle.js');
+>>>>>>> Stashed changes
 
 /**
  * Obtiene todos los productos con soporte para paginación.
@@ -63,7 +68,7 @@ exports.update = async (id, productData) => {
 };
 
 /**
- * Elimina un producto por su ID.
+ * Elimina un producto por su ID (con eliminación en cascada manual).
  * @param {number} id ID del producto a eliminar.
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
@@ -71,6 +76,29 @@ exports.deleteProduct = async (id) => {
     const product = await Product.findByPk(id);
     if (!product) return false;
 
+    // Eliminar los detalles de venta que usan precios de este producto
+    // Primero obtener todos los precios del producto
+    const precios = await Price.findAll({
+        where: { productId: id }
+    });
+
+    const precioIds = precios.map(p => p.id);
+
+    // Si hay precios, eliminar los detalles que los usan
+    if (precioIds.length > 0) {
+        await Detalle.destroy({
+            where: {
+                priceId: precioIds
+            }
+        });
+    }
+
+    // Eliminar todos los precios del producto
+    await Price.destroy({
+        where: { productId: id }
+    });
+
+    // Finalmente, eliminar el producto
     await product.destroy();
     return true;
 };

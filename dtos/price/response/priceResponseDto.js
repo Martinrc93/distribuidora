@@ -14,6 +14,11 @@ class PriceResponseDto {
         this.precioLista6 = parseFloat(parseFloat(price.precioLista6 || 0).toFixed(2));
         this.precioLista7 = parseFloat(parseFloat(price.precioLista7 || 0).toFixed(2));
         this.productId = price.productId;
+        this.listaPreciosId = price.listaPreciosId;
+        this.listaPrecios = price.listaPrecios ? {
+            id: price.listaPrecios.id,
+            nombre: price.listaPrecios.nombre
+        } : null;
     }
 
     /**

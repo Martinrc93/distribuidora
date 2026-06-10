@@ -57,5 +57,11 @@ Producto.init({
         timestamps: true   // Mantiene createdAt y updatedAt
     });
 
+<<<<<<< Updated upstream:models/Producto.js
 // 4. No olvides exportarlo para usarlo en tus controladores
 module.exports = Producto;
+=======
+// 4. Relaciones (se configuran después de crear todos los modelos en los archivos correspondientes)
+// No olvides exportarlo para usarlo en tus controladores
+module.exports = Product;
+>>>>>>> Stashed changes:models/product.js

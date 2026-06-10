@@ -1,6 +1,11 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/db/dataBase');
+<<<<<<< Updated upstream
 const Producto = require('./Producto.js');
+=======
+const Product = require('./product.js');
+const ListaPrecios = require('./listaPrecios.js');
+>>>>>>> Stashed changes
 
 // 1. Usamos la sintaxis de clases (idéntica a User, Product y Empleado)
 class Price extends Model {
@@ -92,16 +97,52 @@ Price.init({
             model: 'productos', // Hace referencia a la tabla productos
             key: 'id'
         },
+        unique: 'composite_product_price_list',
         validate: {
             notNull: {
                 msg: 'El ID de producto es obligatorio.'
+            }
+        }
+    },
+    listaPreciosId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'ListaPrecios',
+            key: 'id'
+        },
+        unique: 'composite_product_price_list',
+        validate: {
+            notNull: {
+                msg: 'La lista de precios es obligatoria.'
             }
         }
     }
 }, {
     sequelize,         // Instancia de conexión
     modelName: 'Price', // Nombre del modelo (generará la tabla "Prices" en plural)
+    tableName: 'Prices',
     timestamps: true   // Mantiene createdAt y updatedAt automáticamente
 });
 
+<<<<<<< Updated upstream
+=======
+// 3. Definición de Relaciones (Asociaciones)
+Price.belongsTo(Product, { foreignKey: 'productId', as: 'producto' });
+Product.hasMany(Price, { 
+    foreignKey: 'productId', 
+    as: 'precios',
+    onDelete: 'CASCADE',  // Eliminar precios cuando se elimine el producto
+    onUpdate: 'CASCADE'
+});
+
+Price.belongsTo(ListaPrecios, { foreignKey: 'listaPreciosId', as: 'listaPrecios' });
+ListaPrecios.hasMany(Price, {
+    foreignKey: 'listaPreciosId',
+    as: 'precios',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+});
+
+>>>>>>> Stashed changes
 module.exports = Price;
