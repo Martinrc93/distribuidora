@@ -20,7 +20,7 @@
                 <div class="header-titles">
                     <h1>CLIENTES</h1>
                 </div>
-                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addClienteModal"><i class="fas fa-plus"></i> Anadir Cliente</button>
+                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addClienteModal"><i class="fas fa-plus"></i> Añadir Cliente</button>
             </header>
 
             <section class="table-container">
@@ -28,7 +28,7 @@
                     <thead>
                         <tr>
                             <th>Cliente</th>
-                            <th>Direccion</th>
+                            <th>Dirección</th>
                             <th>Contacto</th>
                             <th>Pedidos</th>
                             <th>Lista de precios</th>
@@ -41,16 +41,16 @@
             </section>
         </main>
 
-        <!-- Sidebar Container (Cargado Dinamicamente) -->
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
         <div id="sidebar-container"></div>
     </div>
 
-    <!-- Modal Anadir Cliente -->
+    <!-- Modal Añadir Cliente -->
     <div class="modal fade" id="addClienteModal" tabindex="-1" aria-labelledby="addClienteModalLabel" aria-hidden="true" data-bs-theme="dark">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
                 <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title text-white" id="addClienteModalLabel">Anadir Nuevo Cliente</h5>
+                    <h5 class="modal-title text-white" id="addClienteModalLabel">Añadir Nuevo Cliente</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
@@ -60,11 +60,11 @@
                             <input type="text" class="form-control" id="clienteNombre" required>
                         </div>
                         <div class="mb-3 w-75 mx-auto">
-                            <label for="clienteDireccion" class="form-label text-secondary">Direccion</label>
+                            <label for="clienteDireccion" class="form-label text-secondary">Dirección</label>
                             <input type="text" class="form-control" id="clienteDireccion">
                         </div>
                         <div class="mb-3 w-75 mx-auto">
-                            <label for="clienteContacto" class="form-label text-secondary">Telefono de Contacto</label>
+                            <label for="clienteContacto" class="form-label text-secondary">Teléfono de Contacto</label>
                             <input type="tel" class="form-control" id="clienteContacto">
                         </div>
                         <div class="mb-3 w-75 mx-auto">
@@ -75,6 +75,9 @@
                                 <option value="3">Lista 3</option>
                                 <option value="4">Lista 4</option>
                                 <option value="5">Lista 5</option>
+                                <option value="6">Lista 6</option>
+                                <option value="7">Lista 7</option>
+                                <option value="8">Lista 8</option>
                             </select>
                         </div>
                     </form>
@@ -82,49 +85,6 @@
                 <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
                     <button type="button" class="btn btn-primary" style="background-color: #2563eb; border: none;">Guardar Cliente</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Editar Cliente -->
-    <div class="modal fade" id="editClienteModal" tabindex="-1" aria-labelledby="editClienteModalLabel" aria-hidden="true" data-bs-theme="dark">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
-                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title text-white" id="editClienteModalLabel">Editar Cliente</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editClienteForm">
-                        <input type="hidden" id="editClienteId">
-                        <div class="mb-3 w-75 mx-auto">
-                            <label for="editClienteNombre" class="form-label text-secondary">Nombre del Cliente</label>
-                            <input type="text" class="form-control" id="editClienteNombre" required>
-                        </div>
-                        <div class="mb-3 w-75 mx-auto">
-                            <label for="editClienteDireccion" class="form-label text-secondary">Direccion</label>
-                            <input type="text" class="form-control" id="editClienteDireccion">
-                        </div>
-                        <div class="mb-3 w-75 mx-auto">
-                            <label for="editClienteContacto" class="form-label text-secondary">Telefono de Contacto</label>
-                            <input type="tel" class="form-control" id="editClienteContacto" disabled placeholder="Sin contacto">
-                        </div>
-                        <div class="mb-3 w-75 mx-auto">
-                            <label for="editClienteListaPrecios" class="form-label text-secondary">Lista de Precios Asignada</label>
-                            <select class="form-select" id="editClienteListaPrecios">
-                                <option value="1">Lista 1</option>
-                                <option value="2">Lista 2</option>
-                                <option value="3">Lista 3</option>
-                                <option value="4">Lista 4</option>
-                                <option value="5">Lista 5</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnActualizarCliente" style="background-color: #2563eb; border: none;">Guardar Cambios</button>
                 </div>
             </div>
         </div>

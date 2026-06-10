@@ -3,10 +3,9 @@
  * Se encarga de limpiar, estructurar y validar los datos que envía el cliente para crear un cliente.
  */
 class ClienteCreateDto {
-    constructor({ nombre, direccion, listaPreciosId }) {
+    constructor({ nombre, direccion }) {
         this.nombre = typeof nombre === 'string' ? nombre.trim() : null;
         this.direccion = typeof direccion === 'string' ? direccion.trim() : null;
-        this.listaPreciosId = listaPreciosId !== undefined && listaPreciosId !== null && Number.isInteger(Number(listaPreciosId)) ? Number(listaPreciosId) : null;
     }
 
     /**
@@ -26,10 +25,6 @@ class ClienteCreateDto {
             if (this.direccion.length > 50) {
                 errors.push('El campo "direccion" no puede superar los 50 caracteres.');
             }
-        }
-
-        if (this.listaPreciosId === null || this.listaPreciosId === undefined) {
-            errors.push('El campo "listaPreciosId" es obligatorio y debe ser un numero entero valido.');
         }
 
         return {

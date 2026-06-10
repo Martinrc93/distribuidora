@@ -1,9 +1,6 @@
 const Product = require('../models/product.js');
-<<<<<<< Updated upstream
-=======
 const Price = require('../models/price.js');
 const Detalle = require('../models/detalle.js');
->>>>>>> Stashed changes
 
 /**
  * Obtiene todos los productos con soporte para paginación.
@@ -11,8 +8,8 @@ const Detalle = require('../models/detalle.js');
  * @param {number} limit Cantidad de elementos por página.
  */
 exports.getAll = async (page = 1, limit = 10) => {
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 10;
+    const pageNum = Number.parseInt(page, 10) || 1;
+    const limitNum = Number.parseInt(limit, 10) || 10;
     const offsetNum = (pageNum - 1) * limitNum;
 
     // findAndCountAll obtiene los registros y el conteo total para calcular las páginas
@@ -43,27 +40,29 @@ exports.getById = async (id) => {
 
 /**
  * Crea un nuevo producto en la base de datos.
- * @param {{nombre: string, marca: string}} productData Datos filtrados del producto.
+ * @param {{nombre: string, marca: string, costo: number}} productData Datos filtrados del producto.
  */
 exports.create = async (productData) => {
     return await Product.create({
         nombre: productData.nombre,
-        marca: productData.marca
+        marca: productData.marca,
+        costo: productData.costo
     });
 };
 
 /**
  * Actualiza un producto existente por su ID.
  * @param {number} id ID del producto a actualizar.
- * @param {{nombre?: string, marca?: string}} productData Datos a modificar.
+ * @param {{nombre?: string, marca?: string, costo?: number}} productData Datos a modificar.
  */
 exports.update = async (id, productData) => {
     const product = await Product.findByPk(id);
     if (!product) return null;
 
     return await product.update({
-        nombre: productData.nombre !== undefined ? productData.nombre : product.nombre,
-        marca: productData.marca !== undefined ? productData.marca : product.marca
+        nombre: productData.nombre === undefined ? product.nombre : productData.nombre,
+        marca: productData.marca === undefined ? product.marca : productData.marca,
+        costo: productData.costo === undefined ? product.costo : productData.costo
     });
 };
 
@@ -101,4 +100,38 @@ exports.deleteProduct = async (id) => {
     // Finalmente, eliminar el producto
     await product.destroy();
     return true;
+};
+
+/**
+ * Calcula la ganancia de un producto en base a su costo y un ID de precio de venta específico.
+ * @param {number} productId ID del producto.
+ * @param {number} priceId ID del registro de precio.
+ * @returns {Promise<number>} La ganancia calculada (precio - costo).
+ */
+exports.getGanancia = async (productId, priceId) => {
+    const prodId = Number.parseInt(productId, 10);
+    const prcId = Number.parseInt(priceId, 10);
+
+    if (Number.isNaN(prodId) || Number.isNaN(prcId)) {
+        throw new TypeError('El ID de producto y el ID de precio deben ser números válidos.');
+    }
+
+    const product = await Product.findByPk(prodId);
+    if (!product) {
+        throw new Error('Producto no encontrado.');
+    }
+
+    const priceRecord = await Price.findByPk(prcId);
+    if (!priceRecord) {
+        throw new Error('Registro de precio no encontrado.');
+    }
+
+    if (priceRecord.productId !== product.id) {
+        throw new Error('El registro de precio no pertenece al producto especificado.');
+    }
+
+    const precio = Number.parseFloat(priceRecord.precio);
+    const costo = Number.parseFloat(product.costo);
+
+    return Number.parseFloat((precio - costo).toFixed(2));
 };

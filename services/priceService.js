@@ -13,18 +13,6 @@ exports.findByProductId = async (productId) => {
     });
 };
 
-<<<<<<< Updated upstream
-exports.create = async (priceData) => {
-    return await Price.create({
-        precioLista1: priceData.precioLista1,
-        precioLista2: priceData.precioLista2,
-        precioLista3: priceData.precioLista3,
-        precioLista4: priceData.precioLista4,
-        precioLista5: priceData.precioLista5,
-        precioLista6: priceData.precioLista6,
-        precioLista7: priceData.precioLista7,
-        productId: priceData.productId
-=======
 /**
  * Crea un nuevo registro de precio.
  * @param {{precio: number, productId: number, listaPreciosId: number}} priceData Datos del DTO.
@@ -37,7 +25,6 @@ exports.create = async (priceData) => {
     });
     return await nuevoPrecio.reload({
         include: [{ model: ListaPrecios, as: 'listaPrecios' }]
->>>>>>> Stashed changes
     });
 };
 
@@ -50,17 +37,6 @@ exports.update = async (id, priceData) => {
     const priceRecord = await Price.findByPk(id);
     if (!priceRecord) return null;
 
-<<<<<<< Updated upstream
-    return await priceRecord.update({
-        precioLista1: priceData.precioLista1 !== undefined ? priceData.precioLista1 : priceRecord.precioLista1,
-        precioLista2: priceData.precioLista2 !== undefined ? priceData.precioLista2 : priceRecord.precioLista2,
-        precioLista3: priceData.precioLista3 !== undefined ? priceData.precioLista3 : priceRecord.precioLista3,
-        precioLista4: priceData.precioLista4 !== undefined ? priceData.precioLista4 : priceRecord.precioLista4,
-        precioLista5: priceData.precioLista5 !== undefined ? priceData.precioLista5 : priceRecord.precioLista5,
-        precioLista6: priceData.precioLista6 !== undefined ? priceData.precioLista6 : priceRecord.precioLista6,
-        precioLista7: priceData.precioLista7 !== undefined ? priceData.precioLista7 : priceRecord.precioLista7,
-        productId: priceData.productId !== undefined ? priceData.productId : priceRecord.productId
-=======
     await priceRecord.update({
         precio: priceData.precio,
         productId: priceData.productId !== undefined ? priceData.productId : priceRecord.productId,
@@ -69,7 +45,6 @@ exports.update = async (id, priceData) => {
 
     return await priceRecord.reload({
         include: [{ model: ListaPrecios, as: 'listaPrecios' }]
->>>>>>> Stashed changes
     });
 };
 

@@ -1,8 +1,3 @@
-<<<<<<< Updated upstream
-const fs = require('fs');
-const path = require('path');
-const { sequelize, User, Producto, Empleado, Price, Pedido, DetallePedido } = require('./models/index.js');
-=======
 const fs = require('node:fs');
 const path = require('node:path');
 const sequelize = require('./config/db/dataBase.js');
@@ -15,11 +10,6 @@ const Detalle = require('./models/detalle.js'); // Importar el modelo de Detalle
 const Cliente = require('./models/cliente.js'); // Importar el modelo de Cliente
 const ListaPrecios = require('./models/listaPrecios.js'); // Importar el modelo de ListaPrecios
 
->>>>>>> Stashed changes
-
-
-
-
 async function ejecutarSembrado() {
   try {
     // Desactivar llaves foráneas y eliminar tablas antiguas (incluyendo la huérfana 'Venta' singular) para evitar conflictos de restricciones
@@ -27,9 +17,10 @@ async function ejecutarSembrado() {
     await sequelize.query('DROP TABLE IF EXISTS `Detalles`;');
     await sequelize.query('DROP TABLE IF EXISTS `Venta`;');
     await sequelize.query('DROP TABLE IF EXISTS `Ventas`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Clientes`;');
     await sequelize.query('DROP TABLE IF EXISTS `Prices`;');
     await sequelize.query('DROP TABLE IF EXISTS `Empleados`;');
-    await sequelize.query('DROP TABLE IF EXISTS `Productos`;');
+    await sequelize.query('DROP TABLE IF EXISTS `Products`;');
     await sequelize.query('DROP TABLE IF EXISTS `Users`;');
     await sequelize.query('DROP TABLE IF EXISTS `ListaPrecios`;');
     await sequelize.query('PRAGMA foreign_keys = ON;');

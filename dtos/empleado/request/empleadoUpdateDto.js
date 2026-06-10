@@ -10,9 +10,6 @@ class EmpleadoUpdateDto {
         if (data.apellido !== undefined) {
             this.apellido = typeof data.apellido === 'string' ? data.apellido.trim() : null;
         }
-        if (data.active !== undefined) {
-            this.active = typeof data.active === 'boolean' ? data.active : (data.active === 'true' || data.active === 'activo' || data.active === 1 || data.active === 'Activo');
-        }
     }
 
     /**
@@ -28,10 +25,6 @@ class EmpleadoUpdateDto {
 
         if (this.apellido !== undefined && (!this.apellido || this.apellido === '')) {
             errors.push('El campo "apellido" no puede estar vacío si se proporciona.');
-        }
-
-        if (this.active !== undefined && typeof this.active !== 'boolean') {
-            errors.push('El campo "active" debe ser un valor booleano.');
         }
 
         return {

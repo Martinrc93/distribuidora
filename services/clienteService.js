@@ -1,7 +1,6 @@
 const Cliente = require('../models/cliente.js');
 const Venta = require('../models/venta.js');
 const Detalle = require('../models/detalle.js');
-const ListaPrecios = require('../models/listaPrecios.js');
 
 /**
  * Obtiene todos los clientes con soporte para paginación.
@@ -16,7 +15,6 @@ exports.getAll = async (page = 1, limit = 10) => {
     const { count, rows } = await Cliente.findAndCountAll({
         limit: limitNum,
         offset: offsetNum,
-        include: [{ model: ListaPrecios, as: 'listaPrecios' }],
         order: [['createdAt', 'DESC']]
     });
 
@@ -36,43 +34,32 @@ exports.getAll = async (page = 1, limit = 10) => {
  * @param {number} id ID del cliente.
  */
 exports.getById = async (id) => {
-    return await Cliente.findByPk(id, {
-        include: [{ model: ListaPrecios, as: 'listaPrecios' }]
-    });
+    return await Cliente.findByPk(id);
 };
 
 /**
  * Crea un nuevo cliente en la base de datos.
- * @param {{nombre: string, direccion?: string, listaPreciosId: number}} clienteData Datos filtrados del cliente.
+ * @param {{nombre: string, direccion?: string}} clienteData Datos filtrados del cliente.
  */
 exports.create = async (clienteData) => {
-    const nuevoCliente = await Cliente.create({
+    return await Cliente.create({
         nombre: clienteData.nombre,
-        direccion: clienteData.direccion,
-        listaPreciosId: clienteData.listaPreciosId
-    });
-    return await nuevoCliente.reload({
-        include: [{ model: ListaPrecios, as: 'listaPrecios' }]
+        direccion: clienteData.direccion
     });
 };
 
 /**
  * Actualiza un cliente existente por su ID.
  * @param {number} id ID del cliente a actualizar.
- * @param {{nombre?: string, direccion?: string, listaPreciosId?: number}} clienteData Datos a modificar.
+ * @param {{nombre?: string, direccion?: string}} clienteData Datos a modificar.
  */
 exports.update = async (id, clienteData) => {
     const cliente = await Cliente.findByPk(id);
     if (!cliente) return null;
 
-    await cliente.update({
+    return await cliente.update({
         nombre: clienteData.nombre === undefined ? cliente.nombre : clienteData.nombre,
-        direccion: clienteData.direccion === undefined ? cliente.direccion : clienteData.direccion,
-        listaPreciosId: clienteData.listaPreciosId === undefined ? cliente.listaPreciosId : clienteData.listaPreciosId
-    });
-
-    return await cliente.reload({
-        include: [{ model: ListaPrecios, as: 'listaPrecios' }]
+        direccion: clienteData.direccion === undefined ? cliente.direccion : clienteData.direccion
     });
 };
 

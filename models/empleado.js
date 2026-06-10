@@ -1,21 +1,32 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db/dataBase.js');
+const { Model, DataTypes } = require('sequelize');
+const sequelize = require('../config/db/dataBase');
 
-const Empleado = sequelize.define('Empleado', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    nombreCompleto: {
+// 1. Usamos la sintaxis de clases (idéntica a User y Product)
+class Empleado extends Model {
+}
+
+// 2. Inicializamos el modelo de Empleado
+Empleado.init({
+    nombre: {
         type: DataTypes.STRING,
-<<<<<<< Updated upstream
-        allowNull: false
+        allowNull: false,
+        validate: {
+            notNull: {
+                msg: 'El nombre es obligatorio.' // Error amigable si es null
+            },
+            notEmpty: {
+                msg: 'El nombre no puede estar vacío.' // Error amigable si envían ""
+            }
+        },
+        set(value) {
+            // Setter seguro: hace trim si realmente es un string
+            if (typeof value === 'string') {
+                this.setDataValue('nombre', value.trim());
+            }
+        }
     },
-    activo: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true
-=======
+    apellido: {
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
             notNull: {
@@ -41,11 +52,11 @@ const Empleado = sequelize.define('Empleado', {
                 msg: 'El estado es obligatorio.'
             }
         }
->>>>>>> Stashed changes
     }
 }, {
-    tableName: 'empleados',
-    timestamps: true
+    sequelize,         // Instancia de conexión
+    modelName: 'Empleado', // Nombre del modelo (generará la tabla "Empleados" en plural)
+    timestamps: true   // Mantiene createdAt y updatedAt automáticamente
 });
 
 module.exports = Empleado;

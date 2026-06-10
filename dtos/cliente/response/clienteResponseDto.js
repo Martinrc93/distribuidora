@@ -8,11 +8,6 @@ class ClienteResponseDto {
         this.id = cliente.id;
         this.nombre = cliente.nombre;
         this.direccion = cliente.direccion;
-        this.listaPreciosId = cliente.listaPreciosId;
-        this.listaPrecios = cliente.listaPrecios ? {
-            id: cliente.listaPrecios.id,
-            nombre: cliente.listaPrecios.nombre
-        } : null;
     }
 
     /**

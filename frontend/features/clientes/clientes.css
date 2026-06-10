@@ -1,0 +1,39 @@
+.table-container {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    overflow-x: auto;
+}
+.table {
+    color: var(--text-primary);
+    margin-bottom: 0;
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-primary);
+    --bs-table-hover-color: var(--text-primary);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.05);
+}
+.table th {
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding-bottom: 1rem;
+}
+.table td {
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    padding: 1rem 0.5rem;
+}
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+.action-btn {
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+.action-btn:hover {
+    color: var(--accent-glow);
+}
+.action-btn.delete:hover {
+    color: #ef4444;
+}

@@ -1,13 +1,14 @@
 /**
  * DTO para la respuesta de un Producto (Product Response DTO)
- * Se encarga de formatear la salida del producto enviado al cliente.
+ * Se encarga de formatear la salida del producto enviado al cliente,
+ * exponiendo únicamente el id, nombre y marca.
  */
 class ProductResponseDto {
     constructor(product) {
         this.id = product.id;
         this.nombre = product.nombre;
         this.marca = product.marca;
-        this.costo = product.costo !== undefined ? parseFloat(product.costo) : null;
+        this.costo = product.costo !== undefined && product.costo !== null ? Number.parseFloat(Number.parseFloat(product.costo).toFixed(2)) : null;
     }
 
     /**

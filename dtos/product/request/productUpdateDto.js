@@ -11,7 +11,8 @@ class ProductUpdateDto {
             this.marca = typeof data.marca === 'string' ? data.marca.trim() : null;
         }
         if (data.costo !== undefined) {
-            this.costo = parseFloat(data.costo);
+            const parsedCosto = typeof data.costo === 'number' ? data.costo : Number.parseFloat(data.costo);
+            this.costo = Number.isNaN(parsedCosto) ? parsedCosto : Number.parseFloat(parsedCosto.toFixed(2));
         }
     }
 
@@ -30,8 +31,12 @@ class ProductUpdateDto {
             errors.push('El campo "marca" no puede estar vacío si se proporciona.');
         }
 
-        if (this.costo !== undefined && (isNaN(this.costo) || this.costo < 0)) {
-            errors.push('El campo "costo" debe ser un número válido mayor o igual a 0 si se proporciona.');
+        if (this.costo !== undefined) {
+            if (this.costo === null || this.costo === undefined || Number.isNaN(this.costo)) {
+                errors.push('El campo "costo" debe ser un número decimal si se proporciona.');
+            } else if (this.costo < 0) {
+                errors.push('El campo "costo" no puede ser negativo.');
+            }
         }
 
         return {
