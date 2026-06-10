@@ -18,7 +18,8 @@ const Cliente = require('./models/cliente.js');
 const ListaPrecios = require('./models/listaPrecios.js');
 
 const app = express();
-const port = 3000;
+app.disable('x-powered-by');
+const port = process.env.PORT || 3000;
 
 // Middlewares globales
 app.use(cors());
