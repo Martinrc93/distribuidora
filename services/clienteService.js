@@ -1,4 +1,6 @@
 const Cliente = require('../models/cliente.js');
+const Venta = require('../models/venta.js');
+const Detalle = require('../models/detalle.js');
 
 /**
  * Obtiene todos los clientes con soporte para paginación.
@@ -62,7 +64,7 @@ exports.update = async (id, clienteData) => {
 };
 
 /**
- * Elimina un cliente por su ID.
+ * Elimina un cliente por su ID (con eliminación en cascada manual).
  * @param {number} id ID del cliente a eliminar.
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
@@ -70,6 +72,28 @@ exports.deleteCliente = async (id) => {
     const cliente = await Cliente.findByPk(id);
     if (!cliente) return false;
 
+    // Obtener todas las ventas del cliente
+    const ventas = await Venta.findAll({
+        where: { clienteId: id }
+    });
+
+    const ventaIds = ventas.map(v => v.id);
+
+    // Si hay ventas, eliminar los detalles primero
+    if (ventaIds.length > 0) {
+        await Detalle.destroy({
+            where: {
+                sellId: ventaIds
+            }
+        });
+
+        // Luego eliminar las ventas
+        await Venta.destroy({
+            where: { clienteId: id }
+        });
+    }
+
+    // Finalmente, eliminar el cliente
     await cliente.destroy();
     return true;
 };

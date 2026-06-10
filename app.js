@@ -1,9 +1,11 @@
 const express = require('express');
+const path = require('path');
+const cors = require('cors');
 const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
-const userRoutes = require('./routes/userRoutes.js');
-const productRoutes = require('./routes/productRoutes.js');
 const empleadoRoutes = require('./routes/empleadoRoutes.js');
 const priceRoutes = require('./routes/priceRoutes.js');
+const userRoutes = require('./routes/userRoutes.js');
+const productRoutes = require('./routes/productRoutes.js');
 const ventaRoutes = require('./routes/ventaRoutes.js');
 const clienteRoutes = require('./routes/clienteRoutes.js');
 const sequelize = require('./config/db/dataBase.js');
@@ -13,16 +15,18 @@ const Price = require('./models/price.js');
 const Venta = require('./models/venta.js');
 const Detalle = require('./models/detalle.js');
 const Cliente = require('./models/cliente.js');
-
-
-
-
+const ListaPrecios = require('./models/listaPrecios.js');
 
 const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 3000;
 
+// Middlewares globales
+app.use(cors());
 app.use(express.json());
+
+// Servir archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Servir la documentación de Swagger en /api-docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
@@ -34,9 +38,9 @@ app.use('/prices', priceRoutes);
 app.use('/ventas', ventaRoutes);
 app.use('/clientes', clienteRoutes);
 
-// Ruta de prueba
+// Servir index.html en la raíz
 app.get('/', (req, res) => {
-  res.send('¡Hola! El servidor de la distribuidora está funcionando. La documentación está en <a href="/api-docs">/api-docs</a>.');
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
 // Sincronizar base de datos e iniciar servidor

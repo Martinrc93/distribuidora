@@ -8,10 +8,7 @@ const Price = require('./models/price.js'); // Importar el modelo de Price
 const Venta = require('./models/venta.js'); // Importar el modelo de Venta
 const Detalle = require('./models/detalle.js'); // Importar el modelo de Detalle
 const Cliente = require('./models/cliente.js'); // Importar el modelo de Cliente
-
-
-
-
+const ListaPrecios = require('./models/listaPrecios.js'); // Importar el modelo de ListaPrecios
 
 async function ejecutarSembrado() {
   try {
@@ -25,6 +22,7 @@ async function ejecutarSembrado() {
     await sequelize.query('DROP TABLE IF EXISTS `Empleados`;');
     await sequelize.query('DROP TABLE IF EXISTS `Products`;');
     await sequelize.query('DROP TABLE IF EXISTS `Users`;');
+    await sequelize.query('DROP TABLE IF EXISTS `ListaPrecios`;');
     await sequelize.query('PRAGMA foreign_keys = ON;');
 
     // Sincronizar la base de datos recreando las tablas (force: true) para aplicar cambios de esquema automáticamente

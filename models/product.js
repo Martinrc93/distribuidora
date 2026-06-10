@@ -63,5 +63,6 @@ Product.init({
         timestamps: true   // Mantiene createdAt y updatedAt
     });
 
-// 4. No olvides exportarlo para usarlo en tus controladores
+// 4. Relaciones (se configuran después de crear todos los modelos en los archivos correspondientes)
+// No olvides exportarlo para usarlo en tus controladores
 module.exports = Product;

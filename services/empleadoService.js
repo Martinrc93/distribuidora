@@ -1,5 +1,7 @@
 const { Op } = require('sequelize');
 const Empleado = require('../models/empleado.js');
+const Venta = require('../models/venta.js');
+const Detalle = require('../models/detalle.js');
 
 /**
  * Obtiene todos los empleados con paginación y filtro opcional por nombre.
@@ -48,12 +50,13 @@ exports.getById = async (id) => {
 
 /**
  * Crea un nuevo empleado.
- * @param {{nombre: string, apellido: string}} empleadoData Datos limpios del empleado.
+ * @param {{nombre: string, apellido: string, active?: boolean}} empleadoData Datos limpios del empleado.
  */
 exports.create = async (empleadoData) => {
     return await Empleado.create({
         nombre: empleadoData.nombre,
-        apellido: empleadoData.apellido
+        apellido: empleadoData.apellido,
+        active: empleadoData.active !== undefined ? empleadoData.active : true
     });
 };
 
@@ -73,7 +76,7 @@ exports.update = async (id, empleadoData) => {
 };
 
 /**
- * Elimina un empleado.
+ * Elimina un empleado (con eliminación en cascada manual).
  * @param {number} id ID del empleado a eliminar.
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
@@ -81,6 +84,28 @@ exports.deleteEmpleado = async (id) => {
     const empleado = await Empleado.findByPk(id);
     if (!empleado) return false;
 
+    // Obtener todas las ventas del empleado
+    const ventas = await Venta.findAll({
+        where: { empleadoId: id }
+    });
+
+    const ventaIds = ventas.map(v => v.id);
+
+    // Si hay ventas, eliminar los detalles primero
+    if (ventaIds.length > 0) {
+        await Detalle.destroy({
+            where: {
+                sellId: ventaIds
+            }
+        });
+
+        // Luego eliminar las ventas
+        await Venta.destroy({
+            where: { empleadoId: id }
+        });
+    }
+
+    // Finalmente, eliminar el empleado
     await empleado.destroy();
     return true;
 };

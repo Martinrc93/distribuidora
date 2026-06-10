@@ -87,7 +87,12 @@ Detalle.belongsTo(Venta, { foreignKey: 'sellId', as: 'venta' });
 Venta.hasMany(Detalle, { foreignKey: 'sellId', as: 'detalles' });
 
 Detalle.belongsTo(Product, { foreignKey: 'productId', as: 'producto' });
-Product.hasMany(Detalle, { foreignKey: 'productId', as: 'detalles' });
+Product.hasMany(Detalle, { 
+    foreignKey: 'productId', 
+    as: 'detalles',
+    onDelete: 'CASCADE',  // Eliminar detalles cuando se elimine el producto
+    onUpdate: 'CASCADE'
+});
 
 Detalle.belongsTo(Price, { foreignKey: 'priceId', as: 'precioHistorico' });
 Price.hasMany(Detalle, { foreignKey: 'priceId', as: 'detalles' });

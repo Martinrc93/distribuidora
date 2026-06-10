@@ -42,6 +42,16 @@ Empleado.init({
                 this.setDataValue('apellido', value.trim());
             }
         }
+    },
+    active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+        validate: {
+            notNull: {
+                msg: 'El estado es obligatorio.'
+            }
+        }
     }
 }, {
     sequelize,         // Instancia de conexión
