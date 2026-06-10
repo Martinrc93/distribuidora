@@ -5,6 +5,7 @@ components:
       required:
         - nombre
         - marca
+        - costo
       properties:
         id:
           type: integer
@@ -15,6 +16,9 @@ components:
         marca:
           type: string
           description: Marca del producto.
+        costo:
+          type: number
+          description: Costo del producto (formato decimal).
         createdAt:
           type: string
           format: date-time
@@ -27,6 +31,7 @@ components:
         id: 1
         nombre: Leche Entera 1L
         marca: La Serenísima
+        costo: 1.00
         createdAt: "2026-05-22T20:00:00.000Z"
         updatedAt: "2026-05-22T20:00:00.000Z"
 
@@ -92,6 +97,7 @@ paths:
               required:
                 - nombre
                 - marca
+                - costo
               properties:
                 nombre:
                   type: string
@@ -99,9 +105,13 @@ paths:
                 marca:
                   type: string
                   description: Marca del producto.
+                costo:
+                  type: number
+                  description: Costo del producto (formato decimal).
               example:
                 nombre: Café Molido 500g
                 marca: Cabrales
+                costo: 4.30
       responses:
         201:
           description: Producto creado exitosamente.
@@ -158,14 +168,18 @@ paths:
               required:
                 - nombre
                 - marca
+                - costo
               properties:
                 nombre:
                   type: string
                 marca:
                   type: string
+                costo:
+                  type: number
               example:
                 nombre: Café Espresso Premium 500g
                 marca: Cabrales
+                costo: 4.50
       responses:
         200:
           description: Producto actualizado correctamente.

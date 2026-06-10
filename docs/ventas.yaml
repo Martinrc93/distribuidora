@@ -1,0 +1,300 @@
+components:
+  schemas:
+    DetalleResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único autogenerado del detalle.
+        productId:
+          type: integer
+          description: ID del producto vendido.
+        priceId:
+          type: integer
+          description: ID del registro de precio aplicado.
+        cantidad:
+          type: integer
+          description: Cantidad vendida del producto.
+        precio:
+          type: number
+          format: double
+          description: Precio unitario cobrado por el producto.
+        subtotal:
+          type: number
+          format: double
+          description: Subtotal de la venta del producto (cantidad * precio).
+      example:
+        id: 1
+        productId: 2
+        priceId: 5
+        cantidad: 3
+        precio: 1540.50
+        subtotal: 4621.50
+
+    VentaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único autogenerado de la venta.
+        fechaEmision:
+          type: string
+          description: Fecha de emisión del comprobante de venta formateada en DD-MM-YYYY.
+        total:
+          type: number
+          format: double
+          description: Monto total facturado de la venta.
+        active:
+          type: boolean
+          description: Indica si la venta está activa o inactiva (cancelada).
+        empleadoId:
+          type: integer
+          description: ID del empleado que registró la venta.
+        empleadoNombre:
+          type: string
+          description: Nombre del empleado que realizó la venta.
+        empleadoApellido:
+          type: string
+          description: Apellido del empleado que realizó la venta.
+        clienteId:
+          type: integer
+          description: ID del cliente asociado a la venta.
+        clienteNombre:
+          type: string
+          description: Nombre del cliente.
+        ganancia:
+          type: number
+          format: double
+          description: Ganancia total generada por la venta (decimal 10,2).
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetalleResponse'
+      example:
+        id: 1
+        fechaEmision: "22-05-2026"
+        total: 4621.50
+        active: true
+        empleadoId: 2
+        empleadoNombre: "Florencia"
+        empleadoApellido: "Díaz"
+        clienteId: 1
+        clienteNombre: "Supermercado Alborada"
+        ganancia: 1200.00
+        detalles:
+          - id: 1
+            productId: 2
+            priceId: 5
+            cantidad: 3
+            precio: 1540.50
+            subtotal: 4621.50
+
+    PaginatedVentas:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total de ventas encontradas.
+        paginas:
+          type: integer
+          description: Total de páginas disponibles.
+        paginaActual:
+          type: integer
+          description: Página de consulta actual.
+        limite:
+          type: integer
+          description: Cantidad de elementos devueltos por página.
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VentaResponse'
+
+paths:
+  /ventas:
+    post:
+      summary: Registrar una venta y sus detalles de manera transaccional y atómica
+      tags:
+        - Ventas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - empleadoId
+                - clienteId
+                - detalles
+              properties:
+                empleadoId:
+                  type: integer
+                  description: ID del empleado que realiza la venta.
+                clienteId:
+                  type: integer
+                  description: ID del cliente asociado a la venta.
+                detalles:
+                  type: array
+                  description: Lista de artículos a vender.
+                  items:
+                    type: object
+                    required:
+                      - productId
+                      - priceId
+                      - cantidad
+                    properties:
+                      productId:
+                        type: integer
+                        description: ID del producto.
+                      priceId:
+                        type: integer
+                        description: ID del precio específico que se aplica al producto.
+                      cantidad:
+                        type: integer
+                        description: Cantidad a vender.
+              example:
+                empleadoId: 2
+                clienteId: 1
+                detalles:
+                  - productId: 1
+                    priceId: 1
+                    cantidad: 5
+                  - productId: 2
+                    priceId: 6
+                    cantidad: 3
+      responses:
+        210:
+          description: Venta y sus detalles generados exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentaResponse'
+        400:
+          description: Error de validación o datos faltantes.
+        500:
+          description: Error interno del servidor.
+
+  /ventas/empleado/{empleadoId}:
+    get:
+      summary: Obtener todas las ventas activas de un empleado (con paginación y filtro por día opcionales)
+      tags:
+        - Ventas
+      parameters:
+        - in: path
+          name: empleadoId
+          required: true
+          schema:
+            type: integer
+          description: ID del empleado cuyas ventas activas se desean obtener.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Número de página a consultar.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Cantidad de ventas por página.
+        - in: query
+          name: dia
+          schema:
+            type: string
+            format: date
+          description: Filtro opcional por día específico en formato YYYY-MM-DD.
+      responses:
+        200:
+          description: Listado paginado de ventas activas devuelto exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVentas'
+        500:
+          description: Error interno del servidor.
+
+  /ventas/{id}:
+    put:
+      summary: Actualizar únicamente el estado activo (active) de una venta
+      tags:
+        - Ventas
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único de la venta a modificar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - active
+              properties:
+                active:
+                  type: boolean
+                  description: Indica si la venta sigue activa (true) o si se desactiva/cancela (false).
+              example:
+                active: false
+      responses:
+        200:
+          description: Estado de la venta actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentaResponse'
+        400:
+          description: Datos de entrada no válidos o tipo de dato erróneo.
+        404:
+          description: Venta no encontrada.
+        500:
+          description: Error interno del servidor.
+
+  /ventas/cliente/{clienteId}:
+    get:
+      summary: Obtener todas las ventas activas asociadas a un cliente con paginación y filtros opcionales de fecha
+      tags:
+        - Ventas
+      parameters:
+        - in: path
+          name: clienteId
+          required: true
+          schema:
+            type: integer
+          description: ID único del cliente.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Página de consulta.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Límite de ventas por página.
+        - in: query
+          name: fechaMin
+          schema:
+            type: string
+            format: date
+          description: Filtro opcional de fecha mínima (YYYY-MM-DD).
+        - in: query
+          name: fechaMax
+          schema:
+            type: string
+            format: date
+          description: Filtro opcional de fecha máxima (YYYY-MM-DD).
+      responses:
+        200:
+          description: Lista paginada de ventas del cliente solicitada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVentas'
+        500:
+          description: Error interno del servidor.

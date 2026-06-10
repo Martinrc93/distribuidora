@@ -1,0 +1,159 @@
+components:
+  schemas:
+    Price:
+      type: object
+      required:
+        - precio
+        - productId
+      properties:
+        id:
+          type: integer
+          description: ID único autogenerado para el precio.
+        precio:
+          type: number
+          format: double
+          description: Valor del precio (formato decimal/moneda).
+        productId:
+          type: integer
+          description: ID del producto al que se asocia este precio.
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha de registro del precio.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha de última actualización del precio.
+      example:
+        id: 1
+        precio: 1540.50
+        productId: 2
+        createdAt: "2026-05-22T20:30:00.000Z"
+        updatedAt: "2026-05-22T20:30:00.000Z"
+
+paths:
+  /prices:
+    post:
+      summary: Registrar un nuevo precio para un producto
+      tags:
+        - Precios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - precio
+                - productId
+              properties:
+                precio:
+                  type: number
+                  format: double
+                  description: Monto decimal del precio.
+                productId:
+                  type: integer
+                  description: ID del producto asociado.
+              example:
+                precio: 1850.25
+                productId: 2
+      responses:
+        201:
+          description: Registro de precio creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Price'
+        400:
+          description: Error de validación en los campos provistos.
+        500:
+          description: Error interno del servidor.
+
+  /prices/product/{productId}:
+    get:
+      summary: Obtener todos los precios de un producto específico (por productId)
+      tags:
+        - Precios
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+          description: ID único del producto para filtrar los precios.
+      responses:
+        200:
+          description: Lista de precios asociada al producto devuelta exitosamente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Price'
+        500:
+          description: Error interno del servidor.
+
+  /prices/{id}:
+    put:
+      summary: Actualizar un registro de precio específico por su ID único
+      tags:
+        - Precios
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único del precio a actualizar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - precio
+                - productId
+              properties:
+                precio:
+                  type: number
+                  format: double
+                  description: Nuevo valor decimal del precio.
+                productId:
+                  type: integer
+                  description: ID del producto asociado.
+              example:
+                precio: 1950.00
+                productId: 2
+      responses:
+        200:
+          description: Registro de precio actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Price'
+        400:
+          description: Datos de entrada inválidos.
+        404:
+          description: Registro de precio no encontrado.
+        500:
+          description: Error interno del servidor.
+
+    delete:
+      summary: Eliminar un registro de precio específico por su ID único
+      tags:
+        - Precios
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único del precio a eliminar.
+      responses:
+        200:
+          description: Registro de precio de producto eliminado exitosamente.
+        404:
+          description: Registro de precio no encontrado.
+        500:
+          description: Error interno del servidor.

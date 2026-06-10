@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora - Menú</title>
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h1>MENÚ</h1>
+                </div>
+            </header>
+
+            <section class="statistics-section">
+                <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#salesDetailModal">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total de Ventas</h3>
+                        <p class="stat-number">$15,430</p>
+                        <small class="text-secondary" style="font-size: 0.75rem; display: block; margin-top: 0.25rem;"><i class="fas fa-info-circle"></i> Click para ver detalle de productos hoy</small>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
+        <div id="sidebar-container"></div>
+    </div>
+
+    <!-- Modal Detalle de Ventas y Productos -->
+    <div class="modal fade" id="salesDetailModal" tabindex="-1" aria-labelledby="salesDetailModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content" id="salesDetailModalContent" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="salesDetailModalLabel">Resumen de Ventas y Productos Solicitados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <!-- Tarjeta de Resumen -->
+                        <div class="col-lg-4">
+                            <div class="card p-4 h-100" style="background-color: #0f1623; border: 1px solid var(--border-color); border-radius: 12px;">
+                                <h5 class="text-secondary mb-4" style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Reportes de Hoy</h5>
+                                
+                                <div class="mb-4">
+                                    <span class="text-secondary d-block mb-1" style="font-size: 0.85rem;">Total Facturado</span>
+                                    <span class="text-white font-weight-bold" style="font-size: 2.25rem; font-weight: 700;">$15,430</span>
+                                </div>
+
+                                <div class="mb-4">
+                                    <span class="text-secondary d-block mb-1" style="font-size: 0.85rem;">Productos Solicitados Hoy</span>
+                                    <span class="text-white font-weight-bold" style="font-size: 2.25rem; font-weight: 700; color: #60a5fa;">5,046 <small style="font-size: 1rem; font-weight: 500;" class="text-secondary">uds</small></span>
+                                </div>
+
+                                <div class="mt-auto pt-3 border-top" style="border-color: var(--border-color) !important;">
+                                    <p class="text-secondary mb-0" style="font-size: 0.8rem; line-height: 1.5;">Este reporte consolida todas las ventas del día 07 de Junio de 2026 registradas por todos los empleados activos.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Detalles -->
+                        <div class="col-lg-8">
+                            <div class="card p-4" style="background-color: #0f1623; border: 1px solid var(--border-color); border-radius: 12px;">
+                                <h5 class="text-white mb-3" style="font-size: 1rem; font-weight: 600;">Desglose de Productos Solicitados</h5>
+                                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                    <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
+                                        <thead>
+                                            <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                                <th class="text-secondary text-start">Producto</th>
+                                                <th class="text-secondary">Cantidad</th>
+                                                <th class="text-secondary">Precio Unit.</th>
+                                                <th class="text-secondary text-end">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-white text-start">Leche Entera 1L</td>
+                                                <td class="text-white font-weight-bold">1,200</td>
+                                                <td>$1.50</td>
+                                                <td class="text-white text-end">$1,800.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-white text-start">Pan Lactal Familiar</td>
+                                                <td class="text-white font-weight-bold">800</td>
+                                                <td>$2.30</td>
+                                                <td class="text-white text-end">$1,840.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-white text-start">Gaseosa Cola 2.25L</td>
+                                                <td class="text-white font-weight-bold">1,500</td>
+                                                <td>$3.00</td>
+                                                <td class="text-white text-end">$4,500.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-white text-start">Yerba Mate 1kg</td>
+                                                <td class="text-white font-weight-bold">1,000</td>
+                                                <td>$5.00</td>
+                                                <td class="text-white text-end">$5,000.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-white text-start">Café Molido 500g</td>
+                                                <td class="text-white font-weight-bold">300</td>
+                                                <td>$6.20</td>
+                                                <td class="text-white text-end">$1,860.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-white text-start">Galletitas de Chocolate</td>
+                                                <td class="text-white font-weight-bold">246</td>
+                                                <td>$1.75</td>
+                                                <td class="text-white text-end">$430.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="btnPrintReport" style="background-color: #2563eb; border: none; padding: 0.5rem 1.25rem;"><i class="fas fa-print"></i> Imprimir Reporte</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../sidebar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnPrint = document.getElementById('btnPrintReport');
+            if (btnPrint) {
+                btnPrint.addEventListener('click', () => {
+                    globalThis.print();
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

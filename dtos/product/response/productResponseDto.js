@@ -8,6 +8,7 @@ class ProductResponseDto {
         this.id = product.id;
         this.nombre = product.nombre;
         this.marca = product.marca;
+        this.costo = product.costo !== undefined && product.costo !== null ? Number.parseFloat(Number.parseFloat(product.costo).toFixed(2)) : null;
     }
 
     /**

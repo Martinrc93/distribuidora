@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora - Empleados</title>
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="empleados.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h1>EMPLEADOS</h1>
+                </div>
+                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addEmpleadoModal"><i class="fas fa-plus"></i> Añadir Empleado</button>
+            </header>
+
+            <section class="table-container">
+                <table class="table table-hover table-borderless text-center">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Estado</th>
+                            <th>Pedidos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Carlos Gómez</td>
+                            <td><span class="badge bg-success">Activo</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-empleado="Carlos Gómez" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>María López</td>
+                            <td><span class="badge bg-success">Activo</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-empleado="María López" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Juan Pérez</td>
+                            <td><span class="badge bg-secondary">Inactivo</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-empleado="Juan Pérez" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
+        <div id="sidebar-container"></div>
+    </div>
+
+    <!-- Modal Añadir Empleado -->
+    <div class="modal fade" id="addEmpleadoModal" tabindex="-1" aria-labelledby="addEmpleadoModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="addEmpleadoModalLabel">Añadir Nuevo Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEmpleadoForm">
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="empleadoNombre" class="form-label text-secondary">Nombre</label>
+                            <input type="text" class="form-control" id="empleadoNombre" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="empleadoApellido" class="form-label text-secondary">Apellido</label>
+                            <input type="text" class="form-control" id="empleadoApellido" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="empleadoEstado" class="form-label text-secondary">Estado</label>
+                            <select class="form-select" id="empleadoEstado">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" style="background-color: #2563eb; border: none;">Guardar Empleado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Pedidos -->
+    <div class="modal fade" id="verPedidosModal" tabindex="-1" aria-labelledby="verPedidosModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="verPedidosModalLabel">Pedidos del Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Filtros de Fecha -->
+                    <div class="row g-3 mb-4 align-items-end">
+                        <div class="col-md-5">
+                            <label for="filtroFechaMin" class="form-label text-secondary">Fecha Mínima</label>
+                            <input type="date" class="form-control" id="filtroFechaMin">
+                        </div>
+                        <div class="col-md-5">
+                            <label for="filtroFechaMax" class="form-label text-secondary">Fecha Máxima</label>
+                            <input type="date" class="form-control" id="filtroFechaMax">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-secondary w-100" id="btnLimpiarFiltros" style="height: 42px; border: 1px solid var(--border-color); background: transparent; font-size: 0.9rem;">Hoy</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Pedidos -->
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
+                            <thead>
+                                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                    <th class="text-secondary">Fecha</th>
+                                    <th class="text-secondary">Cliente</th>
+                                    <th class="text-secondary">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaPedidosEmpleadoBody">
+                                <!-- Pedidos dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../sidebar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const addEmpleadoForm = document.getElementById('addEmpleadoForm');
+            const btnGuardar = document.querySelector('#addEmpleadoModal .btn-primary');
+            const tableBody = document.querySelector('.table tbody');
+
+            // Database de pedidos de prueba (mock)
+            const mockPedidos = [
+                { empleado: "Carlos Gómez", fecha: "2026-06-07", cliente: "Supermercado Alborada", total: 350 },
+                { empleado: "Carlos Gómez", fecha: "2026-06-05", cliente: "MiniMarket Express", total: 120 },
+                { empleado: "Carlos Gómez", fecha: "2026-06-01", cliente: "Almacén de Don Pepe", total: 450 },
+                { empleado: "María López", fecha: "2026-06-07", cliente: "MiniMarket Express", total: 150 },
+                { empleado: "María López", fecha: "2026-06-06", cliente: "Supermercado Alborada", total: 280 },
+                { empleado: "Juan Pérez", fecha: "2026-06-04", cliente: "Almacén de Don Pepe", total: 90 }
+            ];
+
+            const verPedidosModal = document.getElementById('verPedidosModal');
+            const modalTitle = document.getElementById('verPedidosModalLabel');
+            const tablaPedidosBody = document.getElementById('tablaPedidosEmpleadoBody');
+            const inputFechaMin = document.getElementById('filtroFechaMin');
+            const inputFechaMax = document.getElementById('filtroFechaMax');
+            const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
+
+            let currentEmpleado = '';
+            const todayStr = '2026-06-07';
+
+            function renderPedidosFiltered() {
+                const minDate = inputFechaMin.value;
+                const maxDate = inputFechaMax.value;
+
+                // Filtrar por empleado y fechas
+                const filtered = mockPedidos.filter(p => {
+                    if (p.empleado !== currentEmpleado) return false;
+                    if (minDate && p.fecha < minDate) return false;
+                    if (maxDate && p.fecha > maxDate) return false;
+                    return true;
+                });
+
+                tablaPedidosBody.innerHTML = '';
+
+                if (filtered.length === 0) {
+                    tablaPedidosBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-secondary py-3">No hay pedidos registrados para este periodo.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                filtered.forEach(p => {
+                    // Formatear fecha para mostrar
+                    const parts = p.fecha.split('-');
+                    const formattedDate = `${parts[2]} Jun ${parts[0]}`; // ej. 07 Jun 2026
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-white">${formattedDate}</td>
+                        <td class="text-white">${p.cliente}</td>
+                        <td class="text-white">$${p.total.toFixed(2)}</td>
+                    `;
+                    tablaPedidosBody.appendChild(tr);
+                });
+            }
+
+            // Cuando se abre el modal
+            verPedidosModal.addEventListener('show.bs.modal', (event) => {
+                const button = event.relatedTarget;
+                currentEmpleado = button.dataset.empleado;
+                modalTitle.textContent = `Pedidos de ${currentEmpleado}`;
+
+                // Por defecto hoy
+                inputFechaMin.value = todayStr;
+                inputFechaMax.value = todayStr;
+
+                renderPedidosFiltered();
+            });
+
+            // Escuchar cambios en los inputs de fecha
+            inputFechaMin.addEventListener('change', renderPedidosFiltered);
+            inputFechaMax.addEventListener('change', renderPedidosFiltered);
+
+            // Botón para volver a "Hoy"
+            btnLimpiarFiltros.addEventListener('click', () => {
+                inputFechaMin.value = todayStr;
+                inputFechaMax.value = todayStr;
+                renderPedidosFiltered();
+            });
+
+            // Reset modal Añadir Empleado on close
+            addEmpleadoModal.addEventListener('hidden.bs.modal', () => {
+                addEmpleadoForm.reset();
+            });
+
+            // Handle save
+            btnGuardar.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                const nombre = document.getElementById('empleadoNombre').value.trim();
+                const apellido = document.getElementById('empleadoApellido').value.trim();
+                const estado = document.getElementById('empleadoEstado').value;
+
+                if (!nombre || !apellido) {
+                    alert('Por favor, completa todos los campos.');
+                    return;
+                }
+
+                // Create row
+                const tr = document.createElement('tr');
+                const badgeClass = estado === 'activo' ? 'bg-success' : 'bg-secondary';
+                const estadoTexto = estado === 'activo' ? 'Activo' : 'Inactivo';
+                const fullName = `${nombre} ${apellido}`;
+
+                tr.innerHTML = `
+                    <td>${fullName}</td>
+                    <td><span class="badge ${badgeClass}">${estadoTexto}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-empleado="${fullName}" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+
+                // Add to table
+                tableBody.appendChild(tr);
+
+                // Setup delete handler for new row
+                const deleteBtn = tr.querySelector('.delete');
+                deleteBtn.addEventListener('click', () => {
+                    tr.remove();
+                });
+
+                // Hide modal
+                const modalInstance = bootstrap.Modal.getInstance(addEmpleadoModal);
+                modalInstance.hide();
+            });
+
+            // Setup delete handler for existing rows
+            const deleteButtons = document.querySelectorAll('.action-btn.delete');
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.closest('tr').remove();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

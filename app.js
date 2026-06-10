@@ -1,25 +1,46 @@
 const express = require('express');
+const path = require('path');
 const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
 const userRoutes = require('./routes/userRoutes.js');
 const productRoutes = require('./routes/productRoutes.js');
+const empleadoRoutes = require('./routes/empleadoRoutes.js');
+const priceRoutes = require('./routes/priceRoutes.js');
+const ventaRoutes = require('./routes/ventaRoutes.js');
+const clienteRoutes = require('./routes/clienteRoutes.js');
 const sequelize = require('./config/db/dataBase.js');
 const Product = require('./models/product.js');
+const Empleado = require('./models/empleado.js');
+const Price = require('./models/price.js');
+const Venta = require('./models/venta.js');
+const Detalle = require('./models/detalle.js');
+const Cliente = require('./models/cliente.js');
+
+
+
 
 
 const app = express();
-const port = 3000;
+app.disable('x-powered-by');
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// Servir archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Servir la documentación de Swagger en /api-docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use('/users', userRoutes);
 app.use('/products', productRoutes);
+app.use('/empleados', empleadoRoutes);
+app.use('/prices', priceRoutes);
+app.use('/ventas', ventaRoutes);
+app.use('/clientes', clienteRoutes);
 
-// Ruta de prueba
+// Servir index.html en la raíz
 app.get('/', (req, res) => {
-  res.send('¡Hola! El servidor de la distribuidora está funcionando. La documentación está en <a href="/api-docs">/api-docs</a>.');
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
 // Sincronizar base de datos e iniciar servidor

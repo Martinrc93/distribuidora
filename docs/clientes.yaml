@@ -1,0 +1,208 @@
+components:
+  schemas:
+    Cliente:
+      type: object
+      required:
+        - nombre
+      properties:
+        id:
+          type: integer
+          description: ID autogenerado del cliente.
+        nombre:
+          type: string
+          description: Nombre del cliente (máx 50 caracteres).
+        direccion:
+          type: string
+          description: Dirección del cliente (máx 50 caracteres).
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha de registro.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha de última actualización.
+      example:
+        id: 1
+        nombre: Supermercado Alborada
+        direccion: Av. Rivadavia 1234
+        createdAt: "2026-05-22T20:00:00.000Z"
+        updatedAt: "2026-05-22T20:00:00.000Z"
+
+    PaginatedClientes:
+      type: object
+      properties:
+        total:
+          type: integer
+        paginas:
+          type: integer
+        paginaActual:
+          type: integer
+        limite:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cliente'
+
+paths:
+  /clientes:
+    get:
+      summary: Obtener todos los clientes con paginación
+      tags:
+        - Clientes
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        200:
+          description: Lista de clientes obtenida correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClientes'
+        500:
+          description: Error interno del servidor.
+
+    post:
+      summary: Crear un nuevo cliente
+      tags:
+        - Clientes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+              properties:
+                nombre:
+                  type: string
+                direccion:
+                  type: string
+              example:
+                nombre: Almacén de Don Pepe
+                direccion: Belgrano 890
+      responses:
+        201:
+          description: Cliente creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        400:
+          description: Error de validación.
+        500:
+          description: Error interno del servidor.
+
+  /clientes/{id}:
+    get:
+      summary: Obtener un cliente por su ID
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Datos del cliente solicitado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        404:
+          description: Cliente no encontrado.
+        500:
+          description: Error interno del servidor.
+
+    put:
+      summary: Actualizar un cliente existente
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                direccion:
+                  type: string
+              example:
+                nombre: Almacén de Don Pepe S.R.L.
+                direccion: Belgrano 890 Piso 1
+      responses:
+        200:
+          description: Cliente actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        400:
+          description: Error de validación.
+        404:
+          description: Cliente no encontrado.
+        500:
+          description: Error interno del servidor.
+
+    delete:
+      summary: Eliminar un cliente
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Cliente eliminado exitosamente.
+        404:
+          description: Cliente no encontrado.
+        500:
+          description: Error interno del servidor.
+
+  /clientes/{id}/ultima-venta:
+    get:
+      summary: Obtener la última venta activa realizada a un cliente específico
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID único del cliente.
+      responses:
+        200:
+          description: Datos de la última venta activa del cliente solicitado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentaResponse'
+        404:
+          description: Cliente o venta activa no encontrada.
+        500:
+          description: Error interno del servidor.
