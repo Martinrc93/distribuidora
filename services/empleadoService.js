@@ -71,7 +71,8 @@ exports.update = async (id, empleadoData) => {
 
     return await empleado.update({
         nombre: empleadoData.nombre !== undefined ? empleadoData.nombre : empleado.nombre,
-        apellido: empleadoData.apellido !== undefined ? empleadoData.apellido : empleado.apellido
+        apellido: empleadoData.apellido !== undefined ? empleadoData.apellido : empleado.apellido,
+        active: empleadoData.active !== undefined ? empleadoData.active : empleado.active
     });
 };
 

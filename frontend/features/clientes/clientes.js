@@ -6,17 +6,21 @@ let formAgregarCliente = null;
 let btnGuardarCliente = null;
 let modalAgregarCliente = null;
 
-// Elementos del DOM para el modal de Ver Pedidos
-let verPedidosModalElement = null;
-let modalVerPedidos = null;
-let tablaPedidosClienteBody = null;
+// Modal Editar Cliente
+let editClienteModal = null;
+let modalEditarCliente = null;
+let btnActualizarCliente = null;
+
+// Modal Ver Pedidos
+let verPedidosModal = null;
+let tablaPedidosBody = null;
 let inputFechaMin = null;
 let inputFechaMax = null;
 let btnLimpiarFiltros = null;
 
-// Variables de estado del cliente activo para ver pedidos
 let currentClienteId = null;
-let currentClienteNombre = null;
+let currentClienteNombre = '';
+const todayStr = new Date().toISOString().split('T')[0];
 
 // Service local para clientes
 const clientesService = {
@@ -25,6 +29,8 @@ const clientesService = {
     create: (clienteData) => apiClient.post('/clientes', clienteData),
     update: (id, clienteData) => apiClient.put(`/clientes/${id}`, clienteData),
     delete: (id) => apiClient.delete(`/clientes/${id}`),
+    getPedidos: (clienteId, fechaMin, fechaMax) => 
+        apiClient.get(`/ventas/cliente/${clienteId}?limit=50&fechaMin=${fechaMin}&fechaMax=${fechaMax}`),
 };
 
 /**
@@ -35,13 +41,17 @@ function inicializarElementos() {
     formAgregarCliente = document.getElementById('addClienteForm');
     btnGuardarCliente = document.querySelector('#addClienteModal .modal-footer .btn-primary');
     
-    // Elementos del modal de ver pedidos
-    verPedidosModalElement = document.getElementById('verPedidosModal');
-    tablaPedidosClienteBody = document.getElementById('tablaPedidosClienteBody');
+    // Modal Editar
+    editClienteModal = document.getElementById('editClienteModal');
+    btnActualizarCliente = document.getElementById('btnActualizarCliente');
+
+    // Modal Pedidos
+    verPedidosModal = document.getElementById('verPedidosModal');
+    tablaPedidosBody = document.getElementById('tablaPedidosClienteBody');
     inputFechaMin = document.getElementById('filtroFechaMin');
     inputFechaMax = document.getElementById('filtroFechaMax');
     btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
-    
+
     if (!tablaClientes) {
         console.error('No se encontró la tabla de clientes');
         return false;
@@ -50,12 +60,62 @@ function inicializarElementos() {
     if (btnGuardarCliente) {
         modalAgregarCliente = new bootstrap.Modal(document.getElementById('addClienteModal'));
     }
-    
-    if (verPedidosModalElement) {
-        modalVerPedidos = new bootstrap.Modal(verPedidosModalElement);
+
+    if (editClienteModal) {
+        modalEditarCliente = new bootstrap.Modal(editClienteModal);
     }
     
     return true;
+}
+
+/**
+ * Carga los pedidos/ventas del cliente seleccionado
+ */
+async function cargarPedidosCliente() {
+    if (!currentClienteId) return;
+
+    const minDate = inputFechaMin.value;
+    const maxDate = inputFechaMax.value;
+
+    try {
+        console.log(`Cargando pedidos para cliente ${currentClienteId} entre ${minDate} y ${maxDate}...`);
+        tablaPedidosBody.innerHTML = '<tr><td colspan="3" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>';
+
+        const respuesta = await clientesService.getPedidos(currentClienteId, minDate, maxDate);
+        if (!respuesta || !respuesta.data) {
+            console.error('Respuesta de pedidos inválida:', respuesta);
+            tablaPedidosBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Error al cargar pedidos</td></tr>';
+            return;
+        }
+
+        const pedidos = respuesta.data;
+        tablaPedidosBody.innerHTML = '';
+
+        if (pedidos.length === 0) {
+            tablaPedidosBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-secondary py-3">No hay pedidos registrados para este periodo.</td>
+                </tr>
+            `;
+            return;
+        }
+
+        pedidos.forEach(p => {
+            const empleadoCompleto = p.empleadoNombre && p.empleadoApellido 
+                ? `${p.empleadoNombre} ${p.empleadoApellido}` 
+                : (p.empleadoNombre || 'N/A');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-white">${p.fechaEmision || 'N/A'}</td>
+                <td class="text-white">${empleadoCompleto}</td>
+                <td class="text-white">$${Number(p.total).toFixed(2)}</td>
+            `;
+            tablaPedidosBody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error al cargar pedidos del cliente:', error);
+        tablaPedidosBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-3">Error: ${error.message}</td></tr>`;
+    }
 }
 
 /**
@@ -86,18 +146,19 @@ async function cargarClientes() {
         // Renderizar cada cliente
         clientes.forEach(cliente => {
             const fila = document.createElement('tr');
+            const listaPreciosNombre = `Lista ${cliente.listaPreciosId || 1}`;
             fila.innerHTML = `
                 <td>${cliente.nombre || 'N/A'}</td>
                 <td>${cliente.direccion || 'N/A'}</td>
                 <td>Sin contacto</td>
                 <td>
-                    <button class="btn btn-sm btn-ver-pedidos" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;" data-id="${cliente.id}" data-nombre="${cliente.nombre}">Ver Pedidos</button>
+                    <button class="btn btn-sm btn-ver-pedidos" data-id="${cliente.id}" data-nombre="${cliente.nombre}" data-bs-toggle="modal" data-bs-target="#verPedidosModal" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
                 </td>
                 <td>
-                    <span class="badge" style="background-color: rgba(37, 99, 235, 0.1); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.25); font-weight: 500; font-size: 0.8rem; padding: 0.35rem 0.65rem; border-radius: 6px;">${cliente.listaPrecioNombre || 'Lista 1'}</span>
+                    <span class="badge" style="background-color: rgba(37, 99, 235, 0.1); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.25); font-weight: 500; font-size: 0.8rem; padding: 0.35rem 0.65rem; border-radius: 6px;">${listaPreciosNombre}</span>
                 </td>
                 <td>
-                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${cliente.id}" title="Editar">
+                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${cliente.id}" data-nombre="${cliente.nombre || ''}" data-direccion="${cliente.direccion || ''}" data-listaprecios="${cliente.listaPreciosId || 1}" data-bs-toggle="modal" data-bs-target="#editClienteModal" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm action-btn delete border-0 btn-eliminar" data-id="${cliente.id}" title="Eliminar">
@@ -128,41 +189,6 @@ function agregarEventosTabla() {
             await eliminarCliente(id);
         });
     });
-
-    // Eventos para editar
-    document.querySelectorAll('.btn-editar').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute('data-id');
-            console.log('Editar cliente:', id);
-            try {
-                const cliente = await clientesService.getById(id);
-                document.getElementById('clienteNombre').value = cliente.nombre || '';
-                document.getElementById('clienteDireccion').value = cliente.direccion || '';
-                document.getElementById('clienteListaPrecios').value = cliente.listaPrecioId || '1';
-                
-                formAgregarCliente.setAttribute('data-edit-id', id);
-                document.getElementById('addClienteModalLabel').textContent = 'Editar Cliente';
-                modalAgregarCliente.show();
-            } catch (error) {
-                console.error('Error al cargar datos del cliente:', error);
-                alert('Error al cargar datos del cliente');
-            }
-        });
-    });
-
-    // Eventos para ver pedidos
-    document.querySelectorAll('.btn-ver-pedidos').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            currentClienteId = btn.getAttribute('data-id');
-            currentClienteNombre = btn.getAttribute('data-nombre');
-            
-            if (modalVerPedidos) {
-                modalVerPedidos.show();
-            }
-        });
-    });
 }
 
 /**
@@ -182,151 +208,130 @@ async function eliminarCliente(id) {
         await cargarClientes(); // Recargar la tabla
     } catch (error) {
         console.error('Error completo:', error);
-        console.error('Status:', error.status);
-        console.error('Data:', error.data);
         const mensaje = error.data?.mensaje || error.data?.error || error.message || 'Error desconocido';
         alert('Error al eliminar el cliente: ' + mensaje);
     }
 }
 
 /**
- * Maneja la creación o edición de un cliente
+ * Maneja la creación de un nuevo cliente
  */
 async function guardarCliente() {
     const nombre = document.getElementById('clienteNombre').value.trim();
     const direccion = document.getElementById('clienteDireccion').value.trim();
-    const listaPrecioId = parseInt(document.getElementById('clienteListaPrecios').value, 10);
+    const listaPreciosId = document.getElementById('clienteListaPrecios').value;
 
     // Validar campos obligatorios
-    if (!nombre || isNaN(listaPrecioId)) {
-        alert('Por favor completa los campos obligatorios');
+    if (!nombre) {
+        alert('Por favor completa el nombre del cliente');
         return;
     }
 
     try {
-        const editId = formAgregarCliente.getAttribute('data-edit-id');
-        if (editId) {
-            console.log('Actualizando cliente:', editId, { nombre, direccion, listaPrecioId });
-            await clientesService.update(editId, { nombre, direccion, listaPrecioId });
-            alert('Cliente actualizado exitosamente');
-            formAgregarCliente.removeAttribute('data-edit-id');
-        } else {
-            console.log('Creando cliente:', { nombre, direccion, listaPrecioId });
-            await clientesService.create({
-                nombre,
-                direccion,
-                listaPrecioId
-            });
-            alert('Cliente creado exitosamente');
-        }
+        console.log('Creando cliente:', { nombre, direccion, listaPreciosId });
+        await clientesService.create({
+            nombre,
+            direccion,
+            listaPreciosId
+        });
 
+        alert('Cliente creado exitosamente');
         formAgregarCliente.reset();
         modalAgregarCliente.hide();
         await cargarClientes(); // Recargar la tabla
     } catch (error) {
-        console.error('Error al guardar cliente:', error);
-        const mensaje = error.data?.errores?.[0] || error.data?.mensaje || error.message;
-        alert('Error al guardar el cliente: ' + mensaje);
+        console.error('Error al crear cliente:', error);
+        alert('Error al crear el cliente: ' + error.message);
     }
 }
 
 /**
- * Inicializa los eventos del formulario
+ * Maneja la actualización de un cliente existente
+ */
+async function actualizarCliente() {
+    const id = document.getElementById('editClienteId').value;
+    const nombre = document.getElementById('editClienteNombre').value.trim();
+    const direccion = document.getElementById('editClienteDireccion').value.trim();
+    const listaPreciosId = document.getElementById('editClienteListaPrecios').value;
+
+    // Validar campos obligatorios
+    if (!nombre) {
+        alert('Por favor completa el nombre del cliente');
+        return;
+    }
+
+    try {
+        console.log('Actualizando cliente:', { id, nombre, direccion, listaPreciosId });
+        await clientesService.update(id, {
+            nombre,
+            direccion,
+            listaPreciosId
+        });
+
+        alert('Cliente actualizado exitosamente');
+        modalEditarCliente.hide();
+        await cargarClientes(); // Recargar la tabla
+    } catch (error) {
+        console.error('Error al actualizar cliente:', error);
+        alert('Error al actualizar el cliente: ' + error.message);
+    }
+}
+
+/**
+ * Inicializa los eventos del formulario y modales
  */
 function inicializarEventos() {
     if (btnGuardarCliente) {
         btnGuardarCliente.addEventListener('click', guardarCliente);
     }
 
-    const modalElement = document.getElementById('addClienteModal');
-    if (modalElement) {
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            formAgregarCliente.removeAttribute('data-edit-id');
-            document.getElementById('addClienteModalLabel').textContent = 'Añadir Nuevo Cliente';
+    if (btnActualizarCliente) {
+        btnActualizarCliente.addEventListener('click', actualizarCliente);
+    }
+
+    if (verPedidosModal) {
+        verPedidosModal.addEventListener('show.bs.modal', (event) => {
+            const button = event.relatedTarget;
+            currentClienteId = button.getAttribute('data-id');
+            currentClienteNombre = button.getAttribute('data-nombre');
+            document.getElementById('verPedidosModalLabel').textContent = `Historial de Pedidos de ${currentClienteNombre}`;
+
+            // Por defecto hoy
+            inputFechaMin.value = todayStr;
+            inputFechaMax.value = todayStr;
+
+            cargarPedidosCliente();
+        });
+
+        inputFechaMin.addEventListener('change', cargarPedidosCliente);
+        inputFechaMax.addEventListener('change', cargarPedidosCliente);
+
+        btnLimpiarFiltros.addEventListener('click', () => {
+            inputFechaMin.value = todayStr;
+            inputFechaMax.value = todayStr;
+            cargarPedidosCliente();
+        });
+    }
+
+    if (editClienteModal) {
+        editClienteModal.addEventListener('show.bs.modal', (event) => {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+            const direccion = button.getAttribute('data-direccion');
+            const listaPreciosId = button.getAttribute('data-listaprecios');
+
+            document.getElementById('editClienteId').value = id;
+            document.getElementById('editClienteNombre').value = nombre;
+            document.getElementById('editClienteDireccion').value = direccion;
+            document.getElementById('editClienteListaPrecios').value = listaPreciosId || 1;
+        });
+    }
+
+    const addModalEl = document.getElementById('addClienteModal');
+    if (addModalEl) {
+        addModalEl.addEventListener('hidden.bs.modal', () => {
             formAgregarCliente.reset();
-        });
-    }
-
-    // Funciones auxiliares locales para evitar contaminar el ámbito global
-    const obtenerFechaHoy = () => {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    const renderPedidos = async () => {
-        if (!tablaPedidosClienteBody || !currentClienteId) return;
-        
-        tablaPedidosClienteBody.innerHTML = '<tr><td colspan="3" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin me-2"></i> Cargando pedidos...</td></tr>';
-        
-        try {
-            const fechaMinVal = inputFechaMin ? inputFechaMin.value : '';
-            const fechaMaxVal = inputFechaMax ? inputFechaMax.value : '';
-            
-            const url = `/ventas/cliente/${currentClienteId}?fechaMin=${fechaMinVal}&fechaMax=${fechaMaxVal}&limit=100`;
-            const respuesta = await apiClient.get(url);
-            
-            if (!respuesta || !respuesta.data) {
-                tablaPedidosClienteBody.innerHTML = '<tr><td colspan="3" class="text-center text-warning py-3">Respuesta inválida del servidor</td></tr>';
-                return;
-            }
-            
-            const ventas = respuesta.data;
-            tablaPedidosClienteBody.innerHTML = '';
-            
-            if (ventas.length === 0) {
-                tablaPedidosClienteBody.innerHTML = '<tr><td colspan="3" class="text-center text-secondary py-3">No se encontraron pedidos en este rango de fechas</td></tr>';
-                return;
-            }
-            
-            ventas.forEach(venta => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-bottom';
-                tr.style.borderColor = 'var(--border-color)';
-                tr.innerHTML = `
-                    <td class="py-3 text-white" style="font-weight: 500;">${venta.fechaEmision || 'N/A'}</td>
-                    <td class="py-3 text-secondary">${(venta.empleadoNombre || venta.empleadoApellido) ? `${venta.empleadoNombre || ''} ${venta.empleadoApellido || ''}`.trim() : 'N/A'}</td>
-                    <td class="py-3" style="color: #60a5fa; font-weight: 600;">$${Number(venta.total).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                `;
-                tablaPedidosClienteBody.appendChild(tr);
-            });
-        } catch (error) {
-            console.error('Error al cargar pedidos del cliente:', error);
-            tablaPedidosClienteBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-3"><i class="fas fa-exclamation-circle me-2"></i> Error: ${error.message || 'Error al conectar con el servidor'}</td></tr>`;
-        }
-    };
-
-    if (verPedidosModalElement) {
-        verPedidosModalElement.addEventListener('show.bs.modal', async () => {
-            const label = document.getElementById('verPedidosModalLabel');
-            if (label) {
-                label.textContent = `Pedidos de: ${currentClienteNombre || ''}`;
-            }
-            
-            const hoy = obtenerFechaHoy();
-            if (inputFechaMin) inputFechaMin.value = hoy;
-            if (inputFechaMax) inputFechaMax.value = hoy;
-            
-            await renderPedidos();
-        });
-    }
-
-    if (inputFechaMin) {
-        inputFechaMin.addEventListener('change', renderPedidos);
-    }
-    
-    if (inputFechaMax) {
-        inputFechaMax.addEventListener('change', renderPedidos);
-    }
-
-    if (btnLimpiarFiltros) {
-        btnLimpiarFiltros.addEventListener('click', async () => {
-            const hoy = obtenerFechaHoy();
-            if (inputFechaMin) inputFechaMin.value = hoy;
-            if (inputFechaMax) inputFechaMax.value = hoy;
-            await renderPedidos();
         });
     }
 }

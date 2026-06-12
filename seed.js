@@ -8,11 +8,7 @@ const Price = require('./models/price.js'); // Importar el modelo de Price
 const Venta = require('./models/venta.js'); // Importar el modelo de Venta
 const Detalle = require('./models/detalle.js'); // Importar el modelo de Detalle
 const Cliente = require('./models/cliente.js'); // Importar el modelo de Cliente
-const ListaPrecio = require('./models/listaPrecio.js'); // Importar el modelo de ListaPrecio
-
-
-
-
+const ListaPrecios = require('./models/listaPrecios.js'); // Importar el modelo de ListaPrecios
 
 async function ejecutarSembrado() {
   try {

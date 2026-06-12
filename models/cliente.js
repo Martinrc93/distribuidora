@@ -1,6 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/db/dataBase');
-const ListaPrecio = require('./listaPrecio.js');
+const ListaPrecios = require('./listaPrecios.js');
 
 class Cliente extends Model {}
 
@@ -31,7 +31,7 @@ Cliente.init({
             }
         }
     },
-    listaPrecioId: {
+    listaPreciosId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
@@ -51,8 +51,7 @@ Cliente.init({
     timestamps: true
 });
 
-// Relaciones
-Cliente.belongsTo(ListaPrecio, { foreignKey: 'listaPrecioId', as: 'listaPrecio' });
-ListaPrecio.hasMany(Cliente, { foreignKey: 'listaPrecioId', as: 'clientes' });
+Cliente.belongsTo(ListaPrecios, { foreignKey: 'listaPreciosId', as: 'listaPrecios' });
+ListaPrecios.hasMany(Cliente, { foreignKey: 'listaPreciosId', as: 'clientes' });
 
 module.exports = Cliente;

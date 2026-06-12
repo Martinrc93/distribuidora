@@ -1,6 +1,7 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/db/dataBase');
 const Product = require('./product.js');
+const ListaPrecios = require('./listaPrecios.js');
 
 // 1. Usamos la sintaxis de clases (idéntica a User, Product y Empleado)
 class Price extends Model {
@@ -34,7 +35,7 @@ Price.init({
             }
         }
     },
-    listaPrecioId: {
+    listaPreciosId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
@@ -43,19 +44,18 @@ Price.init({
         },
         validate: {
             notNull: {
-                msg: 'El ID de la lista de precios es obligatorio.'
+                msg: 'La lista de precios es obligatoria.'
             }
         }
     }
 }, {
     sequelize,         // Instancia de conexión
     modelName: 'Price', // Nombre del modelo (generará la tabla "Prices" en plural)
+    tableName: 'Prices',
     timestamps: true   // Mantiene createdAt y updatedAt automáticamente
 });
 
 // 3. Definición de Relaciones (Asociaciones)
-const ListaPrecio = require('./listaPrecio.js');
-
 Price.belongsTo(Product, { foreignKey: 'productId', as: 'producto' });
 Product.hasMany(Price, { 
     foreignKey: 'productId', 
@@ -64,9 +64,9 @@ Product.hasMany(Price, {
     onUpdate: 'CASCADE'
 });
 
-Price.belongsTo(ListaPrecio, { foreignKey: 'listaPrecioId', as: 'listaPrecio' });
-ListaPrecio.hasMany(Price, {
-    foreignKey: 'listaPrecioId',
+Price.belongsTo(ListaPrecios, { foreignKey: 'listaPreciosId', as: 'listaPrecios' });
+ListaPrecios.hasMany(Price, {
+    foreignKey: 'listaPreciosId',
     as: 'precios',
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'

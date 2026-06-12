@@ -28,12 +28,45 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Estado</th>
                             <th>Pedidos</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Los empleados se cargan dinámicamente desde el backend -->
+                        <tr>
+                            <td>Carlos Gómez</td>
+                            <td><span class="badge bg-success">Activo</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-empleado="Carlos Gómez" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>María López</td>
+                            <td><span class="badge bg-success">Activo</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-empleado="María López" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Juan Pérez</td>
+                            <td><span class="badge bg-secondary">Inactivo</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-empleado="Juan Pérez" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm action-btn border-0"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm action-btn delete border-0"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </section>
@@ -61,11 +94,54 @@
                             <label for="empleadoApellido" class="form-label text-secondary">Apellido</label>
                             <input type="text" class="form-control" id="empleadoApellido" required>
                         </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="empleadoEstado" class="form-label text-secondary">Estado</label>
+                            <select class="form-select" id="empleadoEstado">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
                     <button type="button" class="btn btn-primary" style="background-color: #2563eb; border: none;">Guardar Empleado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Empleado -->
+    <div class="modal fade" id="editEmpleadoModal" tabindex="-1" aria-labelledby="editEmpleadoModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="editEmpleadoModalLabel">Editar Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmpleadoForm">
+                        <input type="hidden" id="editEmpleadoId">
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="editEmpleadoNombre" class="form-label text-secondary">Nombre</label>
+                            <input type="text" class="form-control" id="editEmpleadoNombre" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="editEmpleadoApellido" class="form-label text-secondary">Apellido</label>
+                            <input type="text" class="form-control" id="editEmpleadoApellido" required>
+                        </div>
+                        <div class="mb-3 w-75 mx-auto">
+                            <label for="editEmpleadoEstado" class="form-label text-secondary">Estado</label>
+                            <select class="form-select" id="editEmpleadoEstado">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnActualizarEmpleado" style="background-color: #2563eb; border: none;">Actualizar Empleado</button>
                 </div>
             </div>
         </div>

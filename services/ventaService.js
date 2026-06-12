@@ -15,20 +15,10 @@ const productService = require('./productService.js');
  * @param {number} limit Límite de elementos por página.
  * @param {string} dia Fecha en formato YYYY-MM-DD para filtrar por ese día específico.
  */
-exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '') => {
+exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '') => {
     const pageNum = Number.parseInt(page, 10) || 1;
     const limitNum = Number.parseInt(limit, 10) || 10;
     const offsetNum = (pageNum - 1) * limitNum;
-
-    // Si no se especifica un filtro por día, se asume por defecto el día de hoy (fecha actual local)
-    let filtroDia = dia;
-    if (!filtroDia || filtroDia.trim() === '') {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        filtroDia = `${year}-${month}-${day}`;
-    }
 
     // Solo obtenemos las ventas que estén activas para este empleado
     const where = {
@@ -36,13 +26,33 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '') => {
         active: true
     };
 
-    // Filtramos por el día específico
-    const startOfDay = new Date(`${filtroDia.trim()}T00:00:00.000Z`);
-    const endOfDay = new Date(`${filtroDia.trim()}T23:59:59.999Z`);
-    
-    where.fechaEmision = {
-        [Op.between]: [startOfDay, endOfDay]
-    };
+    if (fechaMin || fechaMax) {
+        const dateFilter = {};
+        if (fechaMin && fechaMin.trim() !== '') {
+            dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000Z`);
+        }
+        if (fechaMax && fechaMax.trim() !== '') {
+            dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999Z`);
+        }
+        where.fechaEmision = dateFilter;
+    } else {
+        // Si no se especifica un filtro por día ni rango, se asume por defecto el día de hoy (fecha actual local)
+        let filtroDia = dia;
+        if (!filtroDia || filtroDia.trim() === '') {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            filtroDia = `${year}-${month}-${day}`;
+        }
+
+        const startOfDay = new Date(`${filtroDia.trim()}T00:00:00.000Z`);
+        const endOfDay = new Date(`${filtroDia.trim()}T23:59:59.999Z`);
+        
+        where.fechaEmision = {
+            [Op.between]: [startOfDay, endOfDay]
+        };
+    }
 
     const { count, rows } = await Venta.findAndCountAll({
         where,
@@ -145,24 +155,89 @@ exports.createVenta = async (ventaData) => {
 };
 
 /**
- * Actualiza únicamente el estado activo/inactivo de una venta.
+ * Actualiza el estado activo/inactivo de una venta y, opcionalmente, sus detalles asociados de forma atómica.
  * @param {number} id ID de la venta.
  * @param {boolean} active Nuevo estado activo.
+ * @param {Array} detalles Listado opcional de nuevos detalles [{productId, priceId, cantidad}].
  */
-exports.updateStatus = async (id, active) => {
-    const venta = await Venta.findByPk(id, {
-        include: [
-            { model: Detalle, as: 'detalles' },
-            { model: Empleado, as: 'empleado' },
-            { model: Cliente, as: 'cliente' }
-        ]
-    });
-    
-    if (!venta) return null;
+exports.updateVenta = async (id, active, detalles = null) => {
+    const t = await sequelize.transaction();
 
-    // Actualizamos únicamente el campo active
-    return await venta.update({ active });
+    try {
+        const venta = await Venta.findByPk(id, { transaction: t });
+        if (!venta) {
+            await t.rollback();
+            return null;
+        }
+
+        // 1. Actualizar el estado activo
+        await venta.update({ active }, { transaction: t });
+
+        // 2. Si se envían nuevos detalles, actualizarlos de forma atómica
+        if (detalles) {
+            // Eliminar detalles previos de la venta
+            await Detalle.destroy({
+                where: { sellId: id },
+                transaction: t
+            });
+
+            let totalVenta = 0;
+            let totalGanancia = 0;
+
+            // Registrar los nuevos detalles
+            for (const item of detalles) {
+                const priceRecord = await Price.findByPk(item.priceId, { transaction: t });
+                if (!priceRecord) {
+                    throw new Error(`El registro de precio con ID ${item.priceId} no existe.`);
+                }
+                if (priceRecord.productId !== item.productId) {
+                    throw new Error(`El precio con ID ${item.priceId} no pertenece al producto con ID ${item.productId}.`);
+                }
+
+                const unitPrice = Number.parseFloat(priceRecord.precio);
+                const subtotal = item.cantidad * unitPrice;
+                totalVenta += subtotal;
+
+                // Calcular ganancia acumulada
+                const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId);
+                totalGanancia += gananciaUnidad * item.cantidad;
+
+                // Crear el detalle en la DB
+                await detalleService.createDetalle({
+                    sellId: id,
+                    productId: item.productId,
+                    priceId: item.priceId,
+                    cantidad: item.cantidad,
+                    precio: unitPrice
+                }, { transaction: t });
+            }
+
+            // Actualizar el total y ganancia de la cabecera
+            await venta.update({
+                total: totalVenta,
+                ganancia: Number.parseFloat(totalGanancia.toFixed(2))
+            }, { transaction: t });
+        }
+
+        await t.commit();
+
+        // Retornar la venta actualizada con todas las relaciones cargadas
+        return await Venta.findByPk(id, {
+            include: [
+                { model: Detalle, as: 'detalles' },
+                { model: Empleado, as: 'empleado' },
+                { model: Cliente, as: 'cliente' }
+            ]
+        });
+
+    } catch (error) {
+        await t.rollback();
+        throw error;
+    }
 };
+
+// Mantener compatibilidad por si acaso
+exports.updateStatus = exports.updateVenta;
 
 /**
  * Obtiene la última venta activa realizada para un cliente específico.
@@ -226,6 +301,61 @@ exports.getByCliente = async (clienteId, page = 1, limit = 10, fechaMin = '', fe
 
     if (hasDateFilter) {
         where.fechaEmision = dateFilter;
+    }
+
+    const { count, rows } = await Venta.findAndCountAll({
+        where,
+        limit: limitNum,
+        offset: offsetNum,
+        include: [
+            { model: Detalle, as: 'detalles' },
+            { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' }
+        ],
+        order: [['fechaEmision', 'DESC']]
+    });
+
+    const totalPages = Math.ceil(count / limitNum);
+
+    return {
+        total: count,
+        paginas: totalPages,
+        paginaActual: pageNum,
+        limite: limitNum,
+        data: rows
+    };
+};
+
+/**
+ * Obtiene todas las ventas con soporte para paginación y filtros de fecha opcionales.
+ * @param {number} page Número de página (1-based).
+ * @param {number} limit Cantidad de elementos por página.
+ * @param {string} dia Fecha en formato YYYY-MM-DD para filtrar por ese día específico.
+ * @param {string} fechaMin Fecha mínima (YYYY-MM-DD).
+ * @param {string} fechaMax Fecha máxima (YYYY-MM-DD).
+ */
+exports.getAll = async (page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '') => {
+    const pageNum = Number.parseInt(page, 10) || 1;
+    const limitNum = Number.parseInt(limit, 10) || 10;
+    const offsetNum = (pageNum - 1) * limitNum;
+
+    const where = {};
+
+    if (fechaMin || fechaMax) {
+        const dateFilter = {};
+        if (fechaMin && fechaMin.trim() !== '') {
+            dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000Z`);
+        }
+        if (fechaMax && fechaMax.trim() !== '') {
+            dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999Z`);
+        }
+        where.fechaEmision = dateFilter;
+    } else if (dia && dia.trim() !== '') {
+        const startOfDay = new Date(`${dia.trim()}T00:00:00.000Z`);
+        const endOfDay = new Date(`${dia.trim()}T23:59:59.999Z`);
+        where.fechaEmision = {
+            [Op.between]: [startOfDay, endOfDay]
+        };
     }
 
     const { count, rows } = await Venta.findAndCountAll({

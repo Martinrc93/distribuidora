@@ -9,9 +9,9 @@ const { VentaResponseDto } = require('../dtos/venta/response');
 exports.getByEmpleado = async (req, res) => {
     try {
         const { empleadoId } = req.params;
-        const { page = 1, limit = 10, dia = '' } = req.query;
+        const { page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '' } = req.query;
 
-        const result = await ventaService.getByEmpleado(empleadoId, page, limit, dia);
+        const result = await ventaService.getByEmpleado(empleadoId, page, limit, dia, fechaMin, fechaMax);
         
         // Mapear los datos de las ventas al Response DTO
         result.data = VentaResponseDto.fromModel(result.data);
@@ -49,14 +49,27 @@ exports.create = async (req, res) => {
 exports.updateStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { active } = req.body;
+        const { active, detalles } = req.body;
 
-        // Validación estricta: solo se puede actualizar la propiedad active
+        // Validación: el estado active es obligatorio
         if (active === undefined || typeof active !== 'boolean') {
             return res.status(400).json({ error: 'El campo "active" es obligatorio y debe ser un valor booleano (true/false).' });
         }
 
-        const ventaActualizada = await ventaService.updateStatus(id, active);
+        // Si se envían detalles, validarlos
+        if (detalles) {
+            if (!Array.isArray(detalles) || detalles.length === 0) {
+                return res.status(400).json({ error: 'El campo "detalles" debe ser un arreglo no vacío de ítems.' });
+            }
+            for (let i = 0; i < detalles.length; i++) {
+                const item = detalles[i];
+                if (!item.productId || !item.priceId || !item.cantidad || item.cantidad <= 0) {
+                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productId, priceId y cantidad mayor a 0.` });
+                }
+            }
+        }
+
+        const ventaActualizada = await ventaService.updateVenta(id, active, detalles);
         if (!ventaActualizada) {
             return res.status(404).json({ mensaje: 'Venta no encontrada para actualizar' });
         }
@@ -100,6 +113,21 @@ exports.getVentasByCliente = async (req, res) => {
         // Mapear los datos al Response DTO
         result.data = VentaResponseDto.fromModel(result.data);
 
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * Obtener todas las ventas con paginación.
+ * Ruta: GET /ventas?page=1&limit=10
+ */
+exports.getAll = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '' } = req.query;
+        const result = await ventaService.getAll(page, limit, dia, fechaMin, fechaMax);
+        result.data = VentaResponseDto.fromModel(result.data);
         res.json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });

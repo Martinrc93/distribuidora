@@ -3,15 +3,11 @@
  * Se encarga de limpiar, estructurar y validar los datos que envía el cliente para crear un producto.
  */
 class ProductCreateDto {
-    constructor({ nombre, marca, costo, precios }) {
+    constructor({ nombre, marca, costo }) {
         this.nombre = typeof nombre === 'string' ? nombre.trim() : null;
         this.marca = typeof marca === 'string' ? marca.trim() : null;
         const parsedCosto = typeof costo === 'number' ? costo : Number.parseFloat(costo);
         this.costo = Number.isNaN(parsedCosto) ? parsedCosto : Number.parseFloat(parsedCosto.toFixed(2));
-        this.precios = Array.isArray(precios) ? precios.map(p => ({
-            listaPrecioId: typeof p.listaPrecioId === 'number' ? p.listaPrecioId : parseInt(p.listaPrecioId, 10),
-            precio: typeof p.precio === 'number' ? p.precio : parseFloat(p.precio)
-        })) : [];
     }
 
     /**
@@ -33,10 +29,6 @@ class ProductCreateDto {
             errors.push('El campo "costo" es obligatorio y debe ser un número decimal.');
         } else if (this.costo < 0) {
             errors.push('El campo "costo" no puede ser negativo.');
-        }
-
-        if (this.precios.some(p => isNaN(p.listaPrecioId) || p.listaPrecioId <= 0 || isNaN(p.precio) || p.precio < 0)) {
-            errors.push('La lista de precios contiene valores inválidos. Asegúrate de que los IDs de lista sean positivos y los precios no sean negativos.');
         }
 
         return {

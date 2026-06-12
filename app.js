@@ -1,10 +1,11 @@
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
-const userRoutes = require('./routes/userRoutes.js');
-const productRoutes = require('./routes/productRoutes.js');
 const empleadoRoutes = require('./routes/empleadoRoutes.js');
 const priceRoutes = require('./routes/priceRoutes.js');
+const userRoutes = require('./routes/userRoutes.js');
+const productRoutes = require('./routes/productRoutes.js');
 const ventaRoutes = require('./routes/ventaRoutes.js');
 const clienteRoutes = require('./routes/clienteRoutes.js');
 const sequelize = require('./config/db/dataBase.js');
@@ -14,16 +15,14 @@ const Price = require('./models/price.js');
 const Venta = require('./models/venta.js');
 const Detalle = require('./models/detalle.js');
 const Cliente = require('./models/cliente.js');
-const ListaPrecio = require('./models/listaPrecio.js');
-
-
-
-
+const ListaPrecios = require('./models/listaPrecios.js');
 
 const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 3000;
 
+// Middlewares globales
+app.use(cors());
 app.use(express.json());
 
 // Servir archivos estáticos del frontend

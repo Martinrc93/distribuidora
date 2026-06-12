@@ -161,6 +161,87 @@
         </div>
     </div>
 
+    <!-- Modal Editar Producto -->
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true"
+        data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="editProductModalLabel">Editar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm">
+                        <input type="hidden" id="editProductId">
+                        <!-- Datos Básicos -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-5">
+                                <label for="editProductoNombre" class="form-label text-secondary">Nombre del Producto</label>
+                                <input type="text" class="form-control" id="editProductoNombre" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editProductoMarca" class="form-label text-secondary">Marca</label>
+                                <input type="text" class="form-control" id="editProductoMarca" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editProductoCosto" class="form-label text-secondary">Costo ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editProductoCosto" required>
+                            </div>
+                        </div>
+
+                        <!-- Separador / Subtítulo -->
+                        <h6 class="text-white mb-3 border-bottom pb-2"
+                            style="font-size: 0.95rem; border-color: var(--border-color) !important;">Listas de Precios
+                        </h6>
+
+                        <!-- Grilla de Precios de Lista 1 a 8 -->
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="editPrecioLista1" class="form-label text-secondary">Lista 1 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista2" class="form-label text-secondary">Lista 2 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista2">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista3" class="form-label text-secondary">Lista 3 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista3">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista4" class="form-label text-secondary">Lista 4 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista4">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="editPrecioLista5" class="form-label text-secondary">Lista 5 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista5">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista6" class="form-label text-secondary">Lista 6 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista6">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista7" class="form-label text-secondary">Lista 7 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista7">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista8" class="form-label text-secondary">Lista 8 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista8">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnActualizarProducto"
+                        style="background-color: #2563eb; border: none;">Actualizar Producto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../sidebar.js"></script>

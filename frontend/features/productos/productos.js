@@ -6,6 +6,11 @@ let formAgregarProducto = null;
 let btnGuardarProducto = null;
 let modalAgregarProducto = null;
 
+// Modal Editar Producto
+let editProductModal = null;
+let modalEditarProducto = null;
+let btnActualizarProducto = null;
+
 // Service local para productos
 const productosService = {
     getAll: () => apiClient.get('/products'),
@@ -13,6 +18,12 @@ const productosService = {
     create: (productData) => apiClient.post('/products', productData),
     update: (id, productData) => apiClient.put(`/products/${id}`, productData),
     delete: (id) => apiClient.delete(`/products/${id}`),
+    
+    // Gestión de precios
+    getPricesByProduct: (productId) => apiClient.get(`/prices/product/${productId}`),
+    createPrice: (priceData) => apiClient.post('/prices', priceData),
+    updatePrice: (id, priceData) => apiClient.put(`/prices/${id}`, priceData),
+    deletePrice: (id) => apiClient.delete(`/prices/${id}`),
 };
 
 /**
@@ -23,6 +34,10 @@ function inicializarElementos() {
     formAgregarProducto = document.getElementById('addProductForm');
     btnGuardarProducto = document.querySelector('#addProductModal .modal-footer .btn-primary');
     
+    // Modal Editar
+    editProductModal = document.getElementById('editProductModal');
+    btnActualizarProducto = document.getElementById('btnActualizarProducto');
+
     if (!tablaProductos) {
         console.error('No se encontró la tabla de productos');
         return false;
@@ -30,6 +45,10 @@ function inicializarElementos() {
     
     if (btnGuardarProducto) {
         modalAgregarProducto = new bootstrap.Modal(document.getElementById('addProductModal'));
+    }
+
+    if (editProductModal) {
+        modalEditarProducto = new bootstrap.Modal(editProductModal);
     }
     
     return true;
@@ -67,7 +86,7 @@ async function cargarProductos() {
                 <td>${producto.nombre || 'N/A'}</td>
                 <td>${producto.marca || 'N/A'}</td>
                 <td>
-                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${producto.id}" title="Editar">
+                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${producto.id}" data-bs-toggle="modal" data-bs-target="#editProductModal" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm action-btn delete border-0 btn-eliminar" data-id="${producto.id}" title="Eliminar">
@@ -98,50 +117,6 @@ function agregarEventosTabla() {
             await eliminarProducto(id);
         });
     });
-
-    // Eventos para editar
-    document.querySelectorAll('.btn-editar').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute('data-id');
-            console.log('Editar producto:', id);
-            try {
-                // Obtener datos básicos del producto
-                const producto = await productosService.getById(id);
-                document.getElementById('productoNombre').value = producto.nombre || '';
-                document.getElementById('productoMarca').value = producto.marca || '';
-                document.getElementById('productoCosto').value = producto.costo || '';
-                
-                // Limpiar inputs de precio
-                for (let i = 1; i <= 8; i++) {
-                    const input = document.getElementById(`precioLista${i}`);
-                    if (input) input.value = '';
-                }
-
-                // Obtener precios
-                try {
-                    const respuestaPrecios = await apiClient.get(`/prices/product/${id}`);
-                    if (respuestaPrecios && Array.isArray(respuestaPrecios)) {
-                        respuestaPrecios.forEach(price => {
-                            const input = document.getElementById(`precioLista${price.listaPrecioId}`);
-                            if (input) {
-                                input.value = price.precio;
-                            }
-                        });
-                    }
-                } catch (errPrice) {
-                    console.error('Error al cargar precios del producto:', errPrice);
-                }
-
-                formAgregarProducto.setAttribute('data-edit-id', id);
-                document.getElementById('addProductModalLabel').textContent = 'Editar Producto';
-                modalAgregarProducto.show();
-            } catch (error) {
-                console.error('Error al cargar datos del producto:', error);
-                alert('Error al cargar datos del producto');
-            }
-        });
-    });
 }
 
 /**
@@ -161,8 +136,6 @@ async function eliminarProducto(id) {
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
         console.error('Error completo:', error);
-        console.error('Status:', error.status);
-        console.error('Data:', error.data);
         const mensaje = error.data?.mensaje || error.data?.error || error.message || 'Error desconocido';
         alert('Error al eliminar el producto: ' + mensaje);
     }
@@ -182,61 +155,163 @@ async function guardarProducto() {
         return;
     }
 
-    // Obtener precios
-    const precios = [];
-    for (let i = 1; i <= 8; i++) {
-        const val = parseFloat(document.getElementById(`precioLista${i}`).value);
-        if (!isNaN(val)) {
-            precios.push({ listaPrecioId: i, precio: val });
-        }
-    }
-
     try {
-        const editId = formAgregarProducto.getAttribute('data-edit-id');
-        if (editId) {
-            console.log('Actualizando producto:', editId, { nombre, marca, costo, precios });
-            await productosService.update(editId, {
-                nombre,
-                marca,
-                costo,
-                precios
-            });
-            alert('Producto actualizado exitosamente');
-            formAgregarProducto.removeAttribute('data-edit-id');
-        } else {
-            console.log('Creando producto:', { nombre, marca, costo, precios });
-            await productosService.create({
-                nombre,
-                marca,
-                costo,
-                precios
-            });
-            alert('Producto creado exitosamente');
+        console.log('Creando producto:', { nombre, marca, costo });
+        const resp = await productosService.create({
+            nombre,
+            marca,
+            costo
+        });
+
+        const newProductId = resp.id;
+
+        // Guardar precios de lista
+        for (let i = 1; i <= 8; i++) {
+            const valStr = document.getElementById(`precioLista${i}`).value;
+            if (valStr && valStr.trim() !== '') {
+                const precio = parseFloat(valStr);
+                if (!isNaN(precio)) {
+                    await productosService.createPrice({
+                        precio,
+                        productId: newProductId,
+                        listaPreciosId: i
+                    });
+                }
+            }
         }
 
+        alert('Producto creado exitosamente');
         formAgregarProducto.reset();
         modalAgregarProducto.hide();
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
-        console.error('Error al guardar producto:', error);
-        const mensaje = error.data?.errores?.[0] || error.data?.mensaje || error.message;
-        alert('Error al guardar el producto: ' + mensaje);
+        console.error('Error al crear producto:', error);
+        alert('Error al crear el producto: ' + error.message);
     }
 }
 
 /**
- * Inicializa los eventos del formulario
+ * Maneja la actualización de un producto existente
+ */
+async function actualizarProducto() {
+    const id = document.getElementById('editProductId').value;
+    const nombre = document.getElementById('editProductoNombre').value.trim();
+    const marca = document.getElementById('editProductoMarca').value.trim();
+    const costo = parseFloat(document.getElementById('editProductoCosto').value);
+
+    // Validar campos obligatorios
+    if (!nombre || !marca || isNaN(costo)) {
+        alert('Por favor completa todos los campos obligatorios');
+        return;
+    }
+
+    try {
+        console.log('Actualizando producto:', { id, nombre, marca, costo });
+        await productosService.update(id, {
+            nombre,
+            marca,
+            costo
+        });
+
+        // Obtener precios existentes
+        const respPrecios = await productosService.getPricesByProduct(id);
+        const preciosExistentes = Array.isArray(respPrecios) ? respPrecios : (respPrecios?.data || []);
+
+        // Sincronizar precios de lista 1 a 8
+        for (let i = 1; i <= 8; i++) {
+            const valStr = document.getElementById(`editPrecioLista${i}`).value.trim();
+            const precio = valStr !== '' ? parseFloat(valStr) : NaN;
+
+            // Encontrar si ya existe precio para esta lista
+            const precioExistente = preciosExistentes.find(p => p.listaPreciosId === i);
+
+            if (!isNaN(precio)) {
+                if (precioExistente) {
+                    // Si cambió el precio, actualizarlo
+                    if (parseFloat(precioExistente.precio) !== precio) {
+                        await productosService.updatePrice(precioExistente.id, {
+                            precio,
+                            productId: id,
+                            listaPreciosId: i
+                        });
+                    }
+                } else {
+                    // Si no existía, crearlo
+                    await productosService.createPrice({
+                        precio,
+                        productId: id,
+                        listaPreciosId: i
+                    });
+                }
+            } else {
+                // Si el input está vacío pero existía el registro de precio, eliminarlo
+                if (precioExistente) {
+                    await productosService.deletePrice(precioExistente.id);
+                }
+            }
+        }
+
+        alert('Producto actualizado exitosamente');
+        modalEditarProducto.hide();
+        await cargarProductos(); // Recargar la tabla
+    } catch (error) {
+        console.error('Error al actualizar producto:', error);
+        alert('Error al actualizar el producto: ' + error.message);
+    }
+}
+
+/**
+ * Inicializa los eventos del formulario y modales
  */
 function inicializarEventos() {
     if (btnGuardarProducto) {
         btnGuardarProducto.addEventListener('click', guardarProducto);
     }
 
-    const modalElement = document.getElementById('addProductModal');
-    if (modalElement) {
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            formAgregarProducto.removeAttribute('data-edit-id');
-            document.getElementById('addProductModalLabel').textContent = 'Añadir Nuevo Producto';
+    if (btnActualizarProducto) {
+        btnActualizarProducto.addEventListener('click', actualizarProducto);
+    }
+
+    if (editProductModal) {
+        // Cargar datos al abrir modal de edición
+        editProductModal.addEventListener('show.bs.modal', async (event) => {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+
+            // Limpiar inputs de precios primero
+            for (let i = 1; i <= 8; i++) {
+                document.getElementById(`editPrecioLista${i}`).value = '';
+            }
+
+            try {
+                // Cargar producto
+                const producto = await productosService.getById(id);
+                document.getElementById('editProductId').value = producto.id;
+                document.getElementById('editProductoNombre').value = producto.nombre || '';
+                document.getElementById('editProductoMarca').value = producto.marca || '';
+                document.getElementById('editProductoCosto').value = producto.costo || 0;
+
+                // Cargar precios de lista
+                const respPrecios = await productosService.getPricesByProduct(id);
+                const precios = Array.isArray(respPrecios) ? respPrecios : (respPrecios?.data || []);
+                
+                precios.forEach(p => {
+                    const input = document.getElementById(`editPrecioLista${p.listaPreciosId}`);
+                    if (input) {
+                        input.value = p.precio;
+                    }
+                });
+            } catch (error) {
+                console.error('Error al cargar datos del producto para editar:', error);
+                alert('Error al cargar datos del producto: ' + error.message);
+            }
+        });
+    }
+
+    // Resetear formulario de creación al cerrar
+    const addModalEl = document.getElementById('addProductModal');
+    if (addModalEl) {
+        addModalEl.addEventListener('hidden.bs.modal', () => {
             formAgregarProducto.reset();
         });
     }
@@ -246,7 +321,7 @@ function inicializarEventos() {
  * Inicializa la página
  */
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Página cargada, inicializando...');
+    console.log('Página de productos cargada, inicializando...');
     
     if (inicializarElementos()) {
         cargarProductos();
