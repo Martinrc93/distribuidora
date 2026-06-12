@@ -8,6 +8,7 @@ class EmpleadoResponseDto {
         this.id = String(empleado.id);
         this.nombre = empleado.nombre;
         this.apellido = empleado.apellido;
+        this.active = empleado.active;
     }
 
     /**

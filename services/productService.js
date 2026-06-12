@@ -40,30 +40,61 @@ exports.getById = async (id) => {
 
 /**
  * Crea un nuevo producto en la base de datos.
- * @param {{nombre: string, marca: string, costo: number}} productData Datos filtrados del producto.
+ * @param {{nombre: string, marca: string, costo: number, precios?: Array}} productData Datos filtrados del producto.
  */
 exports.create = async (productData) => {
-    return await Product.create({
+    const product = await Product.create({
         nombre: productData.nombre,
         marca: productData.marca,
         costo: productData.costo
     });
+
+    if (productData.precios && productData.precios.length > 0) {
+        for (const item of productData.precios) {
+            await Price.create({
+                precio: item.precio,
+                productId: product.id,
+                listaPrecioId: item.listaPrecioId
+            });
+        }
+    }
+
+    return product;
 };
 
 /**
  * Actualiza un producto existente por su ID.
  * @param {number} id ID del producto a actualizar.
- * @param {{nombre?: string, marca?: string, costo?: number}} productData Datos a modificar.
+ * @param {{nombre?: string, marca?: string, costo?: number, precios?: Array}} productData Datos a modificar.
  */
 exports.update = async (id, productData) => {
     const product = await Product.findByPk(id);
     if (!product) return null;
 
-    return await product.update({
+    await product.update({
         nombre: productData.nombre === undefined ? product.nombre : productData.nombre,
         marca: productData.marca === undefined ? product.marca : productData.marca,
         costo: productData.costo === undefined ? product.costo : productData.costo
     });
+
+    if (productData.precios && productData.precios.length > 0) {
+        for (const item of productData.precios) {
+            const existingPrice = await Price.findOne({
+                where: { productId: id, listaPrecioId: item.listaPrecioId }
+            });
+            if (existingPrice) {
+                await existingPrice.update({ precio: item.precio });
+            } else {
+                await Price.create({
+                    precio: item.precio,
+                    productId: id,
+                    listaPrecioId: item.listaPrecioId
+                });
+            }
+        }
+    }
+
+    return product;
 };
 
 /**

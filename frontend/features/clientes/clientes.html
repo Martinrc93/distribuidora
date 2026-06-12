@@ -90,9 +90,55 @@
         </div>
     </div>
 
+    <!-- Modal Ver Pedidos -->
+    <div class="modal fade" id="verPedidosModal" tabindex="-1" aria-labelledby="verPedidosModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="verPedidosModalLabel">Pedidos del Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Filtros de Fecha -->
+                    <div class="row g-3 mb-4 align-items-end">
+                        <div class="col-md-5">
+                            <label for="filtroFechaMin" class="form-label text-secondary">Fecha Mínima</label>
+                            <input type="date" class="form-control" id="filtroFechaMin">
+                        </div>
+                        <div class="col-md-5">
+                            <label for="filtroFechaMax" class="form-label text-secondary">Fecha Máxima</label>
+                            <input type="date" class="form-control" id="filtroFechaMax">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-secondary w-100" id="btnLimpiarFiltros" style="height: 42px; border: 1px solid var(--border-color); background: transparent; font-size: 0.9rem;">Hoy</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Pedidos -->
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
+                            <thead>
+                                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                    <th class="text-secondary">Fecha</th>
+                                    <th class="text-secondary">Empleado</th>
+                                    <th class="text-secondary">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaPedidosClienteBody">
+                                <!-- Pedidos dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../sidebar.js"></script>
     <script type="module" src="clientes.js"></script>
 </body>
-
 </html>

@@ -33,6 +33,19 @@ Price.init({
                 msg: 'El ID de producto es obligatorio.'
             }
         }
+    },
+    listaPrecioId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'ListaPrecios',
+            key: 'id'
+        },
+        validate: {
+            notNull: {
+                msg: 'El ID de la lista de precios es obligatorio.'
+            }
+        }
     }
 }, {
     sequelize,         // Instancia de conexión
@@ -41,11 +54,21 @@ Price.init({
 });
 
 // 3. Definición de Relaciones (Asociaciones)
+const ListaPrecio = require('./listaPrecio.js');
+
 Price.belongsTo(Product, { foreignKey: 'productId', as: 'producto' });
 Product.hasMany(Price, { 
     foreignKey: 'productId', 
     as: 'precios',
     onDelete: 'CASCADE',  // Eliminar precios cuando se elimine el producto
+    onUpdate: 'CASCADE'
+});
+
+Price.belongsTo(ListaPrecio, { foreignKey: 'listaPrecioId', as: 'listaPrecio' });
+ListaPrecio.hasMany(Price, {
+    foreignKey: 'listaPrecioId',
+    as: 'precios',
+    onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
 });
 

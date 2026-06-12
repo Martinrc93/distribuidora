@@ -101,12 +101,45 @@ function agregarEventosTabla() {
 
     // Eventos para editar
     document.querySelectorAll('.btn-editar').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const id = btn.getAttribute('data-id');
-            // TODO: Implementar edición
             console.log('Editar producto:', id);
-            alert('La función de edición aún no está implementada');
+            try {
+                // Obtener datos básicos del producto
+                const producto = await productosService.getById(id);
+                document.getElementById('productoNombre').value = producto.nombre || '';
+                document.getElementById('productoMarca').value = producto.marca || '';
+                document.getElementById('productoCosto').value = producto.costo || '';
+                
+                // Limpiar inputs de precio
+                for (let i = 1; i <= 8; i++) {
+                    const input = document.getElementById(`precioLista${i}`);
+                    if (input) input.value = '';
+                }
+
+                // Obtener precios
+                try {
+                    const respuestaPrecios = await apiClient.get(`/prices/product/${id}`);
+                    if (respuestaPrecios && Array.isArray(respuestaPrecios)) {
+                        respuestaPrecios.forEach(price => {
+                            const input = document.getElementById(`precioLista${price.listaPrecioId}`);
+                            if (input) {
+                                input.value = price.precio;
+                            }
+                        });
+                    }
+                } catch (errPrice) {
+                    console.error('Error al cargar precios del producto:', errPrice);
+                }
+
+                formAgregarProducto.setAttribute('data-edit-id', id);
+                document.getElementById('addProductModalLabel').textContent = 'Editar Producto';
+                modalAgregarProducto.show();
+            } catch (error) {
+                console.error('Error al cargar datos del producto:', error);
+                alert('Error al cargar datos del producto');
+            }
         });
     });
 }
@@ -149,21 +182,45 @@ async function guardarProducto() {
         return;
     }
 
-    try {
-        console.log('Creando producto:', { nombre, marca, costo });
-        await productosService.create({
-            nombre,
-            marca,
-            costo
-        });
+    // Obtener precios
+    const precios = [];
+    for (let i = 1; i <= 8; i++) {
+        const val = parseFloat(document.getElementById(`precioLista${i}`).value);
+        if (!isNaN(val)) {
+            precios.push({ listaPrecioId: i, precio: val });
+        }
+    }
 
-        alert('Producto creado exitosamente');
+    try {
+        const editId = formAgregarProducto.getAttribute('data-edit-id');
+        if (editId) {
+            console.log('Actualizando producto:', editId, { nombre, marca, costo, precios });
+            await productosService.update(editId, {
+                nombre,
+                marca,
+                costo,
+                precios
+            });
+            alert('Producto actualizado exitosamente');
+            formAgregarProducto.removeAttribute('data-edit-id');
+        } else {
+            console.log('Creando producto:', { nombre, marca, costo, precios });
+            await productosService.create({
+                nombre,
+                marca,
+                costo,
+                precios
+            });
+            alert('Producto creado exitosamente');
+        }
+
         formAgregarProducto.reset();
         modalAgregarProducto.hide();
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
-        console.error('Error al crear producto:', error);
-        alert('Error al crear el producto: ' + error.message);
+        console.error('Error al guardar producto:', error);
+        const mensaje = error.data?.errores?.[0] || error.data?.mensaje || error.message;
+        alert('Error al guardar el producto: ' + mensaje);
     }
 }
 
@@ -173,6 +230,15 @@ async function guardarProducto() {
 function inicializarEventos() {
     if (btnGuardarProducto) {
         btnGuardarProducto.addEventListener('click', guardarProducto);
+    }
+
+    const modalElement = document.getElementById('addProductModal');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            formAgregarProducto.removeAttribute('data-edit-id');
+            document.getElementById('addProductModalLabel').textContent = 'Añadir Nuevo Producto';
+            formAgregarProducto.reset();
+        });
     }
 }
 

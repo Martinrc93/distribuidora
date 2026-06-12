@@ -1,5 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/db/dataBase');
+const ListaPrecio = require('./listaPrecio.js');
 
 class Cliente extends Model {}
 
@@ -29,6 +30,19 @@ Cliente.init({
                 msg: 'La dirección no puede superar los 50 caracteres.'
             }
         }
+    },
+    listaPrecioId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'ListaPrecios',
+            key: 'id'
+        },
+        validate: {
+            notNull: {
+                msg: 'La lista de precios es obligatoria.'
+            }
+        }
     }
 }, {
     sequelize,
@@ -36,5 +50,9 @@ Cliente.init({
     tableName: 'Clientes',
     timestamps: true
 });
+
+// Relaciones
+Cliente.belongsTo(ListaPrecio, { foreignKey: 'listaPrecioId', as: 'listaPrecio' });
+ListaPrecio.hasMany(Cliente, { foreignKey: 'listaPrecioId', as: 'clientes' });
 
 module.exports = Cliente;

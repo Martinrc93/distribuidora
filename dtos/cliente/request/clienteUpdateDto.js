@@ -10,6 +10,9 @@ class ClienteUpdateDto {
         if (data.direccion !== undefined) {
             this.direccion = typeof data.direccion === 'string' ? data.direccion.trim() : null;
         }
+        if (data.listaPrecioId !== undefined) {
+            this.listaPrecioId = Number.isInteger(data.listaPrecioId) ? data.listaPrecioId : Number.parseInt(data.listaPrecioId, 10);
+        }
     }
 
     /**
@@ -31,6 +34,10 @@ class ClienteUpdateDto {
             if (this.direccion.length > 50) {
                 errors.push('El campo "direccion" no puede superar los 50 caracteres.');
             }
+        }
+
+        if (this.listaPrecioId !== undefined && (Number.isNaN(this.listaPrecioId) || this.listaPrecioId <= 0)) {
+            errors.push('El campo "listaPrecioId" debe ser un número entero válido mayor a cero.');
         }
 
         return {

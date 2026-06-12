@@ -6,6 +6,16 @@ let formAgregarEmpleado = null;
 let btnGuardarEmpleado = null;
 let modalAgregarEmpleado = null;
 
+// Elementos del modal Ver Pedidos
+let verPedidosModalElement = null;
+let modalVerPedidos = null;
+let tablaPedidosEmpleadoBody = null;
+let inputFechaMin = null;
+let inputFechaMax = null;
+let btnLimpiarFiltros = null;
+let currentEmpleadoId = null;
+let currentEmpleadoNombre = '';
+
 // Service local para empleados
 const empleadosService = {
     getAll: () => apiClient.get('/empleados'),
@@ -32,6 +42,16 @@ function inicializarElementos() {
         modalAgregarEmpleado = new bootstrap.Modal(document.getElementById('addEmpleadoModal'));
     }
     
+    // Inicializar elementos de Ver Pedidos
+    verPedidosModalElement = document.getElementById('verPedidosModal');
+    if (verPedidosModalElement) {
+        modalVerPedidos = new bootstrap.Modal(verPedidosModalElement);
+        tablaPedidosEmpleadoBody = document.getElementById('tablaPedidosEmpleadoBody');
+        inputFechaMin = document.getElementById('filtroFechaMin');
+        inputFechaMax = document.getElementById('filtroFechaMax');
+        btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
+    }
+    
     return true;
 }
 
@@ -41,6 +61,7 @@ function inicializarElementos() {
 async function cargarEmpleados() {
     try {
         console.log('Cargando empleados...');
+        // El backend devuelve paginación, la lista real está en respuesta.data
         const respuesta = await empleadosService.getAll();
         
         if (!respuesta || !respuesta.data) {
@@ -62,18 +83,13 @@ async function cargarEmpleados() {
 
         // Renderizar cada empleado
         empleados.forEach(empleado => {
-            const estadoBadge = empleado.active 
-                ? '<span class="badge bg-success">Activo</span>'
-                : '<span class="badge bg-secondary">Inactivo</span>';
-            
             const nombreCompleto = `${empleado.nombre || 'N/A'} ${empleado.apellido || 'N/A'}`;
             
             const fila = document.createElement('tr');
             fila.innerHTML = `
                 <td>${nombreCompleto}</td>
-                <td>${estadoBadge}</td>
                 <td>
-                    <button class="btn btn-sm" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;" disabled>Ver Pedidos</button>
+                    <button class="btn btn-sm btn-ver-pedidos" data-bs-toggle="modal" data-bs-target="#verPedidosModal" data-id="${empleado.id}" data-nombre="${nombreCompleto}" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
                 </td>
                 <td>
                     <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${empleado.id}" title="Editar">
@@ -110,12 +126,22 @@ function agregarEventosTabla() {
 
     // Eventos para editar
     document.querySelectorAll('.btn-editar').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const id = btn.getAttribute('data-id');
-            // TODO: Implementar edición
             console.log('Editar empleado:', id);
-            alert('La función de edición aún no está implementada');
+            try {
+                const empleado = await empleadosService.getById(id);
+                document.getElementById('empleadoNombre').value = empleado.nombre || '';
+                document.getElementById('empleadoApellido').value = empleado.apellido || '';
+                
+                formAgregarEmpleado.setAttribute('data-edit-id', id);
+                document.getElementById('addEmpleadoModalLabel').textContent = 'Editar Empleado';
+                modalAgregarEmpleado.show();
+            } catch (error) {
+                console.error('Error al cargar datos del empleado:', error);
+                alert('Error al cargar datos del empleado');
+            }
         });
     });
 }
@@ -137,20 +163,65 @@ async function eliminarEmpleado(id) {
         await cargarEmpleados(); // Recargar la tabla
     } catch (error) {
         console.error('Error completo:', error);
-        console.error('Status:', error.status);
-        console.error('Data:', error.data);
         const mensaje = error.data?.mensaje || error.data?.error || error.message || 'Error desconocido';
         alert('Error al eliminar el empleado: ' + mensaje);
     }
 }
 
 /**
- * Maneja la creación de un nuevo empleado
+ * Carga y renderiza los pedidos filtrados por fecha del empleado actual
+ */
+async function renderPedidosFiltered() {
+    if (!currentEmpleadoId) return;
+    
+    const minDate = inputFechaMin ? inputFechaMin.value : '';
+    try {
+        console.log(`Cargando pedidos para empleado ${currentEmpleadoId} en el día ${minDate}`);
+        const url = `/ventas/empleado/${currentEmpleadoId}?dia=${minDate}&limit=100`;
+        const response = await apiClient.get(url);
+        
+        if (!response || !response.data) {
+            console.error('Respuesta de pedidos inválida:', response);
+            return;
+        }
+
+        const pedidos = response.data;
+        tablaPedidosEmpleadoBody.innerHTML = '';
+
+        if (pedidos.length === 0) {
+            tablaPedidosEmpleadoBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-secondary py-3">No hay pedidos registrados para este periodo.</td>
+                </tr>
+            `;
+            return;
+        }
+
+        pedidos.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-white">${p.fechaEmision || 'N/A'}</td>
+                <td class="text-white">${p.clienteNombre || 'N/A'}</td>
+                <td class="text-white">$${p.total.toFixed(2)}</td>
+            `;
+            tablaPedidosEmpleadoBody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error al cargar pedidos del empleado:', error);
+        tablaPedidosEmpleadoBody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-danger py-3">Error al cargar pedidos: ${error.message}</td>
+            </tr>
+        `;
+    }
+}
+
+/**
+ * Maneja la creación o edición de un empleado
  */
 async function guardarEmpleado() {
     const nombre = document.getElementById('empleadoNombre').value.trim();
     const apellido = document.getElementById('empleadoApellido').value.trim();
-    const estado = document.getElementById('empleadoEstado').value;
 
     // Validar campos obligatorios
     if (!nombre || !apellido) {
@@ -159,34 +230,102 @@ async function guardarEmpleado() {
     }
 
     try {
-        console.log('Creando empleado:', { nombre, apellido, estado });
-        
-        // Convertir estado a booleano
-        const active = estado === 'activo' || estado === 'true' || estado === true;
-        
-        await empleadosService.create({
-            nombre,
-            apellido,
-            active
-        });
+        const editId = formAgregarEmpleado.getAttribute('data-edit-id');
+        if (editId) {
+            console.log('Actualizando empleado:', editId, { nombre, apellido });
+            await empleadosService.update(editId, { nombre, apellido });
+            alert('Empleado actualizado exitosamente');
+            formAgregarEmpleado.removeAttribute('data-edit-id');
+        } else {
+            console.log('Creando empleado:', { nombre, apellido });
+            await empleadosService.create({
+                nombre,
+                apellido
+            });
+            alert('Empleado creado exitosamente');
+        }
 
-        alert('Empleado creado exitosamente');
         formAgregarEmpleado.reset();
         modalAgregarEmpleado.hide();
         await cargarEmpleados(); // Recargar la tabla
     } catch (error) {
-        console.error('Error al crear empleado:', error);
-        const mensaje = error.data?.errores?.[0] || error.message;
-        alert('Error al crear el empleado: ' + mensaje);
+        console.error('Error al guardar empleado:', error);
+        const mensaje = error.data?.errores?.[0] || error.data?.mensaje || error.message;
+        alert('Error al guardar el empleado: ' + mensaje);
     }
 }
 
 /**
- * Inicializa los eventos del formulario
+ * Inicializa los eventos del formulario y filtros
  */
 function inicializarEventos() {
     if (btnGuardarEmpleado) {
         btnGuardarEmpleado.addEventListener('click', guardarEmpleado);
+    }
+
+    const modalElement = document.getElementById('addEmpleadoModal');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            formAgregarEmpleado.removeAttribute('data-edit-id');
+            document.getElementById('addEmpleadoModalLabel').textContent = 'Añadir Nuevo Empleado';
+            formAgregarEmpleado.reset();
+        });
+    }
+
+    if (verPedidosModalElement) {
+        // Cuando se abre el modal, establecer el empleado actual y la fecha de hoy
+        verPedidosModalElement.addEventListener('show.bs.modal', async (event) => {
+            const button = event.relatedTarget;
+            currentEmpleadoId = button.dataset.id;
+            currentEmpleadoNombre = button.dataset.nombre;
+            
+            const modalTitle = document.getElementById('verPedidosModalLabel');
+            if (modalTitle) {
+                modalTitle.textContent = `Pedidos de ${currentEmpleadoNombre}`;
+            }
+
+            // Por defecto, establecer la fecha de hoy en formato YYYY-MM-DD (hora local de la máquina)
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            
+            if (inputFechaMin) inputFechaMin.value = todayStr;
+            if (inputFechaMax) inputFechaMax.value = todayStr;
+
+            await renderPedidosFiltered();
+        });
+
+        // Escuchar cambios en los inputs de fecha
+        if (inputFechaMin) {
+            inputFechaMin.addEventListener('change', async () => {
+                if (inputFechaMax) inputFechaMax.value = inputFechaMin.value;
+                await renderPedidosFiltered();
+            });
+        }
+        if (inputFechaMax) {
+            inputFechaMax.addEventListener('change', async () => {
+                if (inputFechaMin) inputFechaMin.value = inputFechaMax.value;
+                await renderPedidosFiltered();
+            });
+        }
+
+        // Botón para volver a "Hoy"
+        if (btnLimpiarFiltros) {
+            btnLimpiarFiltros.addEventListener('click', async () => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+                
+                if (inputFechaMin) inputFechaMin.value = todayStr;
+                if (inputFechaMax) inputFechaMax.value = todayStr;
+                
+                await renderPedidosFiltered();
+            });
+        }
     }
 }
 

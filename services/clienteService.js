@@ -12,9 +12,12 @@ exports.getAll = async (page = 1, limit = 10) => {
     const limitNum = Number.parseInt(limit, 10) || 10;
     const offsetNum = (pageNum - 1) * limitNum;
 
+    const ListaPrecio = require('../models/listaPrecio.js');
+
     const { count, rows } = await Cliente.findAndCountAll({
         limit: limitNum,
         offset: offsetNum,
+        include: [{ model: ListaPrecio, as: 'listaPrecio' }],
         order: [['createdAt', 'DESC']]
     });
 
@@ -34,24 +37,28 @@ exports.getAll = async (page = 1, limit = 10) => {
  * @param {number} id ID del cliente.
  */
 exports.getById = async (id) => {
-    return await Cliente.findByPk(id);
+    const ListaPrecio = require('../models/listaPrecio.js');
+    return await Cliente.findByPk(id, {
+        include: [{ model: ListaPrecio, as: 'listaPrecio' }]
+    });
 };
 
 /**
  * Crea un nuevo cliente en la base de datos.
- * @param {{nombre: string, direccion?: string}} clienteData Datos filtrados del cliente.
+ * @param {{nombre: string, direccion?: string, listaPrecioId: number}} clienteData Datos filtrados del cliente.
  */
 exports.create = async (clienteData) => {
     return await Cliente.create({
         nombre: clienteData.nombre,
-        direccion: clienteData.direccion
+        direccion: clienteData.direccion,
+        listaPrecioId: clienteData.listaPrecioId
     });
 };
 
 /**
  * Actualiza un cliente existente por su ID.
  * @param {number} id ID del cliente a actualizar.
- * @param {{nombre?: string, direccion?: string}} clienteData Datos a modificar.
+ * @param {{nombre?: string, direccion?: string, listaPrecioId?: number}} clienteData Datos a modificar.
  */
 exports.update = async (id, clienteData) => {
     const cliente = await Cliente.findByPk(id);
@@ -59,7 +66,8 @@ exports.update = async (id, clienteData) => {
 
     return await cliente.update({
         nombre: clienteData.nombre === undefined ? cliente.nombre : clienteData.nombre,
-        direccion: clienteData.direccion === undefined ? cliente.direccion : clienteData.direccion
+        direccion: clienteData.direccion === undefined ? cliente.direccion : clienteData.direccion,
+        listaPrecioId: clienteData.listaPrecioId === undefined ? cliente.listaPrecioId : clienteData.listaPrecioId
     });
 };
 

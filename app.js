@@ -14,6 +14,7 @@ const Price = require('./models/price.js');
 const Venta = require('./models/venta.js');
 const Detalle = require('./models/detalle.js');
 const Cliente = require('./models/cliente.js');
+const ListaPrecio = require('./models/listaPrecio.js');
 
 
 
