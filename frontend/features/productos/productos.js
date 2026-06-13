@@ -96,7 +96,7 @@ async function cargarProductos(page = 1) {
         
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta inválida:', respuesta);
-            alert('Error: respuesta inválida del servidor');
+            showToast('Error: respuesta inválida del servidor', 'error');
             return;
         }
         
@@ -211,7 +211,8 @@ function renderPaginationControls(totalItems) {
  */
 async function eliminarProducto(id) {
     // Confirmar eliminación
-    if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+    const confirmado = await showCustomConfirm('¿Estás seguro de que deseas eliminar este producto?');
+    if (!confirmado) {
         return;
     }
 
@@ -219,12 +220,12 @@ async function eliminarProducto(id) {
         console.log('Eliminando producto:', id);
         const respuesta = await productosService.delete(id);
         console.log('Respuesta de eliminación:', respuesta);
-        alert('Producto eliminado exitosamente');
+        showToast('Producto eliminado exitosamente');
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
         console.error('Error completo:', error);
         const mensaje = error.data?.mensaje || error.data?.error || error.message || 'Error desconocido';
-        alert('Error al eliminar el producto: ' + mensaje);
+        showToast('Error al eliminar el producto: ' + mensaje, 'error');
     }
 }
 
@@ -238,7 +239,7 @@ async function guardarProducto() {
 
     // Validar campos obligatorios
     if (!nombre || !marca || isNaN(costo)) {
-        alert('Por favor completa todos los campos obligatorios');
+        showToast('Por favor completa todos los campos obligatorios', 'error');
         return;
     }
 
@@ -267,13 +268,13 @@ async function guardarProducto() {
             }
         }
 
-        alert('Producto creado exitosamente');
+        showToast('Producto creado exitosamente');
         formAgregarProducto.reset();
         modalAgregarProducto.hide();
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
         console.error('Error al crear producto:', error);
-        alert('Error al crear el producto: ' + error.message);
+        showToast('Hubo un error al crear el producto.', 'error');
     }
 }
 
@@ -288,7 +289,7 @@ async function actualizarProducto() {
 
     // Validar campos obligatorios
     if (!nombre || !marca || isNaN(costo)) {
-        alert('Por favor completa todos los campos obligatorios');
+        showToast('Por favor completa todos los campos obligatorios', 'error');
         return;
     }
 
@@ -338,12 +339,12 @@ async function actualizarProducto() {
             }
         }
 
-        alert('Producto actualizado exitosamente');
+        showToast('Producto actualizado exitosamente');
         modalEditarProducto.hide();
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
         console.error('Error al actualizar producto:', error);
-        alert('Error al actualizar el producto: ' + error.message);
+        showToast('Hubo un error al actualizar el producto.', 'error');
     }
 }
 
@@ -431,7 +432,7 @@ async function cargarMarcas() {
                         await cargarMarcas(); // Recargar la lista
                     } catch (error) {
                         console.error('Error al actualizar marca:', error);
-                        alert('Error al actualizar la marca: ' + (error.data?.errores?.join(', ') || error.message));
+                        showToast('Hubo un error al actualizar la marca.', 'error');
                     }
                 });
             });
@@ -451,7 +452,7 @@ async function guardarMarca(e) {
     const nombre = nombreInput.value.trim();
 
     if (!nombre) {
-        alert('Por favor introduce el nombre de la marca');
+        showToast('Por favor introduce el nombre de la marca', 'error');
         return;
     }
 
@@ -460,9 +461,10 @@ async function guardarMarca(e) {
         await marcasService.create({ nombre });
         nombreInput.value = '';
         await cargarMarcas(); // Recargar la lista
+        showToast('Marca registrada exitosamente');
     } catch (error) {
         console.error('Error al crear marca:', error);
-        alert('Error al crear la marca: ' + (error.data?.errores?.join(', ') || error.message));
+        showToast('Hubo un error al registrar la marca.', 'error');
     }
 }
 
@@ -470,7 +472,8 @@ async function guardarMarca(e) {
  * Elimina una marca con confirmación
  */
 async function eliminarMarca(id) {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta marca?')) {
+    const confirmado = await showCustomConfirm('¿Estás seguro de que deseas eliminar esta marca?');
+    if (!confirmado) {
         return;
     }
 
@@ -481,7 +484,7 @@ async function eliminarMarca(id) {
     } catch (error) {
         console.error('Error al eliminar marca:', error);
         const mensaje = error.data?.mensaje || error.data?.error || error.message || 'Error desconocido';
-        alert('No se pudo eliminar la marca. Probablemente esté en uso por algún producto.');
+        showToast('No se pudo eliminar la marca. Probablemente esté en uso por algún producto.', 'error');
     }
 }
 
@@ -528,7 +531,7 @@ function inicializarEventos() {
                 });
             } catch (error) {
                 console.error('Error al cargar datos del producto para editar:', error);
-                alert('Error al cargar datos del producto: ' + error.message);
+                showToast('Hubo un error al cargar los datos del producto.', 'error');
             }
         });
     }
@@ -563,6 +566,115 @@ function inicializarEventos() {
             }, 300);
         });
     }
+}
+
+/**
+ * Muestra una notificación toast elegante y autodescartable
+ * @param {string} mensaje - El texto a mostrar
+ * @param {string} tipo - El tipo de toast ('success' o 'error')
+ */
+function showToast(mensaje, tipo = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    // Crear el elemento del toast
+    const toast = document.createElement('div');
+    toast.className = `custom-toast ${tipo}`;
+    
+    const iconHtml = tipo === 'error' 
+        ? '<i class="fas fa-times-circle"></i>' 
+        : '<i class="fas fa-check-circle"></i>';
+
+    toast.innerHTML = `
+        <div class="custom-toast-icon">
+            ${iconHtml}
+        </div>
+        <div class="custom-toast-content">${mensaje}</div>
+        <button type="button" class="custom-toast-close">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+
+    // Animación de entrada: forzar reflow y agregar la clase 'show'
+    toast.offsetHeight; // force reflow
+    toast.classList.add('show');
+
+    // Función para cerrar el toast de forma animada
+    const closeToast = () => {
+        toast.classList.remove('show');
+        // Esperar a que termine la transición de salida antes de remover del DOM
+        toast.addEventListener('transitionend', () => {
+            toast.remove();
+        });
+    };
+
+    // Cerrar al hacer clic en el botón de cerrar
+    const closeBtn = toast.querySelector('.custom-toast-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeToast);
+    }
+
+    // Auto-descartar después de 3 segundos (3000 ms)
+    setTimeout(closeToast, 3000);
+}
+
+/**
+ * Muestra una ventana modal de confirmación personalizada
+ * @param {string} mensaje - Mensaje a mostrar en la ventana
+ * @returns {Promise<boolean>} Promesa que se resuelve con true si acepta, false si cancela
+ */
+function showCustomConfirm(mensaje) {
+    return new Promise((resolve) => {
+        // Crear el overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-confirm-overlay';
+        
+        overlay.innerHTML = `
+            <div class="custom-confirm-box">
+                <div class="custom-confirm-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h5>Confirmación</h5>
+                </div>
+                <div class="custom-confirm-body">
+                    <p>${mensaje}</p>
+                </div>
+                <div class="custom-confirm-footer">
+                    <button class="btn btn-secondary btn-confirm-cancel">Cancelar</button>
+                    <button class="btn btn-danger btn-confirm-accept">Aceptar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Animación de entrada
+        setTimeout(() => overlay.classList.add('show'), 10);
+        
+        const closeConfirm = (res) => {
+            overlay.classList.remove('show');
+            overlay.addEventListener('transitionend', () => {
+                overlay.remove();
+            });
+            resolve(res);
+        };
+        
+        overlay.querySelector('.btn-confirm-cancel').addEventListener('click', () => {
+            closeConfirm(false);
+        });
+        
+        overlay.querySelector('.btn-confirm-accept').addEventListener('click', () => {
+            closeConfirm(true);
+        });
+        
+        // Cerrar al hacer clic en el overlay (cancelar)
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeConfirm(false);
+            }
+        });
+    });
 }
 
 /**

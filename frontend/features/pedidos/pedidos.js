@@ -239,24 +239,24 @@ async function agregarProductoTemporal() {
     const cantidad = parseFloat(document.getElementById('productoCantidad').value);
 
     if (isNaN(cantidad) || cantidad <= 0) {
-        alert('Por favor, ingrese una cantidad mayor a 0.');
+        showToast('Por favor, ingrese una cantidad mayor a 0.', 'error');
         return;
     }
 
     if (!clientName) {
-        alert('Debe seleccionar primero un cliente para obtener su lista de precios.');
+        showToast('Debe seleccionar primero un cliente para obtener su lista de precios.', 'error');
         return;
     }
 
     const client = clientes.find(c => c.nombre === clientName);
     if (!client) {
-        alert('El cliente ingresado no es válido. Por favor, selecciónelo de la lista.');
+        showToast('El cliente ingresado no es válido. Por favor, selecciónelo de la lista.', 'error');
         return;
     }
 
     const product = productos.find(p => p.nombre === productName);
     if (!product) {
-        alert('El producto ingresado no es válido. Por favor, selecciónelo de la lista.');
+        showToast('El producto ingresado no es válido. Por favor, selecciónelo de la lista.', 'error');
         return;
     }
 
@@ -271,7 +271,7 @@ async function agregarProductoTemporal() {
         const priceRecord = prices.find(p => p.listaPreciosId === clientListId);
 
         if (!priceRecord) {
-            alert(`No se encontró un precio para este producto en la Lista de Precios ${clientListId} del cliente.`);
+            showToast(`No se encontró un precio para este producto en la Lista de Precios ${clientListId} del cliente.`, 'error');
             btnAgregarProducto.disabled = false;
             return;
         }
@@ -298,7 +298,7 @@ async function agregarProductoTemporal() {
         document.getElementById('productoCantidad').value = '1';
     } catch (error) {
         console.error('Error al agregar producto al pedido:', error);
-        alert('Error al consultar el precio del producto.');
+        showToast('Hubo un error al consultar el precio del producto.', 'error');
     } finally {
         btnAgregarProducto.disabled = false;
     }
@@ -365,18 +365,18 @@ async function guardarPedido() {
 
     const employee = empleados.find(e => `${e.nombre} ${e.apellido}` === empName);
     if (!employee) {
-        alert('Debe seleccionar un empleado válido.');
+        showToast('Debe seleccionar un empleado válido.', 'error');
         return;
     }
 
     const client = clientes.find(c => c.nombre === clientName);
     if (!client) {
-        alert('Debe seleccionar un cliente válido.');
+        showToast('Debe seleccionar un cliente válido.', 'error');
         return;
     }
 
     if (detallesTemporales.length === 0) {
-        alert('Debe agregar al menos un producto al pedido antes de confirmar.');
+        showToast('Debe agregar al menos un producto al pedido antes de confirmar.', 'error');
         return;
     }
 
@@ -395,12 +395,12 @@ async function guardarPedido() {
         console.log('Creando pedido:', payload);
         await apiClient.post('/ventas', payload);
         
-        alert('Pedido creado exitosamente.');
+        showToast('Pedido creado exitosamente.');
         modalAgregarPedido.hide();
         await cargarVentas();
     } catch (error) {
         console.error('Error al crear pedido:', error);
-        alert('Error al registrar el pedido: ' + (error.data?.errores?.[0] || error.data?.error || error.message));
+        showToast('Hubo un error al registrar el pedido.', 'error');
     } finally {
         btnConfirmarPedido.disabled = false;
     }
@@ -414,18 +414,18 @@ async function agregarProductoEdicion() {
     const cantidad = parseFloat(document.getElementById('editProductoCantidad').value);
 
     if (isNaN(cantidad) || cantidad <= 0) {
-        alert('Por favor, ingrese una cantidad mayor a 0.');
+        showToast('Por favor, ingrese una cantidad mayor a 0.', 'error');
         return;
     }
 
     if (!currentClienteEdicion) {
-        alert('Error: cliente de edición no inicializado.');
+        showToast('Error: cliente de edición no inicializado.', 'error');
         return;
     }
 
     const product = productos.find(p => p.nombre === productName);
     if (!product) {
-        alert('El producto ingresado no es válido. Por favor, selecciónelo de la lista.');
+        showToast('El producto ingresado no es válido. Por favor, selecciónelo de la lista.', 'error');
         return;
     }
 
@@ -440,7 +440,7 @@ async function agregarProductoEdicion() {
         const priceRecord = prices.find(p => p.listaPreciosId === clientListId);
 
         if (!priceRecord) {
-            alert(`No se encontró un precio para este producto en la Lista de Precios ${clientListId} del cliente.`);
+            showToast(`No se encontró un precio para este producto en la Lista de Precios ${clientListId} del cliente.`, 'error');
             btnEditAgregarProducto.disabled = false;
             return;
         }
@@ -467,7 +467,7 @@ async function agregarProductoEdicion() {
         document.getElementById('editProductoCantidad').value = '1';
     } catch (error) {
         console.error('Error al agregar producto al pedido en edición:', error);
-        alert('Error al consultar el precio del producto.');
+        showToast('Hubo un error al consultar el precio del producto.', 'error');
     } finally {
         btnEditAgregarProducto.disabled = false;
     }
@@ -561,7 +561,7 @@ function imprimirConsolidado() {
     const items = Object.entries(consolidado).map(([nombre, cantidad]) => ({ nombre, cantidad }));
 
     if (items.length === 0) {
-        alert('No hay pedidos activos registrados el día de hoy para enviar al depósito.');
+        showToast('No hay pedidos activos registrados el día de hoy para enviar al depósito.', 'error');
         return;
     }
 
@@ -706,7 +706,7 @@ function inicializarEventos() {
             const active = editPedidoEstado.value === 'activo';
 
             if (detallesEdicion.length === 0) {
-                alert('Debe tener al menos un producto agregado al pedido.');
+                showToast('Debe tener al menos un producto agregado al pedido.', 'error');
                 return;
             }
 
@@ -724,12 +724,12 @@ function inicializarEventos() {
                 console.log(`Guardando cambios en pedido ${id}:`, payload);
                 await apiClient.put(`/ventas/${id}`, payload);
                 
-                alert('Pedido actualizado correctamente.');
+                showToast('Pedido actualizado correctamente.');
                 modalEditarPedido.hide();
                 await cargarVentas();
             } catch (error) {
                 console.error('Error al actualizar pedido:', error);
-                alert('Error al actualizar el pedido: ' + (error.data?.error || error.message));
+                showToast('Hubo un error al actualizar el pedido.', 'error');
             } finally {
                 btnActualizarPedido.disabled = false;
             }
@@ -863,6 +863,58 @@ function inicializarCombobox(inputId, optionsList, onSelectCallback = null) {
             closeDropdown();
         }
     });
+}
+
+/**
+ * Muestra una notificación toast elegante y autodescartable
+ * @param {string} mensaje - El texto a mostrar
+ * @param {string} tipo - El tipo de toast ('success' o 'error')
+ */
+function showToast(mensaje, tipo = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    // Crear el elemento del toast
+    const toast = document.createElement('div');
+    toast.className = `custom-toast ${tipo}`;
+    
+    const iconHtml = tipo === 'error' 
+        ? '<i class="fas fa-times-circle"></i>' 
+        : '<i class="fas fa-check-circle"></i>';
+
+    toast.innerHTML = `
+        <div class="custom-toast-icon">
+            ${iconHtml}
+        </div>
+        <div class="custom-toast-content">${mensaje}</div>
+        <button type="button" class="custom-toast-close">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+
+    // Animación de entrada: forzar reflow y agregar la clase 'show'
+    toast.offsetHeight; // force reflow
+    toast.classList.add('show');
+
+    // Función para cerrar el toast de forma animada
+    const closeToast = () => {
+        toast.classList.remove('show');
+        // Esperar a que termine la transición de salida antes de remover del DOM
+        toast.addEventListener('transitionend', () => {
+            toast.remove();
+        });
+    };
+
+    // Cerrar al hacer clic en el botón de cerrar
+    const closeBtn = toast.querySelector('.custom-toast-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeToast);
+    }
+
+    // Auto-descartar después de 3 segundos (3000 ms)
+    setTimeout(closeToast, 3000);
 }
 
 /**
