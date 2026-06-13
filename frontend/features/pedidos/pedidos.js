@@ -34,6 +34,7 @@ let btnEditAgregarProducto = null;
 let clientes = [];
 let empleados = [];
 let productos = [];
+let marcas = [];
 let ventas = [];
 let detallesTemporales = [];
 let detallesEdicion = [];
@@ -96,21 +97,61 @@ function inicializarElementos() {
 async function cargarDatosAuxiliares() {
     try {
         console.log('Cargando datos auxiliares...');
-        const [respClientes, respEmpleados, respProductos] = await Promise.all([
+        const [respClientes, respEmpleados, respProductos, respMarcas] = await Promise.all([
             apiClient.get('/clientes'),
             apiClient.get('/empleados'),
-            apiClient.get('/products')
+            apiClient.get('/products/all'),
+            apiClient.get('/marcas/all')
         ]);
 
         clientes = respClientes?.data || [];
         empleados = respEmpleados?.data || [];
-        productos = respProductos?.data || [];
+        productos = Array.isArray(respProductos) ? respProductos : (respProductos?.data || []);
+        marcas = Array.isArray(respMarcas) ? respMarcas : (respMarcas?.data || []);
 
         // Inicializar comboboxes de búsqueda interactivos
         inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.active).map(e => `${e.nombre} ${e.apellido}`));
         inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre));
-        inicializarCombobox('productoSelect', productos.map(p => p.nombre));
         inicializarCombobox('editProductoSelect', productos.map(p => p.nombre));
+
+        // Inicializar combobox de marcas con callback para filtrar productos
+        inicializarCombobox('marcaSelect', marcas.map(m => m.nombre), (selectedBrand) => {
+            const productInput = document.getElementById('productoSelect');
+            if (productInput) {
+                productInput.value = '';
+                if (!selectedBrand || selectedBrand.trim() === '') {
+                    productInput.comboboxOptions = productos.map(p => p.nombre);
+                } else {
+                    const filtered = productos.filter(p => p.marca === selectedBrand);
+                    productInput.comboboxOptions = filtered.map(p => p.nombre);
+                }
+            }
+        });
+
+        // Escuchar cuando el input de marca se limpie o modifique manualmente
+        const marcaInput = document.getElementById('marcaSelect');
+        if (marcaInput) {
+            marcaInput.addEventListener('input', () => {
+                const val = marcaInput.value.trim();
+                const productInput = document.getElementById('productoSelect');
+                if (productInput) {
+                    if (val === '') {
+                        productInput.comboboxOptions = productos.map(p => p.nombre);
+                    } else {
+                        const matchedBrand = marcas.find(m => m.nombre.toLowerCase() === val.toLowerCase());
+                        if (matchedBrand) {
+                            const filtered = productos.filter(p => p.marca.toLowerCase() === matchedBrand.nombre.toLowerCase());
+                            productInput.comboboxOptions = filtered.map(p => p.nombre);
+                        } else {
+                            productInput.comboboxOptions = productos.map(p => p.nombre);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inicializar combobox de productos
+        inicializarCombobox('productoSelect', productos.map(p => p.nombre));
 
         console.log('Datos auxiliares cargados.');
     } catch (error) {
@@ -702,6 +743,11 @@ function inicializarEventos() {
             formAgregarPedido.reset();
             detallesTemporales = [];
             renderDetallesTemporales();
+            // Restablecer las opciones de todos los productos en el combobox
+            const productInput = document.getElementById('productoSelect');
+            if (productInput) {
+                productInput.comboboxOptions = productos.map(p => p.nombre);
+            }
             // Cerrar dropdowns de combobox abiertos
             document.querySelectorAll('.combobox-dropdown').forEach(d => d.classList.add('d-none'));
             document.querySelectorAll('.custom-combobox-container').forEach(c => c.classList.remove('open'));
@@ -751,7 +797,8 @@ function inicializarCombobox(inputId, optionsList, onSelectCallback = null) {
     }
 
     function populateDropdown(filterText = '') {
-        const filtered = optionsList.filter(opt => 
+        const currentOptions = input.comboboxOptions || optionsList;
+        const filtered = currentOptions.filter(opt => 
             opt.toLowerCase().includes(filterText.toLowerCase())
         );
 

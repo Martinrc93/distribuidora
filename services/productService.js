@@ -1,19 +1,32 @@
+const { Op } = require('sequelize');
 const Product = require('../models/product.js');
 const Price = require('../models/price.js');
 const Detalle = require('../models/detalle.js');
+const Marca = require('../models/marca.js');
 
 /**
  * Obtiene todos los productos con soporte para paginación.
  * @param {number} page Número de página (1-based).
  * @param {number} limit Cantidad de elementos por página.
  */
-exports.getAll = async (page = 1, limit = 10) => {
+exports.getAll = async (page = 1, limit = 10, q = '') => {
     const pageNum = Number.parseInt(page, 10) || 1;
     const limitNum = Number.parseInt(limit, 10) || 10;
     const offsetNum = (pageNum - 1) * limitNum;
 
+    const where = {};
+    if (q && q.trim() !== '') {
+        const queryStr = `%${q.trim()}%`;
+        where[Op.or] = [
+            { nombre: { [Op.like]: queryStr } },
+            { '$marca.nombre$': { [Op.like]: queryStr } }
+        ];
+    }
+
     // findAndCountAll obtiene los registros y el conteo total para calcular las páginas
     const { count, rows } = await Product.findAndCountAll({
+        where,
+        include: [{ model: Marca, as: 'marca' }],
         limit: limitNum,
         offset: offsetNum,
         order: [['createdAt', 'DESC']]
@@ -35,6 +48,7 @@ exports.getAll = async (page = 1, limit = 10) => {
  */
 exports.getAllWithoutPagination = async () => {
     return await Product.findAll({
+        include: [{ model: Marca, as: 'marca' }],
         order: [['createdAt', 'DESC']]
     });
 };
@@ -44,7 +58,9 @@ exports.getAllWithoutPagination = async () => {
  * @param {number} id ID del producto.
  */
 exports.getById = async (id) => {
-    return await Product.findByPk(id);
+    return await Product.findByPk(id, {
+        include: [{ model: Marca, as: 'marca' }]
+    });
 };
 
 /**
@@ -52,10 +68,18 @@ exports.getById = async (id) => {
  * @param {{nombre: string, marca: string, costo: number}} productData Datos filtrados del producto.
  */
 exports.create = async (productData) => {
-    return await Product.create({
+    const [marcaObj] = await Marca.findOrCreate({
+        where: { nombre: productData.marca }
+    });
+
+    const nuevoProducto = await Product.create({
         nombre: productData.nombre,
-        marca: productData.marca,
+        marcaId: marcaObj.id,
         costo: productData.costo
+    });
+
+    return await nuevoProducto.reload({
+        include: [{ model: Marca, as: 'marca' }]
     });
 };
 
@@ -68,10 +92,22 @@ exports.update = async (id, productData) => {
     const product = await Product.findByPk(id);
     if (!product) return null;
 
-    return await product.update({
+    let marcaId = product.marcaId;
+    if (productData.marca !== undefined) {
+        const [marcaObj] = await Marca.findOrCreate({
+            where: { nombre: productData.marca }
+        });
+        marcaId = marcaObj.id;
+    }
+
+    await product.update({
         nombre: productData.nombre === undefined ? product.nombre : productData.nombre,
-        marca: productData.marca === undefined ? product.marca : productData.marca,
+        marcaId: marcaId,
         costo: productData.costo === undefined ? product.costo : productData.costo
+    });
+
+    return await product.reload({
+        include: [{ model: Marca, as: 'marca' }]
     });
 };
 

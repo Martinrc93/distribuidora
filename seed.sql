@@ -23,17 +23,29 @@ INSERT INTO "Clientes" (nombre, direccion, listaPreciosId, createdAt, updatedAt)
 ('MiniMarket Express', 'Calle Corrientes 567', 2, datetime('now'), datetime('now')),
 ('Almacén de Don Pepe', 'Belgrano 890', 1, datetime('now'), datetime('now'));
 
-INSERT INTO "Products" (nombre, marca, costo, createdAt, updatedAt) VALUES
-('Leche Entera 1L', 'La Serenísima', 1.00, datetime('now'), datetime('now')),
-('Pan Lactal Familiar', 'Bimbo', 1.60, datetime('now'), datetime('now')),
-('Gaseosa Cola 2.25L', 'Coca-Cola', 2.20, datetime('now'), datetime('now')),
-('Arroz Integral 1kg', 'Gallo', 1.30, datetime('now'), datetime('now')),
-('Aceite de Girasol 1.5L', 'Natura', 3.40, datetime('now'), datetime('now')),
-('Fideos Tallarines 500g', 'Lucchetti', 0.80, datetime('now'), datetime('now')),
-('Café Molido 500g', 'Cabrales', 4.80, datetime('now'), datetime('now')),
-('Azúcar Común 1kg', 'Ledesma', 0.65, datetime('now'), datetime('now')),
-('Yerba Mate 1kg', 'Playadito', 3.80, datetime('now'), datetime('now')),
-('Galletitas de Chocolate', 'Chocolinas', 1.25, datetime('now'), datetime('now'));
+INSERT INTO "Marcas" (nombre, createdAt, updatedAt) VALUES
+('La Serenísima', datetime('now'), datetime('now')),
+('Bimbo', datetime('now'), datetime('now')),
+('Coca-Cola', datetime('now'), datetime('now')),
+('Gallo', datetime('now'), datetime('now')),
+('Natura', datetime('now'), datetime('now')),
+('Lucchetti', datetime('now'), datetime('now')),
+('Cabrales', datetime('now'), datetime('now')),
+('Ledesma', datetime('now'), datetime('now')),
+('Playadito', datetime('now'), datetime('now')),
+('Chocolinas', datetime('now'), datetime('now'));
+
+INSERT INTO "Products" (nombre, marcaId, costo, createdAt, updatedAt) VALUES
+('Leche Entera 1L', 1, 1.00, datetime('now'), datetime('now')),
+('Pan Lactal Familiar', 2, 1.60, datetime('now'), datetime('now')),
+('Gaseosa Cola 2.25L', 3, 2.20, datetime('now'), datetime('now')),
+('Arroz Integral 1kg', 4, 1.30, datetime('now'), datetime('now')),
+('Aceite de Girasol 1.5L', 5, 3.40, datetime('now'), datetime('now')),
+('Fideos Tallarines 500g', 6, 0.80, datetime('now'), datetime('now')),
+('Café Molido 500g', 7, 4.80, datetime('now'), datetime('now')),
+('Azúcar Común 1kg', 8, 0.65, datetime('now'), datetime('now')),
+('Yerba Mate 1kg', 9, 3.80, datetime('now'), datetime('now')),
+('Galletitas de Chocolate', 10, 1.25, datetime('now'), datetime('now'));
 
 INSERT INTO "Empleados" (nombre, apellido, active, createdAt, updatedAt) VALUES 
 ('Martín', 'Gómez', 1, datetime('now'), datetime('now')), 

@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = '';
 
 async function request(endpoint, options = {}) {
     const url = `${BASE_URL}${endpoint}`;

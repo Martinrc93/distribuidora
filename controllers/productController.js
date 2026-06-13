@@ -8,8 +8,8 @@ const { ProductResponseDto } = require('../dtos/product/response');
  */
 exports.getAll = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
-        const result = await productService.getAll(page, limit);
+        const { page = 1, limit = 10, q = '' } = req.query;
+        const result = await productService.getAll(page, limit, q);
         
         // Mapear los datos de los productos utilizando el Response DTO
         result.data = ProductResponseDto.fromModel(result.data);

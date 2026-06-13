@@ -29,10 +29,10 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '', fecha
     if (fechaMin || fechaMax) {
         const dateFilter = {};
         if (fechaMin && fechaMin.trim() !== '') {
-            dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000Z`);
+            dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000`);
         }
         if (fechaMax && fechaMax.trim() !== '') {
-            dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999Z`);
+            dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999`);
         }
         where.fechaEmision = dateFilter;
     } else {
@@ -46,8 +46,8 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '', fecha
             filtroDia = `${year}-${month}-${day}`;
         }
 
-        const startOfDay = new Date(`${filtroDia.trim()}T00:00:00.000Z`);
-        const endOfDay = new Date(`${filtroDia.trim()}T23:59:59.999Z`);
+        const startOfDay = new Date(`${filtroDia.trim()}T00:00:00.000`);
+        const endOfDay = new Date(`${filtroDia.trim()}T23:59:59.999`);
         
         where.fechaEmision = {
             [Op.between]: [startOfDay, endOfDay]
@@ -290,12 +290,12 @@ exports.getByCliente = async (clienteId, page = 1, limit = 10, fechaMin = '', fe
     let hasDateFilter = false;
 
     if (fechaMin && fechaMin.trim() !== '') {
-        dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000Z`);
+        dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000`);
         hasDateFilter = true;
     }
 
     if (fechaMax && fechaMax.trim() !== '') {
-        dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999Z`);
+        dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999`);
         hasDateFilter = true;
     }
 
@@ -344,15 +344,15 @@ exports.getAll = async (page = 1, limit = 10, dia = '', fechaMin = '', fechaMax 
     if (fechaMin || fechaMax) {
         const dateFilter = {};
         if (fechaMin && fechaMin.trim() !== '') {
-            dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000Z`);
+            dateFilter[Op.gte] = new Date(`${fechaMin.trim()}T00:00:00.000`);
         }
         if (fechaMax && fechaMax.trim() !== '') {
-            dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999Z`);
+            dateFilter[Op.lte] = new Date(`${fechaMax.trim()}T23:59:59.999`);
         }
         where.fechaEmision = dateFilter;
     } else if (dia && dia.trim() !== '') {
-        const startOfDay = new Date(`${dia.trim()}T00:00:00.000Z`);
-        const endOfDay = new Date(`${dia.trim()}T23:59:59.999Z`);
+        const startOfDay = new Date(`${dia.trim()}T00:00:00.000`);
+        const endOfDay = new Date(`${dia.trim()}T23:59:59.999`);
         where.fechaEmision = {
             [Op.between]: [startOfDay, endOfDay]
         };
