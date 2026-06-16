@@ -18,10 +18,10 @@ INSERT INTO "Users" (nombre, createdAt, updatedAt) VALUES
 ('Ana Martínez', datetime('now'), datetime('now')),
 ('Lucía Fernández', datetime('now'), datetime('now'));
 
-INSERT INTO "Clientes" (nombre, direccion, listaPreciosId, createdAt, updatedAt) VALUES
-('Supermercado Alborada', 'Av. Rivadavia 1234', 1, datetime('now'), datetime('now')),
-('MiniMarket Express', 'Calle Corrientes 567', 2, datetime('now'), datetime('now')),
-('Almacén de Don Pepe', 'Belgrano 890', 1, datetime('now'), datetime('now'));
+INSERT INTO "Clientes" (nombre, direccion, contacto, listaPreciosId, createdAt, updatedAt) VALUES
+('Supermercado Alborada', 'Av. Rivadavia 1234', '11-4567-8901', 1, datetime('now'), datetime('now')),
+('MiniMarket Express', 'Calle Corrientes 567', '11-2345-6789', 2, datetime('now'), datetime('now')),
+('Almacén de Don Pepe', 'Belgrano 890', '11-9876-5432', 1, datetime('now'), datetime('now'));
 
 INSERT INTO "Marcas" (nombre, createdAt, updatedAt) VALUES
 ('La Serenísima', datetime('now'), datetime('now')),

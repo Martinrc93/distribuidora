@@ -150,7 +150,7 @@ async function cargarClientes() {
             fila.innerHTML = `
                 <td>${cliente.nombre || 'N/A'}</td>
                 <td>${cliente.direccion || 'N/A'}</td>
-                <td>Sin contacto</td>
+                <td>${cliente.contacto || 'Sin contacto'}</td>
                 <td>
                     <button class="btn btn-sm btn-ver-pedidos" data-id="${cliente.id}" data-nombre="${cliente.nombre}" data-bs-toggle="modal" data-bs-target="#verPedidosModal" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
                 </td>
@@ -158,7 +158,7 @@ async function cargarClientes() {
                     <span class="badge" style="background-color: rgba(37, 99, 235, 0.1); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.25); font-weight: 500; font-size: 0.8rem; padding: 0.35rem 0.65rem; border-radius: 6px;">${listaPreciosNombre}</span>
                 </td>
                 <td>
-                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${cliente.id}" data-nombre="${cliente.nombre || ''}" data-direccion="${cliente.direccion || ''}" data-listaprecios="${cliente.listaPreciosId || 1}" data-bs-toggle="modal" data-bs-target="#editClienteModal" title="Editar">
+                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${cliente.id}" data-nombre="${cliente.nombre || ''}" data-direccion="${cliente.direccion || ''}" data-contacto="${cliente.contacto || ''}" data-listaprecios="${cliente.listaPreciosId || 1}" data-bs-toggle="modal" data-bs-target="#editClienteModal" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm action-btn delete border-0 btn-eliminar" data-id="${cliente.id}" title="Eliminar">
@@ -219,6 +219,7 @@ async function eliminarCliente(id) {
 async function guardarCliente() {
     const nombre = document.getElementById('clienteNombre').value.trim();
     const direccion = document.getElementById('clienteDireccion').value.trim();
+    const contacto = document.getElementById('clienteContacto').value.trim();
     const listaPreciosId = document.getElementById('clienteListaPrecios').value;
 
     // Validar campos obligatorios
@@ -228,10 +229,11 @@ async function guardarCliente() {
     }
 
     try {
-        console.log('Creando cliente:', { nombre, direccion, listaPreciosId });
+        console.log('Creando cliente:', { nombre, direccion, contacto, listaPreciosId });
         await clientesService.create({
             nombre,
             direccion,
+            contacto,
             listaPreciosId
         });
 
@@ -252,6 +254,7 @@ async function actualizarCliente() {
     const id = document.getElementById('editClienteId').value;
     const nombre = document.getElementById('editClienteNombre').value.trim();
     const direccion = document.getElementById('editClienteDireccion').value.trim();
+    const contacto = document.getElementById('editClienteContacto').value.trim();
     const listaPreciosId = document.getElementById('editClienteListaPrecios').value;
 
     // Validar campos obligatorios
@@ -261,10 +264,11 @@ async function actualizarCliente() {
     }
 
     try {
-        console.log('Actualizando cliente:', { id, nombre, direccion, listaPreciosId });
+        console.log('Actualizando cliente:', { id, nombre, direccion, contacto, listaPreciosId });
         await clientesService.update(id, {
             nombre,
             direccion,
+            contacto,
             listaPreciosId
         });
 
@@ -319,11 +323,13 @@ function inicializarEventos() {
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const direccion = button.getAttribute('data-direccion');
+            const contacto = button.getAttribute('data-contacto');
             const listaPreciosId = button.getAttribute('data-listaprecios');
 
             document.getElementById('editClienteId').value = id;
             document.getElementById('editClienteNombre').value = nombre;
             document.getElementById('editClienteDireccion').value = direccion;
+            document.getElementById('editClienteContacto').value = contacto || '';
             document.getElementById('editClienteListaPrecios').value = listaPreciosId || 1;
         });
     }
