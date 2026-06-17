@@ -86,7 +86,7 @@ exports.updateStatus = async (req, res) => {
  */
 exports.getUltimaVentaByCliente = async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = req.params.clienteId || req.params.id;
         const ultimaVenta = await ventaService.getUltimaVenta(id);
         
         if (!ultimaVenta) {

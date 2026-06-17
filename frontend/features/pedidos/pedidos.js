@@ -111,7 +111,15 @@ async function cargarDatosAuxiliares() {
 
         // Inicializar comboboxes de búsqueda interactivos
         inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.active).map(e => `${e.nombre} ${e.apellido}`));
-        inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre));
+        inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre), (selectedClientName) => {
+            const client = clientes.find(c => c.nombre === selectedClientName);
+            const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
+            if (client && btnRepetir) {
+                btnRepetir.classList.remove('d-none');
+            } else if (btnRepetir) {
+                btnRepetir.classList.add('d-none');
+            }
+        });
         inicializarCombobox('editProductoSelect', productos.map(p => p.nombre));
 
         // Inicializar combobox de marcas con callback para filtrar productos
@@ -218,6 +226,9 @@ async function cargarVentas() {
                     </button>
                     <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${venta.id}" data-active="${venta.active}" data-bs-toggle="modal" data-bs-target="#editPedidoModal" title="Editar Pedido">
                         <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm action-btn border-0 btn-imprimir-fila" data-id="${venta.id}" title="Imprimir Comprobante">
+                        <i class="fas fa-print"></i>
                     </button>
                 </td>
             `;
@@ -539,6 +550,9 @@ function renderDetallesEdicion() {
 /**
  * Agrupa todos los pedidos activos de hoy y genera el ticket consolidado para depósito.
  */
+/**
+ * Agrupa todos los pedidos activos de hoy y genera el ticket consolidado para depósito.
+ */
 function imprimirConsolidado() {
     const consolidado = {};
     
@@ -569,20 +583,319 @@ function imprimirConsolidado() {
     const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
     const folioStr = today.toISOString().split('T')[0].replace(/-/g, '');
 
-    // Rellenar datos en la sección de impresión en el DOM actual
-    document.getElementById('printFolio').textContent = folioStr;
-    document.getElementById('printFecha').textContent = formattedDate;
+    const printSection = document.getElementById('printSection');
+    if (printSection) {
+        printSection.innerHTML = `
+            <div class="header-container">
+                <div class="header-left">
+                    <p class="recibo-label">Recibo de venta</p>
+                    <h1>DISTRI-PIPIPUCH</h1>
+                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <p class="info-line">Cliente: CONSOLIDADO DE CARGA</p>
+                    <p class="info-line">Depósito General</p>
+                </div>
+                <div class="header-right">
+                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
+                </div>
+            </div>
+            
+            <div class="meta-section">
+                <span>Folio: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
+            </div>
 
-    const printTableBody = document.getElementById('printTableBody');
-    printTableBody.innerHTML = items.map(item => `
-        <tr>
-            <td># ${item.nombre.toUpperCase()}</td>
-            <td class="cant-cell">${item.cantidad}</td>
-        </tr>
-    `).join('');
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-producto">PRODUCTO</th>
+                        <th class="col-cantidad" style="text-align: center;">CANTIDAD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map(item => `
+                        <tr>
+                            <td># ${item.nombre.toUpperCase()}</td>
+                            <td class="cant-cell">${item.cantidad}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        window.print();
+    }
+}
 
-    // Invocar el diálogo de impresión directamente en la misma pestaña
-    window.print();
+/**
+ * Agrupa los pedidos activos de hoy para un empleado específico y genera su consolidado.
+ */
+function imprimirEmpleado(empleadoId) {
+    const employee = empleados.find(e => String(e.id) === String(empleadoId));
+    if (!employee) {
+        showToast('Empleado no encontrado.', 'error');
+        return;
+    }
+
+    const consolidado = {};
+    const employeeName = `${employee.nombre} ${employee.apellido}`;
+
+    // Filtrar ventas de este empleado (sólo las activas)
+    const employeeVentas = ventas.filter(v => v.active && String(v.empleadoId) === String(empleadoId));
+
+    employeeVentas.forEach(venta => {
+        venta.detalles.forEach(d => {
+            const product = productos.find(p => p.id === d.productId);
+            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+            
+            if (consolidado[productName]) {
+                consolidado[productName] += d.cantidad;
+            } else {
+                consolidado[productName] = d.cantidad;
+            }
+        });
+    });
+
+    const items = Object.entries(consolidado).map(([nombre, cantidad]) => ({ nombre, cantidad }));
+
+    if (items.length === 0) {
+        showToast(`No hay pedidos activos asignados a ${employeeName} el día de hoy.`, 'error');
+        return;
+    }
+
+    const today = new Date();
+    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    const folioStr = today.toISOString().split('T')[0].replace(/-/g, '') + `-EMP${empleadoId}`;
+
+    const printSection = document.getElementById('printSection');
+    if (printSection) {
+        printSection.innerHTML = `
+            <div class="header-container">
+                <div class="header-left">
+                    <p class="recibo-label">Detalle por Empleado</p>
+                    <h1>DISTRI-PIPIPUCH</h1>
+                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <p class="info-line">Empleado: ${employeeName.toUpperCase()}</p>
+                    <p class="info-line">Consolidado de Carga Asignada</p>
+                </div>
+                <div class="header-right">
+                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
+                </div>
+            </div>
+            
+            <div class="meta-section">
+                <span>Folio: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-producto">PRODUCTO</th>
+                        <th class="col-cantidad" style="text-align: center;">CANTIDAD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map(item => `
+                        <tr>
+                            <td># ${item.nombre.toUpperCase()}</td>
+                            <td class="cant-cell">${item.cantidad}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        window.print();
+    }
+}
+
+/**
+ * Genera e imprime el ticket de detalle para el cliente.
+ */
+function imprimirCliente(ventaId) {
+    const venta = ventas.find(v => String(v.id) === String(ventaId));
+    if (!venta) {
+        showToast('Pedido no encontrado.', 'error');
+        return;
+    }
+
+    const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+    const empleadoName = venta.empleadoNombre && venta.empleadoApellido
+        ? `${venta.empleadoNombre} ${venta.empleadoApellido}`
+        : (venta.empleadoNombre || 'N/A');
+
+    const formattedDate = venta.fechaEmision || 'N/A';
+    const folioStr = venta.id.toString().padStart(6, '0');
+
+    const detailsHtml = venta.detalles.map(d => {
+        const product = productos.find(p => p.id === d.productId);
+        const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+        return `
+            <tr>
+                <td>${productName.toUpperCase()}</td>
+                <td class="text-center">${d.cantidad}</td>
+                <td class="text-right">$${Number(d.precio).toFixed(2)}</td>
+                <td class="text-right">$${Number(d.subtotal).toFixed(2)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    const totalStr = Number(venta.total).toFixed(2);
+
+    const printSection = document.getElementById('printSection');
+    if (printSection) {
+        printSection.innerHTML = `
+            <div class="header-container">
+                <div class="header-left">
+                    <p class="recibo-label">Comprobante de Pedido</p>
+                    <h1>DISTRI-PIPIPUCH</h1>
+                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
+                    <p class="info-line">Vendedor: ${empleadoName}</p>
+                </div>
+                <div class="header-right">
+                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
+                </div>
+            </div>
+            
+            <div class="meta-section">
+                <span>Pedido N°: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">PRODUCTO</th>
+                        <th class="text-center" style="width: 15%;">CANTIDAD</th>
+                        <th class="text-right" style="width: 17%;">PRECIO UNIT.</th>
+                        <th class="text-right" style="width: 18%;">SUBTOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${detailsHtml}
+                    <tr style="border-top: 2px solid #000; font-weight: bold;">
+                        <td colspan="3" class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL A PAGAR:</td>
+                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${totalStr}</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+        window.print();
+    }
+}
+
+/**
+ * Obtiene el último pedido del cliente actual y carga sus productos con los precios vigentes.
+ */
+async function repetirUltimoPedido() {
+    const clientName = document.getElementById('pedidoCliente').value.trim();
+    if (!clientName) return;
+
+    const client = clientes.find(c => c.nombre === clientName);
+    if (!client) {
+        showToast('Debe seleccionar un cliente válido.', 'error');
+        return;
+    }
+
+    try {
+        const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
+        if (btnRepetir) {
+            btnRepetir.disabled = true;
+            btnRepetir.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+        }
+
+        // Obtener el último pedido del cliente
+        const respuesta = await apiClient.get(`/ventas/ultimo/${client.id}`);
+        if (!respuesta || !respuesta.id) {
+            showToast('No se encontró un pedido anterior para este cliente.', 'error');
+            return;
+        }
+
+        const ultimoPedido = respuesta;
+        if (!ultimoPedido.detalles || ultimoPedido.detalles.length === 0) {
+            showToast('El último pedido no contiene productos.', 'error');
+            return;
+        }
+
+        // Cargar precios actuales de todos los productos en paralelo
+        const promesasPrecios = ultimoPedido.detalles.map(d => 
+            apiClient.get(`/prices/product/${d.productId}`)
+                .then(resp => ({ detail: d, resp }))
+                .catch(err => ({ detail: d, error: err }))
+        );
+
+        const resultadosPrecios = await Promise.all(promesasPrecios);
+        const nuevosDetalles = [];
+
+        for (const item of resultadosPrecios) {
+            const d = item.detail;
+            const product = productos.find(p => p.id === d.productId);
+            const productName = product ? product.nombre : `Producto #${d.productId}`;
+
+            let price = d.precio;
+            let priceId = d.priceId;
+
+            // Intentar usar el precio actual si está disponible en la lista del cliente
+            if (!item.error) {
+                const prices = Array.isArray(item.resp) ? item.resp : (item.resp?.data || []);
+                const clientListId = client.listaPreciosId || 1;
+                const priceRecord = prices.find(p => p.listaPreciosId === clientListId);
+                
+                if (priceRecord) {
+                    price = priceRecord.precio;
+                    priceId = priceRecord.id;
+                }
+            }
+
+            nuevosDetalles.push({
+                productId: d.productId,
+                priceId: priceId,
+                nombre: productName,
+                precio: price,
+                cantidad: d.cantidad,
+                subtotal: parseFloat((d.cantidad * price).toFixed(2))
+            });
+        }
+
+        // Sobrescribir detalles temporales
+        detallesTemporales = nuevosDetalles;
+        renderDetallesTemporales();
+
+        showToast('Último pedido cargado correctamente.', 'success');
+
+    } catch (error) {
+        console.error('Error al repetir último pedido:', error);
+        const status = error.status || error.response?.status;
+        if (status === 404) {
+            showToast('Este cliente no posee pedidos anteriores registrados.', 'error');
+        } else {
+            showToast('Error al intentar cargar el último pedido del cliente.', 'error');
+        }
+    } finally {
+        const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
+        if (btnRepetir) {
+            btnRepetir.disabled = false;
+            btnRepetir.innerHTML = '<i class="fas fa-redo"></i> Cargar último pedido';
+        }
+    }
+}
+
+/**
+ * Llena el combo select del modal de empleado.
+ */
+function updateImprimirEmpleadoSelect() {
+    const select = document.getElementById('selectImprimirEmpleado');
+    if (!select) return;
+    const activeEmployees = empleados.filter(e => e.active);
+    select.innerHTML = '<option value="">-- Seleccione un Empleado --</option>' + 
+        activeEmployees.map(e => `<option value="${e.id}">${e.nombre} ${e.apellido}</option>`).join('');
+}
+
+/**
+ * Llena el combo select del modal de cliente con pedidos activos de hoy.
+ */
+function updateImprimirClienteSelect() {
+    const select = document.getElementById('selectImprimirCliente');
+    if (!select) return;
+    const activeVentas = ventas.filter(v => v.active);
+    select.innerHTML = '<option value="">-- Seleccione un Pedido --</option>' + 
+        activeVentas.map(v => `<option value="${v.id}">${v.clienteNombre || 'Cliente Desconocido'} - $${Number(v.total).toFixed(2)}</option>`).join('');
 }
 
 /**
@@ -604,10 +917,87 @@ function inicializarEventos() {
         btnEditAgregarProducto.addEventListener('click', agregarProductoEdicion);
     }
 
-    // Evento para imprimir consolidado para depósito
-    const btnImprimirDeposito = document.getElementById('btnImprimirDeposito');
-    if (btnImprimirDeposito) {
-        btnImprimirDeposito.addEventListener('click', imprimirConsolidado);
+    // Evento de input en Selección de Cliente para mostrar/ocultar "Repetir último pedido"
+    const inputCliente = document.getElementById('pedidoCliente');
+    if (inputCliente) {
+        inputCliente.addEventListener('input', () => {
+            const val = inputCliente.value.trim();
+            const client = clientes.find(c => c.nombre === val);
+            const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
+            if (client && btnRepetir) {
+                btnRepetir.classList.remove('d-none');
+            } else if (btnRepetir) {
+                btnRepetir.classList.add('d-none');
+            }
+        });
+    }
+
+    // Evento para "Repetir último pedido"
+    const btnRepetirUltimoPedido = document.getElementById('btnRepetirUltimoPedido');
+    if (btnRepetirUltimoPedido) {
+        btnRepetirUltimoPedido.addEventListener('click', repetirUltimoPedido);
+    }
+
+    // Eventos para las opciones de impresión
+    const btnOptImprimirDeposito = document.getElementById('btnOptImprimirDeposito');
+    if (btnOptImprimirDeposito) {
+        btnOptImprimirDeposito.addEventListener('click', (e) => {
+            e.preventDefault();
+            imprimirConsolidado();
+        });
+    }
+
+    // Modal de impresión por Empleado: poblar opciones al abrir
+    const modalImprimirEmpleadoEl = document.getElementById('modalImprimirEmpleado');
+    if (modalImprimirEmpleadoEl) {
+        modalImprimirEmpleadoEl.addEventListener('show.bs.modal', updateImprimirEmpleadoSelect);
+    }
+
+    // Botón confirmar impresión por Empleado
+    const btnConfirmarImprimirEmpleado = document.getElementById('btnConfirmarImprimirEmpleado');
+    if (btnConfirmarImprimirEmpleado) {
+        btnConfirmarImprimirEmpleado.addEventListener('click', () => {
+            const empVal = document.getElementById('selectImprimirEmpleado').value;
+            if (!empVal) {
+                showToast('Debe seleccionar un empleado.', 'error');
+                return;
+            }
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalImprimirEmpleado'));
+            if (modalInstance) modalInstance.hide();
+            imprimirEmpleado(parseInt(empVal, 10));
+        });
+    }
+
+    // Modal de impresión por Cliente: poblar opciones al abrir
+    const modalImprimirClienteEl = document.getElementById('modalImprimirCliente');
+    if (modalImprimirClienteEl) {
+        modalImprimirClienteEl.addEventListener('show.bs.modal', updateImprimirClienteSelect);
+    }
+
+    // Botón confirmar impresión por Cliente
+    const btnConfirmarImprimirCliente = document.getElementById('btnConfirmarImprimirCliente');
+    if (btnConfirmarImprimirCliente) {
+        btnConfirmarImprimirCliente.addEventListener('click', () => {
+            const ventaVal = document.getElementById('selectImprimirCliente').value;
+            if (!ventaVal) {
+                showToast('Debe seleccionar un pedido.', 'error');
+                return;
+            }
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalImprimirCliente'));
+            if (modalInstance) modalInstance.hide();
+            imprimirCliente(parseInt(ventaVal, 10));
+        });
+    }
+
+    // Delegación de eventos para botón de imprimir en la tabla de pedidos
+    if (tablaPedidos) {
+        tablaPedidos.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-imprimir-fila');
+            if (btn) {
+                const id = parseInt(btn.getAttribute('data-id'), 10);
+                imprimirCliente(id);
+            }
+        });
     }
 
     // Al abrir el modal de visualización de detalles
@@ -748,6 +1138,9 @@ function inicializarEventos() {
             if (productInput) {
                 productInput.comboboxOptions = productos.map(p => p.nombre);
             }
+            // Ocultar botón de repetir último pedido
+            const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
+            if (btnRepetir) btnRepetir.classList.add('d-none');
             // Cerrar dropdowns de combobox abiertos
             document.querySelectorAll('.combobox-dropdown').forEach(d => d.classList.add('d-none'));
             document.querySelectorAll('.custom-combobox-container').forEach(c => c.classList.remove('open'));

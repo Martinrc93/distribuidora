@@ -8,6 +8,9 @@ router.get('/empleado/:empleadoId', ventaController.getByEmpleado);
 // Obtener todas las ventas activas de un cliente con paginación y filtros de fecha
 router.get('/cliente/:clienteId', ventaController.getVentasByCliente);
 
+// Obtener el último pedido activo de un cliente
+router.get('/ultimo/:clienteId', ventaController.getUltimaVentaByCliente);
+
 // Obtener todas las ventas con paginación
 router.get('/', ventaController.getAll);
 

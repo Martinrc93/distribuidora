@@ -22,6 +22,9 @@ let currentClienteId = null;
 let currentClienteNombre = '';
 const todayStr = new Date().toISOString().split('T')[0];
 
+let productos = [];
+let pedidosClienteCurrent = [];
+
 // Service local para clientes
 const clientesService = {
     getAll: () => apiClient.get('/clientes'),
@@ -29,6 +32,7 @@ const clientesService = {
     create: (clienteData) => apiClient.post('/clientes', clienteData),
     update: (id, clienteData) => apiClient.put(`/clientes/${id}`, clienteData),
     delete: (id) => apiClient.delete(`/clientes/${id}`),
+    getProductos: () => apiClient.get('/products/all'),
     getPedidos: (clienteId, fechaMin, fechaMax) => 
         apiClient.get(`/ventas/cliente/${clienteId}?limit=50&fechaMin=${fechaMin}&fechaMax=${fechaMax}`),
 };
@@ -79,28 +83,28 @@ async function cargarPedidosCliente() {
 
     try {
         console.log(`Cargando pedidos para cliente ${currentClienteId} entre ${minDate} y ${maxDate}...`);
-        tablaPedidosBody.innerHTML = '<tr><td colspan="3" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>';
+        tablaPedidosBody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>';
 
         const respuesta = await clientesService.getPedidos(currentClienteId, minDate, maxDate);
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta de pedidos inválida:', respuesta);
-            tablaPedidosBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Error al cargar pedidos</td></tr>';
+            tablaPedidosBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">Error al cargar pedidos</td></tr>';
             return;
         }
 
-        const pedidos = respuesta.data;
+        pedidosClienteCurrent = respuesta.data;
         tablaPedidosBody.innerHTML = '';
 
-        if (pedidos.length === 0) {
+        if (pedidosClienteCurrent.length === 0) {
             tablaPedidosBody.innerHTML = `
                 <tr>
-                    <td colspan="3" class="text-secondary py-3">No hay pedidos registrados para este periodo.</td>
+                    <td colspan="4" class="text-secondary py-3">No hay pedidos registrados para este periodo.</td>
                 </tr>
             `;
             return;
         }
 
-        pedidos.forEach(p => {
+        pedidosClienteCurrent.forEach(p => {
             const empleadoCompleto = p.empleadoNombre && p.empleadoApellido 
                 ? `${p.empleadoNombre} ${p.empleadoApellido}` 
                 : (p.empleadoNombre || 'N/A');
@@ -109,12 +113,78 @@ async function cargarPedidosCliente() {
                 <td class="text-white">${p.fechaEmision || 'N/A'}</td>
                 <td class="text-white">${empleadoCompleto}</td>
                 <td class="text-white">$${Number(p.total).toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-sm action-btn border-0 btn-ver-detalle-pedido" data-id="${p.id}" title="Ver Detalle de Pedido">
+                        <i class="fas fa-eye" style="color: #60a5fa;"></i>
+                    </button>
+                </td>
             `;
             tablaPedidosBody.appendChild(tr);
         });
     } catch (error) {
         console.error('Error al cargar pedidos del cliente:', error);
-        tablaPedidosBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-3">Error: ${error.message}</td></tr>`;
+        tablaPedidosBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">Error: ${error.message}</td></tr>`;
+    }
+}
+
+/**
+ * Carga todos los productos en memoria para poder asociar nombres a IDs
+ */
+async function cargarProductos() {
+    try {
+        const respuesta = await clientesService.getProductos();
+        productos = Array.isArray(respuesta) ? respuesta : (respuesta?.data || []);
+        console.log('Productos cargados en Clientes:', productos.length);
+    } catch (error) {
+        console.error('Error al cargar productos en Clientes:', error);
+    }
+}
+
+/**
+ * Busca y muestra el detalle de productos del pedido seleccionado del historial
+ */
+function mostrarDetallePedidoCliente(pedidoId) {
+    const pedido = pedidosClienteCurrent.find(p => String(p.id) === String(pedidoId));
+    if (!pedido) {
+        console.error('Pedido no encontrado en historial cargado:', pedidoId);
+        return;
+    }
+
+    const empleadoCompleto = pedido.empleadoNombre && pedido.empleadoApellido 
+        ? `${pedido.empleadoNombre} ${pedido.empleadoApellido}` 
+        : (pedido.empleadoNombre || 'N/A');
+
+    document.getElementById('detPedidoFecha').textContent = pedido.fechaEmision || 'N/A';
+    document.getElementById('detPedidoEmpleado').textContent = empleadoCompleto;
+
+    const tbody = document.getElementById('detPedidoProductosBody');
+    tbody.innerHTML = '';
+
+    if (!pedido.detalles || pedido.detalles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-secondary py-3">No hay productos en este pedido</td></tr>';
+    } else {
+        pedido.detalles.forEach(d => {
+            const product = productos.find(p => p.id === d.productId);
+            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-white text-start">${productName}</td>
+                <td class="text-white">$${Number(d.precio).toFixed(2)}</td>
+                <td class="text-white">${d.cantidad}</td>
+                <td class="text-white text-end">$${Number(d.subtotal).toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById('detPedidoTotal').textContent = `$${Number(pedido.total).toFixed(2)}`;
+
+    // Mostrar modal
+    const modalEl = document.getElementById('verDetallePedidoModal');
+    if (modalEl) {
+        const modalInstance = new bootstrap.Modal(modalEl);
+        modalInstance.show();
     }
 }
 
@@ -315,6 +385,27 @@ function inicializarEventos() {
             inputFechaMax.value = todayStr;
             cargarPedidosCliente();
         });
+
+        // Delegación de eventos para ver el detalle de un pedido en el historial
+        tablaPedidosBody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-ver-detalle-pedido');
+            if (btn) {
+                const id = parseInt(btn.getAttribute('data-id'), 10);
+                mostrarDetallePedidoCliente(id);
+            }
+        });
+
+        // Corregir el scroll del body al cerrar el modal superpuesto de detalles
+        const detModalEl = document.getElementById('verDetallePedidoModal');
+        if (detModalEl) {
+            detModalEl.addEventListener('hidden.bs.modal', () => {
+                const listModal = document.getElementById('verPedidosModal');
+                if (listModal && listModal.classList.contains('show')) {
+                    document.body.classList.add('modal-open');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+        }
     }
 
     if (editClienteModal) {
@@ -459,6 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (inicializarElementos()) {
         cargarClientes();
+        cargarProductos();
         inicializarEventos();
     }
 });
