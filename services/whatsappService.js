@@ -17,7 +17,8 @@ function initWhatsApp() {
 
     client = new Client({
         authStrategy: new LocalAuth({
-            clientId: 'distribuidora-session'
+            clientId: 'distribuidora-session',
+            dataPath: process.env.WHATSAPP_AUTH_PATH || './'
         }),
         puppeteer: {
             headless: true,

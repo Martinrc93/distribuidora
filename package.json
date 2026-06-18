@@ -2,10 +2,12 @@
   "name": "distribuidora",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "main.js",
   "scripts": {
     "start": "node app.js",
     "seed": "node seed.js",
+    "electron:start": "electron .",
+    "electron:build": "electron-builder build --win",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -24,6 +26,36 @@
     "whatsapp-web.js": "^1.34.7"
   },
   "devDependencies": {
-    "electron": "^42.3.0"
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.distribuidora.app",
+    "productName": "Distribuidora",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "frontend/assets/logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Distribuidora"
+    },
+    "files": [
+      "**/*",
+      "!dist",
+      "!node_modules/electron",
+      "!node_modules/electron-builder",
+      "!.git",
+      "!*.sqlite",
+      "!.wwebjs_auth/**/*",
+      "!.wwebjs_cache/**/*"
+    ],
+    "asar": true
   }
 }

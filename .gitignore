@@ -22,3 +22,6 @@ Thumbs.db
 # Autenticación de WhatsApp (Secretos locales)
 .wwebjs_auth/
 .wwebjs_cache/
+
+# Carpetas de compilación (Electron)
+dist/
