@@ -448,37 +448,143 @@ async function cargarMarcas() {
 }
 
 /**
- * Actualiza los datalists de marcas en los formularios de añadir y editar producto
+ * Actualiza los dropdowns personalizados de marcas en los formularios de añadir y editar producto
  */
 async function actualizarSelectsMarcas() {
     try {
-        console.log('Actualizando datalists de marcas...');
+        console.log('Actualizando dropdowns personalizados de marcas...');
         const marcas = await marcasService.getAll();
         const listaMarcas = Array.isArray(marcas) ? marcas : (marcas?.data || []);
 
-        const datalistAdd = document.getElementById('marcasListAdd');
-        const datalistEdit = document.getElementById('marcasListEdit');
+        const containers = [
+            { optionsId: 'optionsProductoMarca', inputId: 'productoMarca' },
+            { optionsId: 'optionsEditProductoMarca', inputId: 'editProductoMarca' }
+        ];
 
-        if (datalistAdd) {
-            datalistAdd.innerHTML = '';
-            listaMarcas.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.nombre;
-                datalistAdd.appendChild(opt);
-            });
-        }
+        containers.forEach(({ optionsId, inputId }) => {
+            const optionsContainer = document.getElementById(optionsId);
+            const input = document.getElementById(inputId);
+            if (!optionsContainer) return;
 
-        if (datalistEdit) {
-            datalistEdit.innerHTML = '';
+            const valActual = input ? input.value : '';
+
+            optionsContainer.innerHTML = '';
+            
+            if (listaMarcas.length === 0) {
+                optionsContainer.innerHTML = '<div class="custom-select-option no-results">No hay marcas registradas</div>';
+                return;
+            }
+
             listaMarcas.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.nombre;
-                datalistEdit.appendChild(opt);
+                const opt = document.createElement('div');
+                opt.className = 'custom-select-option';
+                if (m.nombre === valActual) {
+                    opt.classList.add('selected');
+                }
+                opt.setAttribute('data-value', m.nombre);
+                opt.textContent = m.nombre;
+                optionsContainer.appendChild(opt);
             });
-        }
+        });
     } catch (error) {
-        console.error('Error al actualizar datalists de marcas:', error);
+        console.error('Error al actualizar selects personalizados de marcas:', error);
     }
+}
+
+/**
+ * Configura un select autocompletable personalizado
+ */
+function setupCustomSelect(inputId, optionsContainerId, containerId) {
+    const input = document.getElementById(inputId);
+    const optionsContainer = document.getElementById(optionsContainerId);
+    const container = document.getElementById(containerId);
+    
+    if (!input || !optionsContainer || !container) return;
+
+    // Toggle dropdown al hacer click o enfocar
+    const openDropdown = () => {
+        document.querySelectorAll('.custom-select-container').forEach(c => {
+            if (c !== container) c.classList.remove('open');
+        });
+        container.classList.add('open');
+    };
+
+    const closeDropdown = () => {
+        container.classList.remove('open');
+    };
+
+    input.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDropdown();
+    });
+
+    input.addEventListener('focus', () => {
+        openDropdown();
+    });
+
+    // Filtrar opciones al escribir
+    input.addEventListener('input', () => {
+        const query = input.value.trim().toLowerCase();
+        const options = optionsContainer.querySelectorAll('.custom-select-option:not(.no-results)');
+        let hasVisible = false;
+
+        options.forEach(opt => {
+            const val = opt.getAttribute('data-value').toLowerCase();
+            if (val.includes(query)) {
+                opt.style.display = 'flex';
+                hasVisible = true;
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+
+        // Mostrar opción de crear si no hay coincidencia exacta
+        let noResultsOpt = optionsContainer.querySelector('.no-results');
+        if (!hasVisible && query !== '') {
+            if (!noResultsOpt) {
+                noResultsOpt = document.createElement('div');
+                noResultsOpt.className = 'custom-select-option no-results';
+                optionsContainer.appendChild(noResultsOpt);
+            }
+            noResultsOpt.innerHTML = `<i class="fas fa-plus me-2 text-primary"></i> Usar/Crear "${input.value.trim()}"`;
+            noResultsOpt.style.display = 'flex';
+            
+            noResultsOpt.onclick = (e) => {
+                e.stopPropagation();
+                closeDropdown();
+            };
+        } else {
+            if (noResultsOpt) {
+                noResultsOpt.style.display = 'none';
+            }
+        }
+    });
+
+    // Selección al hacer click
+    optionsContainer.addEventListener('click', (e) => {
+        const option = e.target.closest('.custom-select-option');
+        if (!option) return;
+        
+        e.stopPropagation();
+        
+        if (option.classList.contains('no-results')) {
+            closeDropdown();
+            return;
+        }
+
+        const val = option.getAttribute('data-value');
+        input.value = val;
+        
+        optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+        
+        closeDropdown();
+        
+        // Disparar evento input por si otros scripts lo escuchan
+        input.dispatchEvent(new Event('input'));
+    });
 }
 
 /**
@@ -532,6 +638,19 @@ async function eliminarMarca(id) {
  * Inicializa los eventos del formulario y modales
  */
 function inicializarEventos() {
+    // Configurar selects personalizados de marcas
+    setupCustomSelect('productoMarca', 'optionsProductoMarca', 'containerProductoMarca');
+    setupCustomSelect('editProductoMarca', 'optionsEditProductoMarca', 'containerEditProductoMarca');
+
+    // Cerrar select custom al hacer click afuera
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-select-container')) {
+            document.querySelectorAll('.custom-select-container').forEach(c => {
+                c.classList.remove('open');
+            });
+        }
+    });
+
     if (btnGuardarProducto) {
         btnGuardarProducto.addEventListener('click', guardarProducto);
     }
@@ -559,8 +678,22 @@ function inicializarEventos() {
                 const producto = await productosService.getById(id);
                 document.getElementById('editProductId').value = producto.id;
                 document.getElementById('editProductoNombre').value = producto.nombre || '';
-                document.getElementById('editProductoMarca').value = producto.marca || '';
+                
+                const brandVal = producto.marca || '';
+                document.getElementById('editProductoMarca').value = brandVal;
                 document.getElementById('editProductoCosto').value = producto.costo || 0;
+
+                // Marcar la opción correspondiente en el desplegable
+                const optionsContainer = document.getElementById('optionsEditProductoMarca');
+                if (optionsContainer) {
+                    optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+                        if (opt.getAttribute('data-value') === brandVal) {
+                            opt.classList.add('selected');
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                }
 
                 // Cargar precios de lista
                 const respPrecios = await productosService.getPricesByProduct(id);
@@ -586,6 +719,16 @@ function inicializarEventos() {
             await actualizarSelectsMarcas();
             if (ultimaMarcaSeleccionada) {
                 document.getElementById('productoMarca').value = ultimaMarcaSeleccionada;
+                const optionsContainer = document.getElementById('optionsProductoMarca');
+                if (optionsContainer) {
+                    optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+                        if (opt.getAttribute('data-value') === ultimaMarcaSeleccionada) {
+                            opt.classList.add('selected');
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                }
             }
         });
         addModalEl.addEventListener('hidden.bs.modal', () => {

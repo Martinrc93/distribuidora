@@ -123,8 +123,17 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="productoMarca" class="form-label text-secondary">Marca</label>
-                                <input type="text" class="form-control form-select" id="productoMarca" list="marcasListAdd" required placeholder="Buscar o escribir marca...">
-                                <datalist id="marcasListAdd"></datalist>
+                                <div class="custom-select-container" id="containerProductoMarca">
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control form-select-custom" id="productoMarca" required placeholder="Seleccione o busque..." autocomplete="off">
+                                        <span class="custom-select-arrow"><i class="fas fa-chevron-down"></i></span>
+                                    </div>
+                                    <div class="custom-select-dropdown">
+                                        <div class="custom-select-options" id="optionsProductoMarca">
+                                            <!-- Cargado dinámicamente -->
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-3">
                                 <label for="productoCosto" class="form-label text-secondary">Costo ($)</label>
@@ -205,8 +214,17 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="editProductoMarca" class="form-label text-secondary">Marca</label>
-                                <input type="text" class="form-control form-select" id="editProductoMarca" list="marcasListEdit" required placeholder="Buscar o escribir marca...">
-                                <datalist id="marcasListEdit"></datalist>
+                                <div class="custom-select-container" id="containerEditProductoMarca">
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control form-select-custom" id="editProductoMarca" required placeholder="Seleccione o busque..." autocomplete="off">
+                                        <span class="custom-select-arrow"><i class="fas fa-chevron-down"></i></span>
+                                    </div>
+                                    <div class="custom-select-dropdown">
+                                        <div class="custom-select-options" id="optionsEditProductoMarca">
+                                            <!-- Cargado dinámicamente -->
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-3">
                                 <label for="editProductoCosto" class="form-label text-secondary">Costo ($)</label>

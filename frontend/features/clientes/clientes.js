@@ -289,7 +289,12 @@ async function eliminarCliente(id) {
 async function guardarCliente() {
     const nombre = document.getElementById('clienteNombre').value.trim();
     const direccion = document.getElementById('clienteDireccion').value.trim();
-    const contacto = document.getElementById('clienteContacto').value.trim();
+    
+    const codInt = document.getElementById('clienteCodInt').value.trim() || '+54 9';
+    const codArea = document.getElementById('clienteCodArea').value.trim();
+    const numTel = document.getElementById('clienteNumTel').value.trim();
+    const contacto = numTel ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') : '';
+
     const listaPreciosId = document.getElementById('clienteListaPrecios').value;
 
     // Validar campos obligatorios
@@ -324,7 +329,12 @@ async function actualizarCliente() {
     const id = document.getElementById('editClienteId').value;
     const nombre = document.getElementById('editClienteNombre').value.trim();
     const direccion = document.getElementById('editClienteDireccion').value.trim();
-    const contacto = document.getElementById('editClienteContacto').value.trim();
+    
+    const codInt = document.getElementById('editClienteCodInt').value.trim() || '+54 9';
+    const codArea = document.getElementById('editClienteCodArea').value.trim();
+    const numTel = document.getElementById('editClienteNumTel').value.trim();
+    const contacto = numTel ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') : '';
+
     const listaPreciosId = document.getElementById('editClienteListaPrecios').value;
 
     // Validar campos obligatorios
@@ -414,13 +424,28 @@ function inicializarEventos() {
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const direccion = button.getAttribute('data-direccion');
-            const contacto = button.getAttribute('data-contacto');
+            const contacto = (button.getAttribute('data-contacto') || '').trim();
             const listaPreciosId = button.getAttribute('data-listaprecios');
+
+            let codInt = '+54 9';
+            let codArea = '11';
+            let numTel = contacto;
+
+            if (contacto) {
+                const match = contacto.match(/^(\+\d+(?:\s+\d+)?)\s+(\d+)\s+(.+)$/);
+                if (match) {
+                    codInt = match[1];
+                    codArea = match[2];
+                    numTel = match[3];
+                }
+            }
 
             document.getElementById('editClienteId').value = id;
             document.getElementById('editClienteNombre').value = nombre;
             document.getElementById('editClienteDireccion').value = direccion;
-            document.getElementById('editClienteContacto').value = contacto || '';
+            document.getElementById('editClienteCodInt').value = codInt;
+            document.getElementById('editClienteCodArea').value = codArea;
+            document.getElementById('editClienteNumTel').value = numTel;
             document.getElementById('editClienteListaPrecios').value = listaPreciosId || 1;
         });
     }
