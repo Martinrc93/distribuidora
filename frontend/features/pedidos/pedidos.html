@@ -267,17 +267,23 @@
                         <h6 class="text-white mt-4 mb-3 border-bottom pb-2" style="font-size: 0.95rem; border-color: var(--border-color) !important;">Añadir o Modificar Productos</h6>
                         
                         <div class="row g-3 align-items-end mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label for="editMarcaSelect" class="form-label text-secondary">Seleccionar Marca</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="editMarcaSelect" placeholder="Buscar o seleccionar marca..." autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <label for="editProductoSelect" class="form-label text-secondary">Seleccionar Producto</label>
                                 <div class="position-relative">
                                     <input type="text" class="form-control" id="editProductoSelect" placeholder="Buscar o seleccionar producto..." autocomplete="off">
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label for="editProductoCantidad" class="form-label text-secondary">Cantidad</label>
                                 <input type="number" min="0.5" step="0.5" value="1" class="form-control" id="editProductoCantidad">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <button type="button" class="btn btn-sm btn-primary w-100" id="btnEditAgregarProducto" style="background-color: #2563eb; border: none; padding: 0.35rem 0.5rem; height: 42px; font-size: 0.85rem;">
                                     <i class="fas fa-plus"></i> Agregar
                                 </button>

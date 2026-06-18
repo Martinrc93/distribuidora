@@ -122,7 +122,7 @@ async function cargarDatosAuxiliares() {
         });
         inicializarCombobox('editProductoSelect', productos.map(p => p.nombre));
 
-        // Inicializar combobox de marcas con callback para filtrar productos
+        // Inicializar combobox de marcas con callback para filtrar productos (creación)
         inicializarCombobox('marcaSelect', marcas.map(m => m.nombre), (selectedBrand) => {
             const productInput = document.getElementById('productoSelect');
             if (productInput) {
@@ -136,12 +136,48 @@ async function cargarDatosAuxiliares() {
             }
         });
 
-        // Escuchar cuando el input de marca se limpie o modifique manualmente
+        // Inicializar combobox de marcas con callback para filtrar productos (edición)
+        inicializarCombobox('editMarcaSelect', marcas.map(m => m.nombre), (selectedBrand) => {
+            const productInput = document.getElementById('editProductoSelect');
+            if (productInput) {
+                productInput.value = '';
+                if (!selectedBrand || selectedBrand.trim() === '') {
+                    productInput.comboboxOptions = productos.map(p => p.nombre);
+                } else {
+                    const filtered = productos.filter(p => p.marca === selectedBrand);
+                    productInput.comboboxOptions = filtered.map(p => p.nombre);
+                }
+            }
+        });
+
+        // Escuchar cuando el input de marca se limpie o modifique manualmente (creación)
         const marcaInput = document.getElementById('marcaSelect');
         if (marcaInput) {
             marcaInput.addEventListener('input', () => {
                 const val = marcaInput.value.trim();
                 const productInput = document.getElementById('productoSelect');
+                if (productInput) {
+                    if (val === '') {
+                        productInput.comboboxOptions = productos.map(p => p.nombre);
+                    } else {
+                        const matchedBrand = marcas.find(m => m.nombre.toLowerCase() === val.toLowerCase());
+                        if (matchedBrand) {
+                            const filtered = productos.filter(p => p.marca.toLowerCase() === matchedBrand.nombre.toLowerCase());
+                            productInput.comboboxOptions = filtered.map(p => p.nombre);
+                        } else {
+                            productInput.comboboxOptions = productos.map(p => p.nombre);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Escuchar cuando el input de marca se limpie o modifique manualmente (edición)
+        const editMarcaInput = document.getElementById('editMarcaSelect');
+        if (editMarcaInput) {
+            editMarcaInput.addEventListener('input', () => {
+                const val = editMarcaInput.value.trim();
+                const productInput = document.getElementById('editProductoSelect');
                 if (productInput) {
                     if (val === '') {
                         productInput.comboboxOptions = productos.map(p => p.nombre);
@@ -279,18 +315,22 @@ async function agregarProductoTemporal() {
         const prices = Array.isArray(respPrecios) ? respPrecios : (respPrecios?.data || []);
         
         const clientListId = client.listaPreciosId || 1;
-        const priceRecord = prices.find(p => p.listaPreciosId === clientListId);
+        let priceRecord = prices.find(p => p.listaPreciosId === clientListId);
+
+        if (!priceRecord && prices.length > 0) {
+            priceRecord = [...prices].sort((a, b) => b.listaPreciosId - a.listaPreciosId)[0];
+        }
 
         if (!priceRecord) {
-            showToast(`No se encontró un precio para este producto en la Lista de Precios ${clientListId} del cliente.`, 'error');
+            showToast(`No se encontró un precio para este producto en ninguna lista de precios.`, 'error');
             btnAgregarProducto.disabled = false;
             return;
         }
 
         const existingIndex = detallesTemporales.findIndex(d => d.productId === product.id);
         if (existingIndex !== -1) {
-            detallesTemporales[existingIndex].cantidad += cantidad;
-            detallesTemporales[existingIndex].subtotal = parseFloat((detallesTemporales[existingIndex].cantidad * detallesTemporales[existingIndex].precio).toFixed(2));
+            detallesTemporales[existingIndex].cantidad = cantidad;
+            detallesTemporales[existingIndex].subtotal = parseFloat((cantidad * detallesTemporales[existingIndex].precio).toFixed(2));
         } else {
             detallesTemporales.push({
                 productId: product.id,
@@ -448,18 +488,22 @@ async function agregarProductoEdicion() {
         const prices = Array.isArray(respPrecios) ? respPrecios : (respPrecios?.data || []);
         
         const clientListId = currentClienteEdicion.listaPreciosId || 1;
-        const priceRecord = prices.find(p => p.listaPreciosId === clientListId);
+        let priceRecord = prices.find(p => p.listaPreciosId === clientListId);
+
+        if (!priceRecord && prices.length > 0) {
+            priceRecord = [...prices].sort((a, b) => b.listaPreciosId - a.listaPreciosId)[0];
+        }
 
         if (!priceRecord) {
-            showToast(`No se encontró un precio para este producto en la Lista de Precios ${clientListId} del cliente.`, 'error');
+            showToast(`No se encontró un precio para este producto en ninguna lista de precios.`, 'error');
             btnEditAgregarProducto.disabled = false;
             return;
         }
 
         const existingIndex = detallesEdicion.findIndex(d => d.productId === product.id);
         if (existingIndex !== -1) {
-            detallesEdicion[existingIndex].cantidad += cantidad;
-            detallesEdicion[existingIndex].subtotal = parseFloat((detallesEdicion[existingIndex].cantidad * detallesEdicion[existingIndex].precio).toFixed(2));
+            detallesEdicion[existingIndex].cantidad = cantidad;
+            detallesEdicion[existingIndex].subtotal = parseFloat((cantidad * detallesEdicion[existingIndex].precio).toFixed(2));
         } else {
             detallesEdicion.push({
                 productId: product.id,
@@ -572,7 +616,24 @@ function imprimirConsolidado() {
         });
     });
 
-    const items = Object.entries(consolidado).map(([nombre, cantidad]) => ({ nombre, cantidad }));
+    const items = Object.entries(consolidado).map(([nombre, cantidad]) => {
+        const product = productos.find(p => `${p.nombre} (${p.marca})` === nombre);
+        const marca = product ? product.marca : '';
+        return { nombre, cantidad, marca };
+    });
+
+    items.sort((a, b) => {
+        const marcaA = a.marca.toLowerCase();
+        const marcaB = b.marca.toLowerCase();
+        if (marcaA < marcaB) return -1;
+        if (marcaA > marcaB) return 1;
+        
+        const nombreA = a.nombre.toLowerCase();
+        const nombreB = b.nombre.toLowerCase();
+        if (nombreA < nombreB) return -1;
+        if (nombreA > nombreB) return 1;
+        return 0;
+    });
 
     if (items.length === 0) {
         showToast('No hay pedidos activos registrados el día de hoy para enviar al depósito.', 'error');
@@ -653,7 +714,24 @@ function imprimirEmpleado(empleadoId) {
         });
     });
 
-    const items = Object.entries(consolidado).map(([nombre, cantidad]) => ({ nombre, cantidad }));
+    const items = Object.entries(consolidado).map(([nombre, cantidad]) => {
+        const product = productos.find(p => `${p.nombre} (${p.marca})` === nombre);
+        const marca = product ? product.marca : '';
+        return { nombre, cantidad, marca };
+    });
+
+    items.sort((a, b) => {
+        const marcaA = a.marca.toLowerCase();
+        const marcaB = b.marca.toLowerCase();
+        if (marcaA < marcaB) return -1;
+        if (marcaA > marcaB) return 1;
+        
+        const nombreA = a.nombre.toLowerCase();
+        const nombreB = b.nombre.toLowerCase();
+        if (nombreA < nombreB) return -1;
+        if (nombreA > nombreB) return 1;
+        return 0;
+    });
 
     if (items.length === 0) {
         showToast(`No hay pedidos activos asignados a ${employeeName} el día de hoy.`, 'error');
@@ -835,7 +913,11 @@ async function repetirUltimoPedido() {
             if (!item.error) {
                 const prices = Array.isArray(item.resp) ? item.resp : (item.resp?.data || []);
                 const clientListId = client.listaPreciosId || 1;
-                const priceRecord = prices.find(p => p.listaPreciosId === clientListId);
+                let priceRecord = prices.find(p => p.listaPreciosId === clientListId);
+                
+                if (!priceRecord && prices.length > 0) {
+                    priceRecord = [...prices].sort((a, b) => b.listaPreciosId - a.listaPreciosId)[0];
+                }
                 
                 if (priceRecord) {
                     price = priceRecord.precio;
@@ -1085,6 +1167,18 @@ function inicializarEventos() {
                 };
             });
 
+            // Limpiar campos de agregado en edición
+            const editMarcaInput = document.getElementById('editMarcaSelect');
+            if (editMarcaInput) {
+                editMarcaInput.value = '';
+            }
+            const editProductInput = document.getElementById('editProductoSelect');
+            if (editProductInput) {
+                editProductInput.value = '';
+                editProductInput.comboboxOptions = productos.map(p => p.nombre);
+            }
+            document.getElementById('editProductoCantidad').value = '1';
+
             renderDetallesEdicion();
         });
     }
@@ -1154,6 +1248,10 @@ function inicializarEventos() {
             document.getElementById('editPedidoForm').reset();
             detallesEdicion = [];
             currentClienteEdicion = null;
+            const editProductInput = document.getElementById('editProductoSelect');
+            if (editProductInput) {
+                editProductInput.comboboxOptions = productos.map(p => p.nombre);
+            }
             // Cerrar dropdowns de combobox abiertos
             document.querySelectorAll('.combobox-dropdown').forEach(d => d.classList.add('d-none'));
             document.querySelectorAll('.custom-combobox-container').forEach(c => c.classList.remove('open'));
