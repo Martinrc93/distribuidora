@@ -10,6 +10,9 @@ class EmpleadoUpdateDto {
         if (data.apellido !== undefined) {
             this.apellido = typeof data.apellido === 'string' ? data.apellido.trim() : null;
         }
+        if (data.active !== undefined) {
+            this.active = data.active === true || data.active === 'true' || data.active === 1;
+        }
     }
 
     /**

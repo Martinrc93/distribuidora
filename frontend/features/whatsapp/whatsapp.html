@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora - WhatsApp</title>
+    <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../global.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .qr-container {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .whatsapp-icon-large {
+            font-size: 4rem;
+            color: #25d366;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background-color: rgba(37, 211, 102, 0.15);
+            color: #25d366;
+            border: 1px solid rgba(37, 211, 102, 0.3);
+        }
+
+        .status-disconnected {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-initializing {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-qr {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-titles">
+                    <h1>VINCULACIÓN DE WHATSAPP</h1>
+                </div>
+            </header>
+
+            <section class="content-body text-center">
+                <div class="status-card max-w-md mx-auto">
+                    <i class="fab fa-whatsapp whatsapp-icon-large"></i>
+                    
+                    <h3 class="text-white mb-3">WhatsApp Web</h3>
+                    <p class="text-secondary mb-4">Conectá tu cuenta de WhatsApp para poder enviar los reportes de depósito, consolidados y facturas de clientes de forma automática en formato PDF.</p>
+                    
+                    <div class="mb-4">
+                        <span id="whatsappStatusBadge" class="status-badge status-disconnected">
+                            <i class="fas fa-circle-notch fa-spin me-2 d-none" id="statusSpinner"></i>
+                            <span id="statusText">Cargando estado...</span>
+                        </span>
+                    </div>
+
+                    <!-- Contenedor del QR -->
+                    <div id="qrSection" class="d-none">
+                        <p class="text-white mb-3">Escaneá este código QR desde la aplicación de WhatsApp en tu celular (Menú > Dispositivos vinculados > Vincular un dispositivo):</p>
+                        <div class="mb-3">
+                            <div class="qr-container">
+                                <div id="qrcode"></div>
+                            </div>
+                        </div>
+                        <p class="text-secondary small">El código se actualizará automáticamente si vence.</p>
+                    </div>
+
+                    <!-- Sección Conectado -->
+                    <div id="connectedSection" class="d-none">
+                        <p class="text-success mb-4"><i class="fas fa-check-circle me-1"></i> Tu cuenta está vinculada y lista para enviar mensajes.</p>
+                        <button class="btn btn-danger px-4 py-2" id="btnDisconnect" style="border-radius: 8px; font-weight: 600;">
+                            <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión de WhatsApp
+                        </button>
+                    </div>
+
+                    <!-- Sección Inicializando -->
+                    <div id="initializingSection" class="d-none">
+                        <p class="text-secondary"><i class="fas fa-spinner fa-spin me-2"></i> Iniciando el navegador en segundo plano. Esto puede demorar unos segundos...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Sidebar Container (Cargado Dinámicamente) -->
+        <div id="sidebar-container"></div>
+    </div>
+
+    <!-- Contenedor para Notificaciones Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script type="module" src="whatsapp.js"></script>
+</body>
+
+</html>

@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <li><a href="../productos/productos.html" id="nav-productos"><i class="fas fa-box"></i> Productos</a></li>
                     <li><a href="../clientes/clientes.html" id="nav-clientes"><i class="fas fa-user-friends"></i> Clientes</a></li>
                     <li><a href="../empleados/empleados.html" id="nav-empleados"><i class="fas fa-users"></i> Empleados</a></li>
+                    <li><a href="../whatsapp/whatsapp.html" id="nav-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a></li>
                 </ul>
             </nav>
         </aside>
@@ -38,5 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('nav-clientes')?.classList.add('active');
     } else if (path.includes('/empleados/')) {
         document.getElementById('nav-empleados')?.classList.add('active');
+    } else if (path.includes('/whatsapp/')) {
+        document.getElementById('nav-whatsapp')?.classList.add('active');
     }
 });

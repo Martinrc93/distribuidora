@@ -25,21 +25,29 @@ Product.init({
             }
         }
     },
-    marca: {
-        type: DataTypes.STRING,
+    marcaId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'Marcas',
+            key: 'id'
+        },
+        validate: {
+            notNull: {
+                msg: 'El ID de la marca es obligatorio.'
+            }
+        }
+    },
+    costo: {
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         validate: {
             notNull: {
-                msg: 'La marca es obligatoria.' // Error amigable si es null
+                msg: 'El costo es obligatorio.'
             },
-            notEmpty: {
-                msg: 'La marca no puede estar vacía.' // Error amigable si envían ""
-            }
-        },
-        set(value) {
-            // 3. Setter más seguro: solo hacemos trim si realmente es un string
-            if (typeof value === 'string') {
-                this.setDataValue('marca', value.trim());
+            min: {
+                args: [0],
+                msg: 'El costo no puede ser negativo.'
             }
         }
     },
@@ -63,6 +71,13 @@ Product.init({
         timestamps: true   // Mantiene createdAt y updatedAt
     });
 
-// 4. Relaciones (se configuran después de crear todos los modelos en los archivos correspondientes)
-// No olvides exportarlo para usarlo en tus controladores
+const Marca = require('./marca.js');
+Product.belongsTo(Marca, { foreignKey: 'marcaId', as: 'marca' });
+Marca.hasMany(Product, { 
+    foreignKey: 'marcaId', 
+    as: 'productos',
+    onDelete: 'RESTRICT',
+    onUpdate: 'CASCADE'
+});
+
 module.exports = Product;

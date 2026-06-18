@@ -39,19 +39,21 @@ exports.getById = async (id) => {
 
 /**
  * Crea un nuevo cliente en la base de datos.
- * @param {{nombre: string, direccion?: string}} clienteData Datos filtrados del cliente.
+ * @param {{nombre: string, direccion?: string, contacto?: string}} clienteData Datos filtrados del cliente.
  */
 exports.create = async (clienteData) => {
     return await Cliente.create({
         nombre: clienteData.nombre,
-        direccion: clienteData.direccion
+        direccion: clienteData.direccion,
+        contacto: clienteData.contacto,
+        listaPreciosId: clienteData.listaPreciosId || 1
     });
 };
 
 /**
  * Actualiza un cliente existente por su ID.
  * @param {number} id ID del cliente a actualizar.
- * @param {{nombre?: string, direccion?: string}} clienteData Datos a modificar.
+ * @param {{nombre?: string, direccion?: string, contacto?: string}} clienteData Datos a modificar.
  */
 exports.update = async (id, clienteData) => {
     const cliente = await Cliente.findByPk(id);
@@ -59,7 +61,9 @@ exports.update = async (id, clienteData) => {
 
     return await cliente.update({
         nombre: clienteData.nombre === undefined ? cliente.nombre : clienteData.nombre,
-        direccion: clienteData.direccion === undefined ? cliente.direccion : clienteData.direccion
+        direccion: clienteData.direccion === undefined ? cliente.direccion : clienteData.direccion,
+        contacto: clienteData.contacto === undefined ? cliente.contacto : clienteData.contacto,
+        listaPreciosId: clienteData.listaPreciosId === undefined ? cliente.listaPreciosId : clienteData.listaPreciosId
     });
 };
 

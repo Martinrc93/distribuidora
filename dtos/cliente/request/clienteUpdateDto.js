@@ -10,6 +10,12 @@ class ClienteUpdateDto {
         if (data.direccion !== undefined) {
             this.direccion = typeof data.direccion === 'string' ? data.direccion.trim() : null;
         }
+        if (data.contacto !== undefined) {
+            this.contacto = typeof data.contacto === 'string' ? data.contacto.trim() : null;
+        }
+        if (data.listaPreciosId !== undefined) {
+            this.listaPreciosId = Number.parseInt(data.listaPreciosId, 10) || null;
+        }
     }
 
     /**
@@ -30,6 +36,12 @@ class ClienteUpdateDto {
         if (this.direccion !== undefined && this.direccion !== null) {
             if (this.direccion.length > 50) {
                 errors.push('El campo "direccion" no puede superar los 50 caracteres.');
+            }
+        }
+
+        if (this.contacto !== undefined && this.contacto !== null) {
+            if (this.contacto.length > 50) {
+                errors.push('El campo "contacto" no puede superar los 50 caracteres.');
             }
         }
 

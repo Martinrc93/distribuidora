@@ -22,11 +22,25 @@
                 <div class="header-titles">
                     <h1>PRODUCTOS</h1>
                 </div>
-                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal"><i
-                        class="fas fa-plus"></i> Añadir Producto</button>
+                <div class="header-actions d-flex gap-2">
+                    <button class="btn-secondary-custom" data-bs-toggle="modal" data-bs-target="#brandModal">
+                        <i class="fas fa-tags"></i> Añadir Marca
+                    </button>
+                    <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="fas fa-plus"></i> Añadir Producto
+                    </button>
+                </div>
             </header>
 
             <section class="table-container">
+                <!-- Buscador -->
+                <div class="search-container mb-4">
+                    <div class="position-relative w-100" style="max-width: 400px;">
+                        <i class="fas fa-search search-icon position-absolute text-secondary" style="left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                        <input type="text" id="productSearchInput" class="form-control" placeholder="Buscar por producto o marca..." style="padding-left: 40px;">
+                    </div>
+                </div>
+
                 <table class="table table-hover table-borderless text-center">
                     <thead>
                         <tr>
@@ -74,6 +88,15 @@
                         </tr>
                     </tbody>
                 </table>
+                <!-- Pagination Controls -->
+                <div class="pagination-controls d-flex justify-content-between align-items-center px-4 py-3" style="border-top: 1px solid var(--border-color);">
+                    <span class="text-secondary" id="paginationInfo" style="font-size: 0.9rem;">Mostrando 0-0 de 0 productos</span>
+                    <nav aria-label="Navegación de productos">
+                        <ul class="pagination mb-0" id="paginationList">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </nav>
+                </div>
             </section>
         </main>
 
@@ -161,6 +184,133 @@
         </div>
     </div>
 
+    <!-- Modal Editar Producto -->
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true"
+        data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="editProductModalLabel">Editar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm">
+                        <input type="hidden" id="editProductId">
+                        <!-- Datos Básicos -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-5">
+                                <label for="editProductoNombre" class="form-label text-secondary">Nombre del Producto</label>
+                                <input type="text" class="form-control" id="editProductoNombre" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editProductoMarca" class="form-label text-secondary">Marca</label>
+                                <input type="text" class="form-control" id="editProductoMarca" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editProductoCosto" class="form-label text-secondary">Costo ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editProductoCosto" required>
+                            </div>
+                        </div>
+
+                        <!-- Separador / Subtítulo -->
+                        <h6 class="text-white mb-3 border-bottom pb-2"
+                            style="font-size: 0.95rem; border-color: var(--border-color) !important;">Listas de Precios
+                        </h6>
+
+                        <!-- Grilla de Precios de Lista 1 a 8 -->
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="editPrecioLista1" class="form-label text-secondary">Lista 1 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista2" class="form-label text-secondary">Lista 2 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista2">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista3" class="form-label text-secondary">Lista 3 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista3">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista4" class="form-label text-secondary">Lista 4 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista4">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="editPrecioLista5" class="form-label text-secondary">Lista 5 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista5">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista6" class="form-label text-secondary">Lista 6 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista6">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista7" class="form-label text-secondary">Lista 7 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista7">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editPrecioLista8" class="form-label text-secondary">Lista 8 ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrecioLista8">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnActualizarProducto"
+                        style="background-color: #2563eb; border: none;">Actualizar Producto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gestión de Marcas -->
+    <div class="modal fade" id="brandModal" tabindex="-1" aria-labelledby="brandModalLabel" aria-hidden="true"
+        data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="brandModalLabel">Gestión de Marcas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Formulario de Registro -->
+                    <form id="addBrandForm" class="mb-4">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-8">
+                                <label for="brandNombre" class="form-label text-secondary">Nueva Marca</label>
+                                <input type="text" class="form-control" id="brandNombre" required placeholder="Ej. Nestlé">
+                            </div>
+                            <div class="col-4">
+                                <button type="submit" class="btn btn-primary w-100" style="background-color: #2563eb; border: none; height: calc(1.5em + .75rem + 2px);">
+                                    <i class="fas fa-plus"></i> Registrar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Lista de Marcas Registradas -->
+                    <h6 class="text-white mb-2 pb-1 border-bottom" style="font-size: 0.95rem; border-color: var(--border-color) !important;">
+                        Marcas Registradas
+                    </h6>
+                    <div id="brandListContainer" class="brand-list-scroll">
+                        <ul class="list-group list-group-flush" id="brandList">
+                            <!-- Carga dinámica de marcas -->
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Contenedor para Notificaciones Toast -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../sidebar.js"></script>

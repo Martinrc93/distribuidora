@@ -18,3 +18,7 @@ logs
 *.log
 .DS_Store
 Thumbs.db
+
+# Autenticación de WhatsApp (Secretos locales)
+.wwebjs_auth/
+.wwebjs_cache/

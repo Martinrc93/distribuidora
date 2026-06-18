@@ -31,6 +31,16 @@ Cliente.init({
             }
         }
     },
+    contacto: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        validate: {
+            len: {
+                args: [0, 50],
+                msg: 'El contacto no puede superar los 50 caracteres.'
+            }
+        }
+    },
     listaPreciosId: {
         type: DataTypes.INTEGER,
         allowNull: false,

@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
@@ -22,7 +23,22 @@
                 <div class="header-titles">
                     <h1>PEDIDOS</h1>
                 </div>
-                <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addPedidoModal"><i class="fas fa-plus"></i> Nuevo Pedido</button>
+                <div class="d-flex gap-2" style="position: absolute; right: 0; z-index: 1000;">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="btnImprimirDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); padding: 0.875rem 1.5rem; border-radius: 10px; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; height: 42px;">
+                            <i class="fas fa-print"></i> Opciones de Impresión
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="btnImprimirDropdown" style="background-color: #0b111c; border: 1px solid var(--border-color); border-radius: 10px;">
+                            <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptImprimirDeposito" style="color: var(--text-primary); transition: all 0.2s;"><i class="fas fa-warehouse me-2" style="color: #60a5fa; width: 16px;"></i> Imprimir Depósito</a></li>
+                            <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptEnviarDepositoWSP" style="color: var(--text-primary); transition: all 0.2s;"><i class="fab fa-whatsapp me-2" style="color: #25d366; width: 16px;"></i> Enviar Depósito por WA</a></li>
+                            <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptImprimirEmpleado" data-bs-toggle="modal" data-bs-target="#modalImprimirEmpleado" style="color: var(--text-primary); transition: all 0.2s;"><i class="fas fa-user-tie me-2" style="color: #60a5fa; width: 16px;"></i> Imprimir por Empleado</a></li>
+                            <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptImprimirCliente" data-bs-toggle="modal" data-bs-target="#modalImprimirCliente" style="color: var(--text-primary); transition: all 0.2s;"><i class="fas fa-user me-2" style="color: #60a5fa; width: 16px;"></i> Imprimir por Cliente</a></li>
+                        </ul>
+                    </div>
+                    <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addPedidoModal" style="position: static;">
+                        <i class="fas fa-plus"></i> Nuevo Pedido
+                    </button>
+                </div>
             </header>
 
             <section class="table-container">
@@ -32,6 +48,7 @@
                             <th>Cliente</th>
                             <th>Fecha</th>
                             <th>Total</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -94,21 +111,18 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="pedidoEmpleado" class="form-label text-secondary">Seleccionar Empleado</label>
-                                <input type="text" class="form-control" list="empleadosList" id="pedidoEmpleado" required placeholder="Escribir o buscar empleado...">
-                                <datalist id="empleadosList">
-                                    <option value="Carlos Gómez"></option>
-                                    <option value="María López"></option>
-                                    <option value="Juan Pérez"></option>
-                                </datalist>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="pedidoEmpleado" required placeholder="Buscar o seleccionar empleado..." autocomplete="off">
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="pedidoCliente" class="form-label text-secondary">Seleccionar Cliente</label>
-                                <input type="text" class="form-control" list="clientesList" id="pedidoCliente" required placeholder="Escribir o buscar cliente...">
-                                <datalist id="clientesList">
-                                    <option value="Supermercado Alborada"></option>
-                                    <option value="MiniMarket Express"></option>
-                                    <option value="Almacén de Don Pepe"></option>
-                                </datalist>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="pedidoCliente" required placeholder="Buscar o seleccionar cliente..." autocomplete="off">
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-info mt-2 d-none" id="btnRepetirUltimoPedido" style="font-size: 0.8rem; border-radius: 6px; padding: 0.25rem 0.5rem; border: 1px solid rgba(23, 162, 184, 0.4); color: #67e8f9; background-color: rgba(23, 162, 184, 0.1); transition: all 0.3s ease;">
+                                    <i class="fas fa-redo"></i> Cargar último pedido
+                                </button>
                             </div>
                         </div>
 
@@ -116,27 +130,23 @@
                         <h6 class="text-white mt-4 mb-3 border-bottom pb-2" style="font-size: 0.95rem; border-color: var(--border-color) !important;">Añadir Productos al Pedido</h6>
                         
                         <div class="row g-3 align-items-end mb-4">
-                            <div class="col-md-6">
-                                <label for="productoSelect" class="form-label text-secondary">Seleccionar Producto</label>
-                                <input type="text" class="form-control" list="productosList" id="productoSelect" placeholder="Escribir o buscar producto...">
-                                <datalist id="productosList">
-                                    <option value="Leche Entera 1L"></option>
-                                    <option value="Pan Lactal Familiar"></option>
-                                    <option value="Gaseosa Cola 2.25L"></option>
-                                    <option value="Arroz Integral 1kg"></option>
-                                    <option value="Aceite de Girasol 1.5L"></option>
-                                    <option value="Fideos Tallarines 500g"></option>
-                                    <option value="Café Molido 500g"></option>
-                                    <option value="Azúcar Común 1kg"></option>
-                                    <option value="Yerba Mate 1kg"></option>
-                                    <option value="Galletitas de Chocolate"></option>
-                                </datalist>
+                            <div class="col-md-4">
+                                <label for="marcaSelect" class="form-label text-secondary">Seleccionar Marca</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="marcaSelect" placeholder="Buscar o seleccionar marca..." autocomplete="off">
+                                </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <label for="productoSelect" class="form-label text-secondary">Seleccionar Producto</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="productoSelect" placeholder="Buscar o seleccionar producto..." autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
                                 <label for="productoCantidad" class="form-label text-secondary">Cantidad</label>
                                 <input type="number" min="0.5" step="0.5" value="1" class="form-control" id="productoCantidad">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <button type="button" class="btn btn-sm btn-primary w-100" id="btnAgregarProducto" style="background-color: #2563eb; border: none; padding: 0.35rem 0.5rem; height: 42px; font-size: 0.85rem;">
                                     <i class="fas fa-plus"></i> Agregar
                                 </button>
@@ -178,124 +188,226 @@
         </div>
     </div>
 
+    <!-- Modal Ver Detalle de Pedido -->
+    <div class="modal fade" id="verPedidoModal" tabindex="-1" aria-labelledby="verPedidoModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="verPedidoModalLabel">Detalle del Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Información General -->
+                    <div class="row g-3 mb-4 text-white">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong class="text-secondary">Cliente:</strong> <span id="verPedidoCliente"></span></p>
+                            <p class="mb-1"><strong class="text-secondary">Empleado:</strong> <span id="verPedidoEmpleado"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong class="text-secondary">Fecha:</strong> <span id="verPedidoFecha"></span></p>
+                            <p class="mb-1"><strong class="text-secondary">Estado:</strong> <span id="verPedidoEstadoBadge"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Productos -->
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
+                            <thead>
+                                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                    <th class="text-secondary">Producto</th>
+                                    <th class="text-secondary">Precio Unitario</th>
+                                    <th class="text-secondary">Cantidad</th>
+                                    <th class="text-secondary">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="verPedidoDetallesBody">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="d-flex justify-content-end align-items-center pt-2 border-top" style="border-color: var(--border-color) !important;">
+                        <span class="text-secondary me-2 font-weight-bold" style="font-size: 1.1rem;">TOTAL:</span>
+                        <span class="text-white font-weight-bold" id="verPedidoTotal" style="font-size: 1.35rem;">$0.00</span>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Pedido (Estado y Detalles) -->
+    <div class="modal fade" id="editPedidoModal" tabindex="-1" aria-labelledby="editPedidoModalLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="editPedidoModalLabel">Modificar Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPedidoForm">
+                        <input type="hidden" id="editPedidoId">
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="editPedidoCliente" class="form-label text-secondary">Cliente</label>
+                                <input type="text" class="form-control" id="editPedidoCliente" readonly disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPedidoEstado" class="form-label text-secondary">Estado del Pedido</label>
+                                <select class="form-select" id="editPedidoEstado">
+                                    <option value="activo">Activo</option>
+                                    <option value="inactivo">Cancelado</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Sección para Añadir Productos -->
+                        <h6 class="text-white mt-4 mb-3 border-bottom pb-2" style="font-size: 0.95rem; border-color: var(--border-color) !important;">Añadir o Modificar Productos</h6>
+                        
+                        <div class="row g-3 align-items-end mb-4">
+                            <div class="col-md-4">
+                                <label for="editMarcaSelect" class="form-label text-secondary">Seleccionar Marca</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="editMarcaSelect" placeholder="Buscar o seleccionar marca..." autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editProductoSelect" class="form-label text-secondary">Seleccionar Producto</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="editProductoSelect" placeholder="Buscar o seleccionar producto..." autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="editProductoCantidad" class="form-label text-secondary">Cantidad</label>
+                                <input type="number" min="0.5" step="0.5" value="1" class="form-control" id="editProductoCantidad">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-sm btn-primary w-100" id="btnEditAgregarProducto" style="background-color: #2563eb; border: none; padding: 0.35rem 0.5rem; height: 42px; font-size: 0.85rem;">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Productos Agregados -->
+                        <div class="table-responsive mb-3" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
+                                <thead>
+                                    <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                        <th class="text-secondary">Producto</th>
+                                        <th class="text-secondary">Precio Unitario</th>
+                                        <th class="text-secondary">Cantidad</th>
+                                        <th class="text-secondary">Subtotal</th>
+                                        <th class="text-secondary">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="editPedidoDetallesBody">
+                                    <!-- Dinámico -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Sección de Total -->
+                        <div class="d-flex justify-content-end align-items-center pt-2 border-top" style="border-color: var(--border-color) !important;">
+                            <span class="text-secondary me-2 font-weight-bold" style="font-size: 1rem;">TOTAL:</span>
+                            <span class="text-white font-weight-bold" id="editPedidoTotalLabel" style="font-size: 1.25rem;">$0.00</span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnActualizarPedido" style="background-color: #2563eb; border: none;">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Impresión (Solo visible al imprimir) -->
+    <div id="printSection" class="d-none d-print-block"></div>
+
+    <!-- Modal Seleccionar Empleado para Impresión -->
+    <div class="modal fade" id="modalImprimirEmpleado" tabindex="-1" aria-labelledby="modalImprimirEmpleadoLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="modalImprimirEmpleadoLabel">Imprimir Pedidos de Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="selectImprimirEmpleado" class="form-label text-white">Seleccione el Empleado</label>
+                        <select class="form-select text-white" id="selectImprimirEmpleado" style="background-color: #0b111c; border: 1px solid var(--border-color);">
+                            <!-- Dinámico -->
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarEnviarEmpleadoWSP" style="background-color: #25d366; border: none; color: #fff;"><i class="fab fa-whatsapp me-1"></i> Enviar WhatsApp</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarImprimirEmpleado" style="background-color: #2563eb; border: none;">Imprimir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Seleccionar Cliente para Impresión -->
+    <div class="modal fade" id="modalImprimirCliente" tabindex="-1" aria-labelledby="modalImprimirClienteLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="modalImprimirClienteLabel">Imprimir Pedido de Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="selectImprimirCliente" class="form-label text-white">Seleccione el Pedido</label>
+                        <select class="form-select text-white" id="selectImprimirCliente" style="background-color: #0b111c; border: 1px solid var(--border-color);">
+                            <!-- Dinámico -->
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarEnviarClienteWSP" style="background-color: #25d366; border: none; color: #fff;"><i class="fab fa-whatsapp me-1"></i> Enviar WhatsApp</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarImprimirCliente" style="background-color: #2563eb; border: none;">Imprimir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ingresar/confirmar teléfono de WhatsApp -->
+    <div class="modal fade" id="modalEnviarWhatsapp" tabindex="-1" aria-labelledby="modalEnviarWhatsappLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="modalEnviarWhatsappLabel">Enviar por WhatsApp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="inputWhatsappNumero" class="form-label text-white">Número de Teléfono (WhatsApp)</label>
+                        <input type="text" class="form-control text-white" id="inputWhatsappNumero" placeholder="Ej: 5491150222520" style="background-color: #0b111c; border: 1px solid var(--border-color);">
+                        <div class="form-text text-secondary">Ingresá el número con código de país y de área (ej. 54911... para móvil de Buenos Aires).</div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarEnviarWhatsapp" style="background-color: #25d366; border: none; font-weight: 600; color: #fff;">
+                        <i class="fab fa-whatsapp me-1"></i> Enviar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor para Notificaciones Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../sidebar.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnAgregar = document.getElementById('btnAgregarProducto');
-            const productoSelect = document.getElementById('productoSelect');
-            const productoCantidad = document.getElementById('productoCantidad');
-            const detallesBody = document.getElementById('pedidoDetallesBody');
-            const totalLabel = document.getElementById('pedidoTotalLabel');
-
-            // Mapeo de precios de productos
-            const productPrices = {
-                "Leche Entera 1L": 1.5,
-                "Pan Lactal Familiar": 2.3,
-                "Gaseosa Cola 2.25L": 3,
-                "Arroz Integral 1kg": 1.8,
-                "Aceite de Girasol 1.5L": 4.5,
-                "Fideos Tallarines 500g": 1.1,
-                "Café Molido 500g": 6.2,
-                "Azúcar Común 1kg": 0.95,
-                "Yerba Mate 1kg": 5,
-                "Galletitas de Chocolate": 1.75
-            };
-
-            let items = [];
-
-            // Fila vacía de respaldo
-            const filaVaciaHtml = `
-                <tr id="filaVacia">
-                    <td colspan="5" class="text-secondary py-3">No hay productos agregados a este pedido.</td>
-                </tr>
-            `;
-
-            function updateTable() {
-                detallesBody.innerHTML = '';
-
-                if (items.length === 0) {
-                    detallesBody.innerHTML = filaVaciaHtml;
-                    totalLabel.textContent = '$0.00';
-                    return;
-                }
-
-                let total = 0;
-                items.forEach((item, index) => {
-                    const subtotal = item.precio * item.cantidad;
-                    total += subtotal;
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="text-white">${item.nombre}</td>
-                        <td class="text-white">$${item.precio.toFixed(2)}</td>
-                        <td class="text-white">${item.cantidad}</td>
-                        <td class="text-white">$${subtotal.toFixed(2)}</td>
-                        <td>
-                            <button type="button" class="btn btn-sm action-btn delete border-0 p-0" data-index="${index}" style="background: none;">
-                                <i class="fas fa-trash-alt text-danger"></i>
-                            </button>
-                        </td>
-                    `;
-                    detallesBody.appendChild(tr);
-                });
-
-                totalLabel.textContent = `$${total.toFixed(2)}`;
-
-                // Agregar oyentes de eventos a botones de eliminación
-                const deleteButtons = detallesBody.querySelectorAll('.delete');
-                deleteButtons.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const idx = Number.parseInt(btn.dataset.index, 10);
-                        items.splice(idx, 1);
-                        updateTable();
-                    });
-                });
-            }
-
-            btnAgregar.addEventListener('click', () => {
-                const nombre = productoSelect.value.trim();
-                const cantidad = Number.parseFloat(productoCantidad.value);
-
-                if (!nombre || !productPrices[nombre]) {
-                    alert('Por favor, selecciona un producto válido de la lista.');
-                    return;
-                }
-
-                if (Number.isNaN(cantidad) || cantidad <= 0 || !Number.isInteger(cantidad * 2)) {
-                    alert('Por favor, ingresa una cantidad válida (enteros o medios, ej. 0.5, 1, 1.5).');
-                    return;
-                }
-
-                // Si ya existe en la lista, sumar cantidad
-                const existingItem = items.find(item => item.nombre === nombre);
-                if (existingItem) {
-                    existingItem.cantidad += cantidad;
-                } else {
-                    items.push({
-                        nombre: nombre,
-                        precio: productPrices[nombre],
-                        cantidad: cantidad
-                    });
-                }
-
-                // Limpiar campos de entrada
-                productoSelect.value = '';
-                productoCantidad.value = '1';
-
-                updateTable();
-            });
-
-            // Limpiar formulario al cerrar modal
-            const addPedidoModal = document.getElementById('addPedidoModal');
-            addPedidoModal.addEventListener('hidden.bs.modal', () => {
-                document.getElementById('addPedidoForm').reset();
-                items = [];
-                updateTable();
-            });
-        });
-    </script>
+    <script type="module" src="pedidos.js"></script>
 </body>
-
 </html>
