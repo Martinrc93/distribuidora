@@ -52,9 +52,10 @@
       "!node_modules/electron",
       "!node_modules/electron-builder",
       "!.git",
-      "!*.sqlite",
+      "!database.sqlite",
       "!.wwebjs_auth/**/*",
-      "!.wwebjs_cache/**/*"
+      "!.wwebjs_cache/**/*",
+      "!session-distribuidora-session/**/*"
     ],
     "asar": true
   }

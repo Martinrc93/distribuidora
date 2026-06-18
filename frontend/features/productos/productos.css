@@ -177,3 +177,8 @@
 .search-container:focus-within .search-icon {
     color: var(--accent-glow) !important;
 }
+
+/* Ocultar la flecha nativa de datalist para evitar duplicación con el estilo form-select */
+input.form-select::-webkit-calendar-picker-indicator {
+    display: none !important;
+}

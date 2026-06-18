@@ -123,7 +123,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="productoMarca" class="form-label text-secondary">Marca</label>
-                                <input type="text" class="form-control" id="productoMarca" required>
+                                <input type="text" class="form-control form-select" id="productoMarca" list="marcasListAdd" required placeholder="Buscar o escribir marca...">
+                                <datalist id="marcasListAdd"></datalist>
                             </div>
                             <div class="col-md-3">
                                 <label for="productoCosto" class="form-label text-secondary">Costo ($)</label>
@@ -204,7 +205,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="editProductoMarca" class="form-label text-secondary">Marca</label>
-                                <input type="text" class="form-control" id="editProductoMarca" required>
+                                <input type="text" class="form-control form-select" id="editProductoMarca" list="marcasListEdit" required placeholder="Buscar o escribir marca...">
+                                <datalist id="marcasListEdit"></datalist>
                             </div>
                             <div class="col-md-3">
                                 <label for="editProductoCosto" class="form-label text-secondary">Costo ($)</label>

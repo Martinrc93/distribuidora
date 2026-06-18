@@ -17,6 +17,8 @@ let modalBrand = null;
 let formAgregarBrand = null;
 let listBrand = null;
 
+let ultimaMarcaSeleccionada = '';
+
 // Service local para productos
 const productosService = {
     getAll: (page = 1, limit = 10, q = '') => apiClient.get(`/products?page=${page}&limit=${limit}&q=${encodeURIComponent(q)}`),
@@ -269,6 +271,7 @@ async function guardarProducto() {
         }
 
         showToast('Producto creado exitosamente');
+        ultimaMarcaSeleccionada = marca;
         formAgregarProducto.reset();
         modalAgregarProducto.hide();
         await cargarProductos(); // Recargar la tabla
@@ -430,6 +433,7 @@ async function cargarMarcas() {
                         console.log('Actualizando marca:', id, 'a', nuevoNombre);
                         await marcasService.update(id, { nombre: nuevoNombre });
                         await cargarMarcas(); // Recargar la lista
+                        await actualizarSelectsMarcas();
                     } catch (error) {
                         console.error('Error al actualizar marca:', error);
                         showToast('Hubo un error al actualizar la marca.', 'error');
@@ -440,6 +444,40 @@ async function cargarMarcas() {
     } catch (error) {
         console.error('Error al cargar marcas:', error);
         listBrand.innerHTML = `<li class="list-group-item text-center text-danger">Error: ${error.message}</li>`;
+    }
+}
+
+/**
+ * Actualiza los datalists de marcas en los formularios de añadir y editar producto
+ */
+async function actualizarSelectsMarcas() {
+    try {
+        console.log('Actualizando datalists de marcas...');
+        const marcas = await marcasService.getAll();
+        const listaMarcas = Array.isArray(marcas) ? marcas : (marcas?.data || []);
+
+        const datalistAdd = document.getElementById('marcasListAdd');
+        const datalistEdit = document.getElementById('marcasListEdit');
+
+        if (datalistAdd) {
+            datalistAdd.innerHTML = '';
+            listaMarcas.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.nombre;
+                datalistAdd.appendChild(opt);
+            });
+        }
+
+        if (datalistEdit) {
+            datalistEdit.innerHTML = '';
+            listaMarcas.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.nombre;
+                datalistEdit.appendChild(opt);
+            });
+        }
+    } catch (error) {
+        console.error('Error al actualizar datalists de marcas:', error);
     }
 }
 
@@ -461,6 +499,7 @@ async function guardarMarca(e) {
         await marcasService.create({ nombre });
         nombreInput.value = '';
         await cargarMarcas(); // Recargar la lista
+        await actualizarSelectsMarcas();
         showToast('Marca registrada exitosamente');
     } catch (error) {
         console.error('Error al crear marca:', error);
@@ -481,6 +520,7 @@ async function eliminarMarca(id) {
         console.log('Eliminando marca:', id);
         await marcasService.delete(id);
         await cargarMarcas(); // Recargar la lista
+        await actualizarSelectsMarcas();
     } catch (error) {
         console.error('Error al eliminar marca:', error);
         const mensaje = error.data?.mensaje || error.data?.error || error.message || 'Error desconocido';
@@ -512,6 +552,9 @@ function inicializarEventos() {
             }
 
             try {
+                // Asegurar que las marcas estén al día
+                await actualizarSelectsMarcas();
+
                 // Cargar producto
                 const producto = await productosService.getById(id);
                 document.getElementById('editProductId').value = producto.id;
@@ -539,6 +582,12 @@ function inicializarEventos() {
     // Resetear formulario de creación al cerrar
     const addModalEl = document.getElementById('addProductModal');
     if (addModalEl) {
+        addModalEl.addEventListener('show.bs.modal', async () => {
+            await actualizarSelectsMarcas();
+            if (ultimaMarcaSeleccionada) {
+                document.getElementById('productoMarca').value = ultimaMarcaSeleccionada;
+            }
+        });
         addModalEl.addEventListener('hidden.bs.modal', () => {
             formAgregarProducto.reset();
         });
@@ -685,6 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (inicializarElementos()) {
         cargarProductos();
+        actualizarSelectsMarcas();
         inicializarEventos();
     }
 });
