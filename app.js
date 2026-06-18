@@ -47,6 +47,8 @@ const productRoutes = require('./routes/productRoutes.js');
 const ventaRoutes = require('./routes/ventaRoutes.js');
 const clienteRoutes = require('./routes/clienteRoutes.js');
 const marcaRoutes = require('./routes/marcaRoutes.js');
+const whatsappRoutes = require('./routes/whatsappRoutes.js');
+const { initWhatsApp } = require('./services/whatsappService.js');
 const sequelize = require('./config/db/dataBase.js');
 const Product = require('./models/product.js');
 const Empleado = require('./models/empleado.js');
@@ -63,7 +65,8 @@ const port = process.env.PORT || 3000;
 
 // Middlewares globales
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Servir archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, 'frontend')));
@@ -78,6 +81,7 @@ app.use('/prices', priceRoutes);
 app.use('/ventas', ventaRoutes);
 app.use('/clientes', clienteRoutes);
 app.use('/marcas', marcaRoutes);
+app.use('/whatsapp', whatsappRoutes);
 
 // Servir index.html en la raíz
 app.get('/', (req, res) => {
@@ -89,6 +93,10 @@ sequelize.sync({ force: false })
   .then(() => {
     console.log('Conexión a SQLite establecida y modelos sincronizados.');
     console.log(`Documentación de Swagger disponible en http://localhost:${port}/api-docs`);
+    
+    // Inicializar cliente de WhatsApp
+    initWhatsApp();
+
     app.listen(port, () => {
       console.log(`Servidor corriendo en http://localhost:${port}`);
     });

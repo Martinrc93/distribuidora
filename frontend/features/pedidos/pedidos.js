@@ -266,6 +266,9 @@ async function cargarVentas() {
                     <button class="btn btn-sm action-btn border-0 btn-imprimir-fila" data-id="${venta.id}" title="Imprimir Comprobante">
                         <i class="fas fa-print"></i>
                     </button>
+                    <button class="btn btn-sm action-btn border-0 btn-whatsapp-fila" data-id="${venta.id}" title="Enviar por WhatsApp" style="color: #25d366;">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
                 </td>
             `;
             tablaPedidos.appendChild(fila);
@@ -594,10 +597,7 @@ function renderDetallesEdicion() {
 /**
  * Agrupa todos los pedidos activos de hoy y genera el ticket consolidado para depósito.
  */
-/**
- * Agrupa todos los pedidos activos de hoy y genera el ticket consolidado para depósito.
- */
-function imprimirConsolidado() {
+function generarConsolidadoHtml() {
     const consolidado = {};
     
     // Sumar cantidades por producto únicamente para ventas activas
@@ -637,7 +637,7 @@ function imprimirConsolidado() {
 
     if (items.length === 0) {
         showToast('No hay pedidos activos registrados el día de hoy para enviar al depósito.', 'error');
-        return;
+        return false;
     }
 
     const today = new Date();
@@ -681,18 +681,32 @@ function imprimirConsolidado() {
                 </tbody>
             </table>
         `;
+        return true;
+    }
+    return false;
+}
+
+function imprimirConsolidado() {
+    if (generarConsolidadoHtml()) {
         window.print();
+    }
+}
+
+function enviarConsolidadoWSP() {
+    if (generarConsolidadoHtml()) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        enviarPDFPorWhatsApp('printSection', `consolidado_deposito_${todayStr}.pdf`);
     }
 }
 
 /**
  * Agrupa los pedidos activos de hoy para un empleado específico y genera su consolidado.
  */
-function imprimirEmpleado(empleadoId) {
+function generarEmpleadoHtml(empleadoId) {
     const employee = empleados.find(e => String(e.id) === String(empleadoId));
     if (!employee) {
         showToast('Empleado no encontrado.', 'error');
-        return;
+        return false;
     }
 
     const consolidado = {};
@@ -735,7 +749,7 @@ function imprimirEmpleado(empleadoId) {
 
     if (items.length === 0) {
         showToast(`No hay pedidos activos asignados a ${employeeName} el día de hoy.`, 'error');
-        return;
+        return false;
     }
 
     const today = new Date();
@@ -779,18 +793,32 @@ function imprimirEmpleado(empleadoId) {
                 </tbody>
             </table>
         `;
+        return true;
+    }
+    return false;
+}
+
+function imprimirEmpleado(empleadoId) {
+    if (generarEmpleadoHtml(empleadoId)) {
         window.print();
+    }
+}
+
+function enviarEmpleadoWSP(empleadoId) {
+    if (generarEmpleadoHtml(empleadoId)) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        enviarPDFPorWhatsApp('printSection', `consolidado_empleado_${empleadoId}_${todayStr}.pdf`);
     }
 }
 
 /**
  * Genera e imprime el ticket de detalle para el cliente.
  */
-function imprimirCliente(ventaId) {
+function generarClienteHtml(ventaId) {
     const venta = ventas.find(v => String(v.id) === String(ventaId));
     if (!venta) {
         showToast('Pedido no encontrado.', 'error');
-        return;
+        return false;
     }
 
     const clienteName = venta.clienteNombre || 'Cliente Desconocido';
@@ -854,8 +882,97 @@ function imprimirCliente(ventaId) {
                 </tbody>
             </table>
         `;
+        return { success: true, clienteId: venta.clienteId, folioStr };
+    }
+    return false;
+}
+
+function imprimirCliente(ventaId) {
+    if (generarClienteHtml(ventaId)) {
         window.print();
     }
+}
+
+function enviarClienteWSP(ventaId) {
+    const res = generarClienteHtml(ventaId);
+    if (res && res.success) {
+        const clientObj = clientes.find(c => c.id === res.clienteId);
+        const defaultPhone = clientObj ? clientObj.contacto : '';
+        enviarPDFPorWhatsApp('printSection', `comprobante_pedido_${res.folioStr}.pdf`, defaultPhone);
+    }
+}
+
+/**
+ * Abre el modal de confirmación de número de WhatsApp, genera el PDF y realiza el envío
+ */
+function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '') {
+    const inputNumero = document.getElementById('inputWhatsappNumero');
+    if (inputNumero) {
+        inputNumero.value = defaultPhone ? defaultPhone.replace(/[-\s]/g, '') : '';
+    }
+
+    const modalEl = document.getElementById('modalEnviarWhatsapp');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    const btnConfirmar = document.getElementById('btnConfirmarEnviarWhatsapp');
+    
+    // Clonar para remover event listeners previos
+    const newBtnConfirmar = btnConfirmar.cloneNode(true);
+    btnConfirmar.parentNode.replaceChild(newBtnConfirmar, btnConfirmar);
+
+    newBtnConfirmar.addEventListener('click', async () => {
+        const number = inputNumero.value.trim();
+        if (!number) {
+            showToast('Debe ingresar un número de teléfono.', 'error');
+            return;
+        }
+
+        newBtnConfirmar.disabled = true;
+        newBtnConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generando PDF...';
+
+        try {
+            const element = document.getElementById(elementId);
+            
+            // html2pdf requiere visibilidad temporal en el DOM
+            element.classList.remove('d-none');
+            
+            const opt = {
+                margin:       [0.5, 0.5, 0.5, 0.5],
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            const pdfBase64DataUri = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+            element.classList.add('d-none');
+
+            newBtnConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando...';
+
+            const base64Data = pdfBase64DataUri.split(',')[1];
+
+            // Enviar al backend
+            const response = await apiClient.post('/whatsapp/send-pdf', {
+                number,
+                pdfBase64: base64Data,
+                filename
+            });
+
+            if (response && response.success) {
+                showToast('¡Comprobante enviado por WhatsApp con éxito!', 'success');
+                modal.hide();
+            } else {
+                showToast('Hubo un problema al enviar el WhatsApp.', 'error');
+            }
+        } catch (error) {
+            console.error('Error al generar o enviar el PDF:', error);
+            showToast(error.message || 'Error al procesar el envío por WhatsApp.', 'error');
+        } finally {
+            newBtnConfirmar.disabled = false;
+            newBtnConfirmar.innerHTML = '<i class="fab fa-whatsapp me-1"></i> Enviar PDF';
+        }
+    });
 }
 
 /**
@@ -1029,6 +1146,14 @@ function inicializarEventos() {
         });
     }
 
+    const btnOptEnviarDepositoWSP = document.getElementById('btnOptEnviarDepositoWSP');
+    if (btnOptEnviarDepositoWSP) {
+        btnOptEnviarDepositoWSP.addEventListener('click', (e) => {
+            e.preventDefault();
+            enviarConsolidadoWSP();
+        });
+    }
+
     // Modal de impresión por Empleado: poblar opciones al abrir
     const modalImprimirEmpleadoEl = document.getElementById('modalImprimirEmpleado');
     if (modalImprimirEmpleadoEl) {
@@ -1047,6 +1172,21 @@ function inicializarEventos() {
             const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalImprimirEmpleado'));
             if (modalInstance) modalInstance.hide();
             imprimirEmpleado(parseInt(empVal, 10));
+        });
+    }
+
+    // Botón confirmar enviar por WhatsApp por Empleado
+    const btnConfirmarEnviarEmpleadoWSP = document.getElementById('btnConfirmarEnviarEmpleadoWSP');
+    if (btnConfirmarEnviarEmpleadoWSP) {
+        btnConfirmarEnviarEmpleadoWSP.addEventListener('click', () => {
+            const empVal = document.getElementById('selectImprimirEmpleado').value;
+            if (!empVal) {
+                showToast('Debe seleccionar un empleado.', 'error');
+                return;
+            }
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalImprimirEmpleado'));
+            if (modalInstance) modalInstance.hide();
+            enviarEmpleadoWSP(parseInt(empVal, 10));
         });
     }
 
@@ -1071,13 +1211,35 @@ function inicializarEventos() {
         });
     }
 
-    // Delegación de eventos para botón de imprimir en la tabla de pedidos
+    // Botón confirmar enviar por WhatsApp por Cliente
+    const btnConfirmarEnviarClienteWSP = document.getElementById('btnConfirmarEnviarClienteWSP');
+    if (btnConfirmarEnviarClienteWSP) {
+        btnConfirmarEnviarClienteWSP.addEventListener('click', () => {
+            const ventaVal = document.getElementById('selectImprimirCliente').value;
+            if (!ventaVal) {
+                showToast('Debe seleccionar un pedido.', 'error');
+                return;
+            }
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalImprimirCliente'));
+            if (modalInstance) modalInstance.hide();
+            enviarClienteWSP(parseInt(ventaVal, 10));
+        });
+    }
+
+    // Delegación de eventos para botón de imprimir y WhatsApp en la tabla de pedidos
     if (tablaPedidos) {
         tablaPedidos.addEventListener('click', (e) => {
-            const btn = e.target.closest('.btn-imprimir-fila');
-            if (btn) {
-                const id = parseInt(btn.getAttribute('data-id'), 10);
+            const btnPrint = e.target.closest('.btn-imprimir-fila');
+            if (btnPrint) {
+                const id = parseInt(btnPrint.getAttribute('data-id'), 10);
                 imprimirCliente(id);
+                return;
+            }
+
+            const btnWsp = e.target.closest('.btn-whatsapp-fila');
+            if (btnWsp) {
+                const id = parseInt(btnWsp.getAttribute('data-id'), 10);
+                enviarClienteWSP(id);
             }
         });
     }

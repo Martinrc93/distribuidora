@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
@@ -29,6 +30,7 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="btnImprimirDropdown" style="background-color: #0b111c; border: 1px solid var(--border-color); border-radius: 10px;">
                             <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptImprimirDeposito" style="color: var(--text-primary); transition: all 0.2s;"><i class="fas fa-warehouse me-2" style="color: #60a5fa; width: 16px;"></i> Imprimir Depósito</a></li>
+                            <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptEnviarDepositoWSP" style="color: var(--text-primary); transition: all 0.2s;"><i class="fab fa-whatsapp me-2" style="color: #25d366; width: 16px;"></i> Enviar Depósito por WA</a></li>
                             <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptImprimirEmpleado" data-bs-toggle="modal" data-bs-target="#modalImprimirEmpleado" style="color: var(--text-primary); transition: all 0.2s;"><i class="fas fa-user-tie me-2" style="color: #60a5fa; width: 16px;"></i> Imprimir por Empleado</a></li>
                             <li><a class="dropdown-item py-2 px-3" href="#" id="btnOptImprimirCliente" data-bs-toggle="modal" data-bs-target="#modalImprimirCliente" style="color: var(--text-primary); transition: all 0.2s;"><i class="fas fa-user me-2" style="color: #60a5fa; width: 16px;"></i> Imprimir por Cliente</a></li>
                         </ul>
@@ -344,6 +346,7 @@
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarEnviarEmpleadoWSP" style="background-color: #25d366; border: none; color: #fff;"><i class="fab fa-whatsapp me-1"></i> Enviar WhatsApp</button>
                     <button type="button" class="btn btn-primary" id="btnConfirmarImprimirEmpleado" style="background-color: #2563eb; border: none;">Imprimir</button>
                 </div>
             </div>
@@ -368,7 +371,33 @@
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarEnviarClienteWSP" style="background-color: #25d366; border: none; color: #fff;"><i class="fab fa-whatsapp me-1"></i> Enviar WhatsApp</button>
                     <button type="button" class="btn btn-primary" id="btnConfirmarImprimirCliente" style="background-color: #2563eb; border: none;">Imprimir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ingresar/confirmar teléfono de WhatsApp -->
+    <div class="modal fade" id="modalEnviarWhatsapp" tabindex="-1" aria-labelledby="modalEnviarWhatsappLabel" aria-hidden="true" data-bs-theme="dark">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="modalEnviarWhatsappLabel">Enviar por WhatsApp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="inputWhatsappNumero" class="form-label text-white">Número de Teléfono (WhatsApp)</label>
+                        <input type="text" class="form-control text-white" id="inputWhatsappNumero" placeholder="Ej: 5491150222520" style="background-color: #0b111c; border: 1px solid var(--border-color);">
+                        <div class="form-text text-secondary">Ingresá el número con código de país y de área (ej. 54911... para móvil de Buenos Aires).</div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarEnviarWhatsapp" style="background-color: #25d366; border: none; font-weight: 600; color: #fff;">
+                        <i class="fab fa-whatsapp me-1"></i> Enviar PDF
+                    </button>
                 </div>
             </div>
         </div>
