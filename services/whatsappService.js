@@ -117,12 +117,42 @@ async function sendPDF(number, pdfBase64, filename) {
         cleanedNumber = `${cleanedNumber}@c.us`;
     }
 
-    console.log(`Enviando PDF a: ${cleanedNumber}`);
+    // Obtener el ID correcto y validado por WhatsApp
+    let resolvedJid = cleanedNumber;
+    try {
+        console.log(`Buscando ID de WhatsApp registrado para: ${cleanedNumber}`);
+        const numberId = await client.getNumberId(cleanedNumber);
+        if (numberId) {
+            resolvedJid = numberId._serialized;
+            console.log(`ID de WhatsApp resuelto con éxito: ${resolvedJid}`);
+        } else {
+            // Si getNumberId no encuentra el número con el formato inicial (ej: con 9),
+            // y es de Argentina (empieza con 549), intentamos sin el '9' por si estuviera registrado así.
+            if (cleanedNumber.startsWith('549')) {
+                const alternativeLookup = '54' + cleanedNumber.slice(3);
+                console.log(`No registrado con 549. Probando formato alternativo: ${alternativeLookup}`);
+                const altNumberId = await client.getNumberId(alternativeLookup);
+                if (altNumberId) {
+                    resolvedJid = altNumberId._serialized;
+                    console.log(`ID de WhatsApp resuelto en formato alternativo: ${resolvedJid}`);
+                } else {
+                    throw new Error('El número no está registrado en WhatsApp.');
+                }
+            } else {
+                throw new Error('El número no está registrado en WhatsApp.');
+            }
+        }
+    } catch (err) {
+        console.error(`Error al verificar registro del número:`, err);
+        throw new Error(err.message || 'El número no está registrado en WhatsApp o no se pudo verificar.');
+    }
+
+    console.log(`Enviando PDF a: ${resolvedJid}`);
 
     try {
         const media = new MessageMedia('application/pdf', pdfBase64, filename);
-        await client.sendMessage(cleanedNumber, media);
-        console.log(`PDF enviado con éxito a ${cleanedNumber}`);
+        await client.sendMessage(resolvedJid, media);
+        console.log(`PDF enviado con éxito a ${resolvedJid}`);
         return { success: true };
     } catch (error) {
         console.error('Error al enviar mensaje de WhatsApp:', error);

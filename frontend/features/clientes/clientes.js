@@ -290,7 +290,8 @@ async function guardarCliente() {
     const nombre = document.getElementById('clienteNombre').value.trim();
     const direccion = document.getElementById('clienteDireccion').value.trim();
     
-    const codInt = document.getElementById('clienteCodInt').value.trim() || '+54 9';
+    let codInt = document.getElementById('clienteCodInt').value.trim() || '54 9';
+    codInt = codInt.replace(/^\+/, '');
     const codArea = document.getElementById('clienteCodArea').value.trim();
     const numTel = document.getElementById('clienteNumTel').value.trim();
     const contacto = numTel ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') : '';
@@ -330,7 +331,8 @@ async function actualizarCliente() {
     const nombre = document.getElementById('editClienteNombre').value.trim();
     const direccion = document.getElementById('editClienteDireccion').value.trim();
     
-    const codInt = document.getElementById('editClienteCodInt').value.trim() || '+54 9';
+    let codInt = document.getElementById('editClienteCodInt').value.trim() || '54 9';
+    codInt = codInt.replace(/^\+/, '');
     const codArea = document.getElementById('editClienteCodArea').value.trim();
     const numTel = document.getElementById('editClienteNumTel').value.trim();
     const contacto = numTel ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') : '';
@@ -427,14 +429,14 @@ function inicializarEventos() {
             const contacto = (button.getAttribute('data-contacto') || '').trim();
             const listaPreciosId = button.getAttribute('data-listaprecios');
 
-            let codInt = '+54 9';
+            let codInt = '54 9';
             let codArea = '11';
             let numTel = contacto;
 
             if (contacto) {
-                const match = contacto.match(/^(\+\d+(?:\s+\d+)?)\s+(\d+)\s+(.+)$/);
+                const match = contacto.match(/^(\+?\d+(?:\s+\d+)?)\s+(\d+)\s+(.+)$/);
                 if (match) {
-                    codInt = match[1];
+                    codInt = match[1].replace(/^\+/, '');
                     codArea = match[2];
                     numTel = match[3];
                 }
