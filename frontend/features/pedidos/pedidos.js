@@ -650,7 +650,7 @@ function generarConsolidadoHtml() {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Recibo de venta</p>
-                    <h1>DISTRI-PIPIPUCH</h1>
+                    <h1>Distri-Pipipuch</h1>
                     <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
                     <p class="info-line">Cliente: CONSOLIDADO DE CARGA</p>
                     <p class="info-line">Depósito General</p>
@@ -762,7 +762,7 @@ function generarEmpleadoHtml(empleadoId) {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Detalle por Empleado</p>
-                    <h1>DISTRI-PIPIPUCH</h1>
+                    <h1>Distri-Pipipuch</h1>
                     <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
                     <p class="info-line">Empleado: ${employeeName.toUpperCase()}</p>
                     <p class="info-line">Consolidado de Carga Asignada</p>
@@ -850,7 +850,7 @@ function generarClienteHtml(ventaId) {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Comprobante de Pedido</p>
-                    <h1>DISTRI-PIPIPUCH</h1>
+                    <h1>Distri-Pipipuch</h1>
                     <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
                     <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
                     <p class="info-line">Vendedor: ${empleadoName}</p>

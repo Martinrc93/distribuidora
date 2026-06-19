@@ -213,7 +213,7 @@
         #table-employees,
         #table-top-clients {
             max-width: 960px;
-            margin-left: 0;
+            margin-left: auto;
             margin-right: auto;
         }
 
@@ -399,7 +399,7 @@
         <main class="main-content">
             <header class="main-header">
                 <div class="header-titles">
-                    <h1><i class="fas fa-home"></i>DASHBOARD DE NEGOCIO</h1>
+                    <h1><i class="fas fa-home"></i>Dashboard de Negocio</h1>
                 </div>
             </header>
 
@@ -557,7 +557,23 @@
                     <!-- Top Clientes -->
                     <div class="col-lg-12">
                         <div class="table-card">
-                            <h2><i class="fas fa-medal me-2" style="color: #34d399;"></i> Clientes de Mayor Valor</h2>
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+                                style="max-width: 960px; margin: 0 auto 1.25rem auto;">
+                                <h2 class="mb-0" style="margin-bottom: 0 !important;"><i class="fas fa-medal me-2"
+                                        style="color: #34d399;"></i> <span id="clients-title-text">Top 10 Clientes de Mayor Valor</span></h2>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-secondary"
+                                        style="font-size: 0.85rem; font-weight: 600;">MOSTRAR:</span>
+                                    <select id="select-top-clients-limit" class="form-select form-select-sm"
+                                        style="width: auto; background-color: #060b14; border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.85rem; border-radius: 6px; padding: 0.25rem 2rem 0.25rem 0.75rem;">
+                                        <option value="5">Top 5</option>
+                                        <option value="10" selected>Top 10</option>
+                                        <option value="15">Top 15</option>
+                                        <option value="20">Top 20</option>
+                                        <option value="all" id="option-clients-limit-all">Todos</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="custom-table" id="table-top-clients">
                                     <thead>
@@ -585,8 +601,7 @@
                     <!-- Rendimiento de Vendedores -->
                     <div class="col-lg-12">
                         <div class="table-card">
-                            <h2><i class="fas fa-user-tie me-2" style="color: #60a5fa;"></i> Desempeño de Ventas por
-                                Vendedor</h2>
+                            <h2 style="max-width: 960px; margin: 0 auto 1.25rem auto;"><i class="fas fa-user-tie me-2" style="color: #60a5fa;"></i> Desempeño de Ventas por Vendedor</h2>
                             <div class="table-responsive">
                                 <table class="custom-table" id="table-employees">
                                     <thead>

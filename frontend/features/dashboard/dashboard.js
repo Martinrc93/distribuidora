@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputFechaMin = document.getElementById('globalFechaMin');
     const inputFechaMax = document.getElementById('globalFechaMax');
     const selectProductsLimit = document.getElementById('select-top-products-limit');
+    const selectClientsLimit = document.getElementById('select-top-clients-limit');
     
     // Almacenamos instancias de los gráficos para poder destruirlas y recrearlas limpiamente
     const chartInstances = {
@@ -92,6 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectProductsLimit) {
         selectProductsLimit.addEventListener('change', () => {
             loadPortfolioData(true);
+        });
+    }
+
+    if (selectClientsLimit) {
+        selectClientsLimit.addEventListener('change', () => {
+            loadCommercialData();
         });
     }
 
@@ -408,11 +415,26 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const fMin = inputFechaMin.value;
             const fMax = inputFechaMax.value;
-            const response = await fetch(`/dashboard/commercial?fechaMin=${fMin}&fechaMax=${fMax}`);
+            const limit = selectClientsLimit ? selectClientsLimit.value : 10;
+
+            const titleText = document.getElementById('clients-title-text');
+            if (titleText) {
+                titleText.textContent = limit === 'all'
+                    ? 'Todos los Clientes de Mayor Valor'
+                    : `Top ${limit} Clientes de Mayor Valor`;
+            }
+
+            const response = await fetch(`/dashboard/commercial?fechaMin=${fMin}&fechaMax=${fMax}&limit=${limit}`);
             if (!response.ok) throw new Error('Error al obtener datos comerciales');
             const data = await response.json();
 
-            const { topClients, employeeStats } = data;
+            const { topClients, employeeStats, totalClientsCount } = data;
+
+            // Actualizar la opción de "Todos" con la cantidad de clientes
+            const optionAllClients = document.getElementById('option-clients-limit-all');
+            if (optionAllClients && totalClientsCount) {
+                optionAllClients.textContent = `Todos (${totalClientsCount})`;
+            }
 
             // Rellenar Tabla de Clientes (Clientes de Mayor Valor)
             const clientsTableBody = document.querySelector('#table-top-clients tbody');

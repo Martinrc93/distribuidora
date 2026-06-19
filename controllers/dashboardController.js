@@ -64,8 +64,9 @@ exports.getCommercialStats = async (req, res) => {
         const { defaultFechaMin, defaultFechaMax } = getDefaultDates();
         const fechaMin = req.query.fechaMin || defaultFechaMin;
         const fechaMax = req.query.fechaMax || defaultFechaMax;
+        const limit = req.query.limit === 'all' ? 'all' : (parseInt(req.query.limit) || 10);
 
-        const stats = await dashboardService.getCommercialStats(fechaMin, fechaMax);
+        const stats = await dashboardService.getCommercialStats(fechaMin, fechaMax, limit);
         res.json(stats);
     } catch (err) {
         res.status(500).json({ error: err.message });

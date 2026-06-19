@@ -18,7 +18,7 @@
         <main class="main-content">
             <header class="main-header">
                 <div class="header-titles">
-                    <h1><i class="fas fa-users"></i>EMPLEADOS</h1>
+                    <h1><i class="fas fa-users"></i>Empleados</h1>
                 </div>
                 <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addEmpleadoModal"><i class="fas fa-plus"></i> Añadir Empleado</button>
             </header>
@@ -179,6 +179,7 @@
                                     <th class="text-secondary">Fecha</th>
                                     <th class="text-secondary">Cliente</th>
                                     <th class="text-secondary">Total</th>
+                                    <th class="text-secondary">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tablaPedidosEmpleadoBody">
@@ -189,6 +190,55 @@
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle del Pedido del Historial -->
+    <div class="modal fade" id="verDetallePedidoModal" tabindex="-1" aria-labelledby="verDetallePedidoModalLabel" aria-hidden="true" data-bs-theme="dark" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title text-white" id="verDetallePedidoModalLabel">Detalle de Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Info general del pedido -->
+                    <div class="row mb-4 text-white">
+                        <div class="col-md-6">
+                            <span class="text-secondary d-block" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Fecha de Emisión</span>
+                            <span class="font-weight-bold" id="detPedidoFecha" style="font-size: 1.05rem;">N/A</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-secondary d-block" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Cliente</span>
+                            <span class="font-weight-bold" id="detPedidoCliente" style="font-size: 1.05rem;">N/A</span>
+                        </div>
+                    </div>
+                    <!-- Tabla de Productos -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-borderless text-center align-middle" style="font-size: 0.95rem; color: var(--text-primary);">
+                            <thead>
+                                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                                    <th class="text-secondary text-start" style="width: 50%;">Producto</th>
+                                    <th class="text-secondary" style="width: 15%;">Precio Unit.</th>
+                                    <th class="text-secondary" style="width: 15%;">Cantidad</th>
+                                    <th class="text-secondary text-end" style="width: 20%;">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detPedidoProductosBody">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Total -->
+                    <div class="d-flex justify-content-end align-items-center pt-3 border-top" style="border-color: var(--border-color) !important;">
+                        <span class="text-secondary me-2 font-weight-bold" style="font-size: 1rem;">TOTAL:</span>
+                        <span class="text-white font-weight-bold" id="detPedidoTotal" style="font-size: 1.3rem;">$0.00</span>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Volver</button>
                 </div>
             </div>
         </div>

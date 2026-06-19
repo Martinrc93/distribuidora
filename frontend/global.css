@@ -173,7 +173,6 @@ body {
     letter-spacing: 0.05em;
     margin-bottom: 0;
     text-align: center;
-    text-transform: uppercase;
     text-shadow: 0 2px 10px rgba(37, 99, 235, 0.5), 0 0 20px rgba(37, 99, 235, 0.2);
     display: flex;
     align-items: center;
@@ -582,19 +581,19 @@ body {
 
 @media (min-width: 576px) {
     .modal-dialog {
-        max-width: 620px !important; /* Larger default modal width */
+        max-width: 806px !important; /* 30% larger default modal width (620 * 1.30 = 806) */
     }
 }
 
 @media (min-width: 992px) {
     .modal-lg {
-        max-width: 950px !important; /* Larger modal-lg width */
+        max-width: 1235px !important; /* 30% larger modal-lg width (950 * 1.30 = 1235) */
     }
 }
 
 @media (min-width: 1200px) {
     .modal-xl {
-        max-width: 1350px !important; /* Larger modal-xl width */
+        max-width: 1755px !important; /* 30% larger modal-xl width (1350 * 1.30 = 1755) */
     }
 }
 

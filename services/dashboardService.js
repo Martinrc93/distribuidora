@@ -124,13 +124,19 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
 /**
  * Obtener estadísticas de clientes, vendedores y listas de precios.
  */
-exports.getCommercialStats = async (fechaMin, fechaMax) => {
+exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
     const replacements = {
         fechaMin: `${fechaMin} 00:00:00.000`,
         fechaMax: `${fechaMax} 23:59:59.999`
     };
 
-    // 1. Top 10 clientes
+    let limitClause = '';
+    if (limit !== 'all') {
+        const clientsLimit = parseInt(limit) || 10;
+        limitClause = `LIMIT ${clientsLimit}`;
+    }
+
+    // 1. Top clientes
     const topClientsQuery = `
         SELECT 
             c.id as clienteId,
@@ -145,7 +151,7 @@ exports.getCommercialStats = async (fechaMin, fechaMax) => {
         WHERE v.active = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY c.id, c.nombre, lp.nombre
         ORDER BY totalComprado DESC
-        LIMIT 10;
+        ${limitClause};
     `;
     const topClients = await sequelize.query(topClientsQuery, { 
         replacements,
@@ -171,8 +177,15 @@ exports.getCommercialStats = async (fechaMin, fechaMax) => {
         type: sequelize.QueryTypes.SELECT 
     });
 
+    // 3. Cantidad total de clientes en el sistema
+    const totalClientsResult = await sequelize.query(`
+        SELECT COUNT(id) as count FROM Clientes;
+    `, { type: sequelize.QueryTypes.SELECT });
+    const totalClientsCount = totalClientsResult[0]?.count || 0;
+
     return {
         topClients,
-        employeeStats
+        employeeStats,
+        totalClientsCount
     };
 };
