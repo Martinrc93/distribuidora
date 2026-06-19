@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- NAVEGACIÓN ENTRE PESTAÑAS (TABS) ---
     const tabs = document.querySelectorAll('.dashboard-tab');
     const views = document.querySelectorAll('.dashboard-view');
-    const btnFilter = document.getElementById('btnFilterDates');
     const inputFechaMin = document.getElementById('globalFechaMin');
     const inputFechaMax = document.getElementById('globalFechaMax');
     const selectProductsLimit = document.getElementById('select-top-products-limit');
@@ -36,6 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
     inputFechaMax.value = getLocalDateString(today);
     inputFechaMin.value = getLocalDateString(fourteenDaysAgo);
 
+    // Configurar límites iniciales
+    inputFechaMin.max = inputFechaMax.value;
+    inputFechaMax.min = inputFechaMin.value;
+
     // --- NAVEGACIÓN DE PESTAÑAS ---
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -59,14 +62,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- BOTÓN DE FILTRADO ---
-    btnFilter.addEventListener('click', () => {
+    // --- FILTRADO AUTOMÁTICO AL CAMBIAR FECHAS ---
+    const handleDateChange = (e) => {
+        // Validar y ajustar si Desde > Hasta
+        if (inputFechaMin.value && inputFechaMax.value && inputFechaMin.value > inputFechaMax.value) {
+            if (e.target === inputFechaMin) {
+                // Si cambió Desde, ajustamos Hasta
+                inputFechaMax.value = inputFechaMin.value;
+            } else if (e.target === inputFechaMax) {
+                // Si cambió Hasta, ajustamos Desde
+                inputFechaMin.value = inputFechaMax.value;
+            }
+        }
+
+        // Actualizar límites dinámicos
+        inputFechaMin.max = inputFechaMax.value;
+        inputFechaMax.min = inputFechaMin.value;
+
         const activeTabButton = document.querySelector('.dashboard-tab.active');
         if (activeTabButton) {
             const targetTab = activeTabButton.getAttribute('data-tab');
             loadTabData(targetTab);
         }
-    });
+    };
+
+    inputFechaMin.addEventListener('change', handleDateChange);
+    inputFechaMax.addEventListener('change', handleDateChange);
 
     if (selectProductsLimit) {
         selectProductsLimit.addEventListener('change', () => {
