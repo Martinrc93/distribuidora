@@ -187,8 +187,16 @@ function renderPaginationControls(totalItems) {
     }
     paginationList.appendChild(prevLi);
 
-    // Botones Numéricos
-    for (let i = 1; i <= totalPages; i++) {
+    // Botones Numéricos con ventana deslizable
+    const maxVisiblePages = window.innerWidth < 576 ? 3 : 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
         const pageLi = document.createElement('li');
         pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
         pageLi.innerHTML = `<button class="page-link" type="button">${i}</button>`;
