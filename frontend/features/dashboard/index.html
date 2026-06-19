@@ -4,13 +4,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distribuidora - Menú</title>
+    <title>Distribuidora - Dashboard</title>
     <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../../global.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .dashboard-tabs {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .tabs-buttons-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dashboard-tab.active {
+            color: var(--text-primary);
+            background-color: var(--border-color);
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+
+        .dashboard-tab:hover:not(.active) {
+            color: var(--text-primary);
+            background-color: rgba(30, 41, 59, 0.5);
+        }
+
+        .dashboard-view {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+
+        .dashboard-view.active-view {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chart-card {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        .stat-card-deck {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card-custom {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background-color: rgba(37, 99, 235, 0.1);
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-card-icon.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+        }
+
+        .stat-card-icon.warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+        }
+
+        .stat-card-info h3 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card-info .stat-val {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .table-card {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .table-card h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .custom-table th,
+        .custom-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .custom-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: left;
+            background-color: rgba(15, 22, 35, 0.4);
+        }
+
+        .custom-table td {
+            font-weight: 400;
+        }
+
+        .custom-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: rgba(30, 41, 59, 0.3);
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-success {
+            color: #34d399 !important;
+        }
+
+        /* Ajuste de anchos fijos y alineado a la izquierda o centro */
+        #table-employees,
+        #table-top-clients {
+            max-width: 960px;
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        #table-top-products {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #table-employees th:nth-child(1),
+        #table-employees td:nth-child(1) {
+            width: 35%;
+            text-align: left;
+        }
+
+        #table-employees th:nth-child(2),
+        #table-employees td:nth-child(2) {
+            width: 15%;
+            text-align: center;
+        }
+
+        #table-employees th:nth-child(3),
+        #table-employees td:nth-child(3) {
+            width: 25%;
+            text-align: right;
+        }
+
+        #table-employees th:nth-child(4),
+        #table-employees td:nth-child(4) {
+            width: 25%;
+            text-align: right;
+        }
+
+        #table-top-clients th:nth-child(1),
+        #table-top-clients td:nth-child(1) {
+            width: 30%;
+            text-align: left;
+        }
+
+        #table-top-clients th:nth-child(2),
+        #table-top-clients td:nth-child(2) {
+            width: 25%;
+            text-align: left;
+        }
+
+        #table-top-clients th:nth-child(3),
+        #table-top-clients td:nth-child(3) {
+            width: 15%;
+            text-align: center;
+        }
+
+        #table-top-clients th:nth-child(4),
+        #table-top-clients td:nth-child(4) {
+            width: 15%;
+            text-align: right;
+        }
+
+        #table-top-clients th:nth-child(4),
+        #table-top-clients td:nth-child(4) {
+            width: 15%;
+            text-align: right;
+        }
+
+        #table-top-clients th:nth-child(5),
+        #table-top-clients td:nth-child(5) {
+            width: 15%;
+            text-align: right;
+        }
+
+        /* Ajuste de anchos fijos para tabla de Productos */
+        #table-top-products th:nth-child(1),
+        #table-top-products td:nth-child(1) {
+            width: 50%;
+            text-align: left;
+        }
+
+        #table-top-products th:nth-child(2),
+        #table-top-products td:nth-child(2) {
+            width: 25%;
+            text-align: center;
+        }
+
+        #table-top-products th:nth-child(3),
+        #table-top-products td:nth-child(3) {
+            width: 25%;
+            text-align: right;
+        }
+
+        /* Estilos para el contenedor global de filtros de fecha */
+        .date-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .date-input-group {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .date-input-group label {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .date-picker-custom {
+            background-color: #060b14 !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+            border-radius: 8px !important;
+            padding: 0.5rem 0.9rem !important;
+            height: 44px;
+            font-family: inherit !important;
+            font-size: 1.1rem;
+        }
+
+        .date-picker-custom:focus {
+            border-color: var(--accent-glow) !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+        }
+
+        .date-picker-custom::-webkit-calendar-picker-indicator {
+            filter: invert(0.7) sepia(1) saturate(5) hue-rotate(190deg);
+            cursor: pointer;
+        }
+
+        /* Estilos para el filtro de marcas */
+        .brand-filter-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .brand-pills-container {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: rgba(6, 11, 20, 0.4);
+        }
+
+        .brand-pill {
+            background-color: #060b14;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .brand-pill.active {
+            background-color: rgba(37, 99, 235, 0.15);
+            border-color: rgba(37, 99, 235, 0.4);
+            color: #60a5fa;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.15);
+        }
+
+        .brand-pill:hover:not(.active) {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+    </style>
 </head>
 
 <body>
@@ -19,137 +399,227 @@
         <main class="main-content">
             <header class="main-header">
                 <div class="header-titles">
-                    <h1>MENÚ</h1>
+                    <h1><i class="fas fa-home"></i>DASHBOARD DE NEGOCIO</h1>
                 </div>
             </header>
 
-            <section class="statistics-section">
-                <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#salesDetailModal">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
+            <!-- Pestañas de Navegación de Dashboards -->
+            <div class="dashboard-tabs">
+                <div class="tabs-buttons-group">
+                    <button class="dashboard-tab active" data-tab="tab-finance">
+                        <i class="fas fa-chart-line"></i> Finanzas y Rentabilidad
+                    </button>
+                    <button class="dashboard-tab" data-tab="tab-portfolio">
+                        <i class="fas fa-box-open"></i> Mix de Productos y Marcas
+                    </button>
+                    <button class="dashboard-tab" data-tab="tab-commercial">
+                        <i class="fas fa-users"></i> Gestión Comercial
+                    </button>
+                </div>
+
+                <!-- Filtros de Fecha Globales (Alineados a la derecha) -->
+                <div class="date-filter-container">
+                    <div class="date-input-group">
+                        <label for="globalFechaMin"><i class="fas fa-calendar-alt"></i> Desde:</label>
+                        <input type="date" id="globalFechaMin" class="form-control date-picker-custom">
                     </div>
-                    <div class="stat-info">
-                        <h3>Total de Ventas</h3>
-                        <p class="stat-number">$15,430</p>
-                        <small class="text-secondary" style="font-size: 0.75rem; display: block; margin-top: 0.25rem;"><i class="fas fa-info-circle"></i> Click para ver detalle de productos hoy</small>
+                    <div class="date-input-group">
+                        <label for="globalFechaMax"><i class="fas fa-calendar-alt"></i> Hasta:</label>
+                        <input type="date" id="globalFechaMax" class="form-control date-picker-custom">
                     </div>
                 </div>
-            </section>
+            </div>
+
+            <!-- TAB 1: FINANZAS Y RENTABILIDAD -->
+            <div id="tab-finance" class="dashboard-view active-view">
+                <div class="stat-card-deck">
+                    <div class="stat-card-custom">
+                        <div class="stat-card-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-card-info">
+                            <h3>Facturación Total</h3>
+                            <div class="stat-val" id="fin-facturacion">$0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-custom">
+                        <div class="stat-card-icon success">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-card-info">
+                            <h3>Ganancia Real</h3>
+                            <div class="stat-val text-success" id="fin-ganancia">$0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-custom">
+                        <div class="stat-card-icon warning">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <div class="stat-card-info">
+                            <h3>Margen de Utilidad</h3>
+                            <div class="stat-val" id="fin-margen">0%</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-custom">
+                        <div class="stat-card-icon" style="background-color: rgba(96, 165, 250, 0.1); color: #38bdf8;">
+                            <i class="fas fa-shopping-basket"></i>
+                        </div>
+                        <div class="stat-card-info">
+                            <h3>Ventas Registradas</h3>
+                            <div class="stat-val" id="fin-ventas">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h5 class="text-white mb-4" style="font-size: 1.1rem; font-weight: 600;"><i
+                            class="fas fa-chart-area me-2" style="color: #60a5fa;"></i> Historial de Ventas vs.
+                        Ganancias</h5>
+                    <div class="chart-container">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: PORTFOLIO Y MARCAS -->
+            <div id="tab-portfolio" class="dashboard-view">
+                <div class="row g-4 mb-4">
+                    <!-- Gráfico de Ventas por Marca -->
+                    <div class="col-lg-12">
+                        <div class="chart-card">
+                            <h5 class="text-white mb-3" style="font-size: 1.1rem; font-weight: 600;"><i
+                                    class="fas fa-tags me-2" style="color: #60a5fa;"></i> Facturación y Margen por Marca
+                            </h5>
+
+                            <!-- Filtro interactivo de marcas -->
+                            <div class="brand-filter-section">
+                                <span class="d-block text-secondary mb-2"
+                                    style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em;"><i
+                                        class="fas fa-filter me-1"></i> SELECCIONAR MARCAS A MOSTRAR:</span>
+                                <div id="brandFilterContainer" class="brand-pills-container">
+                                    <!-- Se cargará dinámicamente -->
+                                </div>
+                            </div>
+
+                            <div class="chart-container" style="height: 350px;">
+                                <canvas id="brandChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-12">
+                        <div class="table-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+                                style="max-width: 960px; margin: 0 auto 1.25rem auto;">
+                                <h2 class="mb-0" style="margin-bottom: 0 !important;"><i class="fas fa-trophy me-2"
+                                        style="color: #fbbf24;"></i> <span id="products-title-text">Top 10 Productos Más
+                                        Vendidos</span></h2>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-secondary"
+                                        style="font-size: 0.85rem; font-weight: 600;">MOSTRAR:</span>
+                                    <select id="select-top-products-limit" class="form-select form-select-sm"
+                                        style="width: auto; background-color: #060b14; border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.85rem; border-radius: 6px; padding: 0.25rem 2rem 0.25rem 0.75rem;">
+                                        <option value="5">Top 5</option>
+                                        <option value="10" selected>Top 10</option>
+                                        <option value="15">Top 15</option>
+                                        <option value="20">Top 20</option>
+                                        <option value="all" id="option-limit-all">Todos</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="custom-table" id="table-top-products">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th class="text-center">Cant. Vendida</th>
+                                            <th class="text-right">Total Facturado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="3" class="text-center text-secondary py-4">Cargando
+                                                productos...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: GESTIÓN COMERCIAL -->
+            <div id="tab-commercial" class="dashboard-view">
+                <div class="row g-4 mb-4">
+                    <!-- Top Clientes -->
+                    <div class="col-lg-12">
+                        <div class="table-card">
+                            <h2><i class="fas fa-medal me-2" style="color: #34d399;"></i> Clientes de Mayor Valor</h2>
+                            <div class="table-responsive">
+                                <table class="custom-table" id="table-top-clients">
+                                    <thead>
+                                        <tr>
+                                            <th>Cliente</th>
+                                            <th>Lista de Precios</th>
+                                            <th class="text-center">Cant. Pedidos</th>
+                                            <th class="text-right">Total Comprado</th>
+                                            <th class="text-right">Ganancia Generada</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-secondary py-4">Cargando clientes...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Rendimiento de Vendedores -->
+                    <div class="col-lg-12">
+                        <div class="table-card">
+                            <h2><i class="fas fa-user-tie me-2" style="color: #60a5fa;"></i> Desempeño de Ventas por
+                                Vendedor</h2>
+                            <div class="table-responsive">
+                                <table class="custom-table" id="table-employees">
+                                    <thead>
+                                        <tr>
+                                            <th>Vendedor</th>
+                                            <th class="text-center">Ventas</th>
+                                            <th class="text-right">Total Facturado</th>
+                                            <th class="text-right">Ganancia Aportada</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="4" class="text-center text-secondary py-4">Cargando
+                                                vendedores...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <!-- Sidebar Container (Cargado Dinámicamente) -->
         <div id="sidebar-container"></div>
     </div>
 
-    <!-- Modal Detalle de Ventas y Productos -->
-    <div class="modal fade" id="salesDetailModal" tabindex="-1" aria-labelledby="salesDetailModalLabel" aria-hidden="true" data-bs-theme="dark">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
-            <div class="modal-content" id="salesDetailModalContent" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
-                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title text-white" id="salesDetailModalLabel">Resumen de Ventas y Productos Solicitados</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-4">
-                        <!-- Tarjeta de Resumen -->
-                        <div class="col-lg-4">
-                            <div class="card p-4 h-100" style="background-color: #0f1623; border: 1px solid var(--border-color); border-radius: 12px;">
-                                <h5 class="text-secondary mb-4" style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Reportes de Hoy</h5>
-                                
-                                <div class="mb-4">
-                                    <span class="text-secondary d-block mb-1" style="font-size: 0.85rem;">Total Facturado</span>
-                                    <span class="text-white font-weight-bold" style="font-size: 2.25rem; font-weight: 700;">$15,430</span>
-                                </div>
-
-                                <div class="mb-4">
-                                    <span class="text-secondary d-block mb-1" style="font-size: 0.85rem;">Productos Solicitados Hoy</span>
-                                    <span class="text-white font-weight-bold" style="font-size: 2.25rem; font-weight: 700; color: #60a5fa;">5,046 <small style="font-size: 1rem; font-weight: 500;" class="text-secondary">uds</small></span>
-                                </div>
-
-                                <div class="mt-auto pt-3 border-top" style="border-color: var(--border-color) !important;">
-                                    <p class="text-secondary mb-0" style="font-size: 0.8rem; line-height: 1.5;">Este reporte consolida todas las ventas del día 07 de Junio de 2026 registradas por todos los empleados activos.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tabla de Detalles -->
-                        <div class="col-lg-8">
-                            <div class="card p-4" style="background-color: #0f1623; border: 1px solid var(--border-color); border-radius: 12px;">
-                                <h5 class="text-white mb-3" style="font-size: 1rem; font-weight: 600;">Desglose de Productos Solicitados</h5>
-                                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-                                    <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
-                                        <thead>
-                                            <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                                                <th class="text-secondary text-start">Producto</th>
-                                                <th class="text-secondary">Cantidad</th>
-                                                <th class="text-secondary">Precio Unit.</th>
-                                                <th class="text-secondary text-end">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td class="text-white text-start">Leche Entera 1L</td>
-                                                <td class="text-white font-weight-bold">1,200</td>
-                                                <td>$1.50</td>
-                                                <td class="text-white text-end">$1,800.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-white text-start">Pan Lactal Familiar</td>
-                                                <td class="text-white font-weight-bold">800</td>
-                                                <td>$2.30</td>
-                                                <td class="text-white text-end">$1,840.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-white text-start">Gaseosa Cola 2.25L</td>
-                                                <td class="text-white font-weight-bold">1,500</td>
-                                                <td>$3.00</td>
-                                                <td class="text-white text-end">$4,500.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-white text-start">Yerba Mate 1kg</td>
-                                                <td class="text-white font-weight-bold">1,000</td>
-                                                <td>$5.00</td>
-                                                <td class="text-white text-end">$5,000.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-white text-start">Café Molido 500g</td>
-                                                <td class="text-white font-weight-bold">300</td>
-                                                <td>$6.20</td>
-                                                <td class="text-white text-end">$1,860.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-white text-start">Galletitas de Chocolate</td>
-                                                <td class="text-white font-weight-bold">246</td>
-                                                <td>$1.75</td>
-                                                <td class="text-white text-end">$430.00</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
-                    <button type="button" class="btn btn-primary" id="btnPrintReport" style="background-color: #2563eb; border: none; padding: 0.5rem 1.25rem;"><i class="fas fa-print"></i> Imprimir Reporte</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../sidebar.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnPrint = document.getElementById('btnPrintReport');
-            if (btnPrint) {
-                btnPrint.addEventListener('click', () => {
-                    globalThis.print();
-                });
-            }
-        });
-    </script>
+    <!-- Carga local de Chart.js para soporte sin conexión -->
+    <script src="../../assets/chart.min.js"></script>
+    <script src="dashboard.js"></script>
 </body>
 
 </html>

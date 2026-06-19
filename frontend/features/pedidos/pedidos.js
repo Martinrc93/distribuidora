@@ -695,7 +695,7 @@ function imprimirConsolidado() {
 function enviarConsolidadoWSP() {
     if (generarConsolidadoHtml()) {
         const todayStr = new Date().toISOString().split('T')[0];
-        enviarPDFPorWhatsApp('printSection', `consolidado_deposito_${todayStr}.pdf`);
+        enviarPDFPorWhatsApp('printSection', `consolidado_deposito_${todayStr}.pdf`, '', 'deposito');
     }
 }
 
@@ -905,8 +905,11 @@ function enviarClienteWSP(ventaId) {
 /**
  * Abre el modal de confirmación de número de WhatsApp, genera el PDF y realiza el envío
  */
-function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '') {
+function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = '') {
     const inputNumero = document.getElementById('inputWhatsappNumero');
+    if (context === 'deposito' && !defaultPhone) {
+        defaultPhone = localStorage.getItem('last_wsp_number_deposito') || '';
+    }
     if (inputNumero) {
         inputNumero.value = defaultPhone ? defaultPhone.replace(/[-\s]/g, '') : '';
     }
@@ -1002,6 +1005,9 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '') {
             }, { signal: abortController.signal });
 
             if (response && response.success) {
+                if (context === 'deposito') {
+                    localStorage.setItem('last_wsp_number_deposito', number);
+                }
                 showToast('¡Comprobante enviado por WhatsApp con éxito!', 'success');
                 modal.hide();
             } else {

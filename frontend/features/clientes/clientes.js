@@ -217,10 +217,13 @@ async function cargarClientes() {
         clientes.forEach(cliente => {
             const fila = document.createElement('tr');
             const listaPreciosNombre = `Lista ${cliente.listaPreciosId || 1}`;
+            const contactoDisplay = (!cliente.contacto || cliente.contacto.replace(/\s+/g, '') === '54911') 
+                ? 'Sin contacto' 
+                : cliente.contacto;
             fila.innerHTML = `
                 <td>${cliente.nombre || 'N/A'}</td>
                 <td>${cliente.direccion || 'N/A'}</td>
-                <td>${cliente.contacto || 'Sin contacto'}</td>
+                <td>${contactoDisplay}</td>
                 <td>
                     <button class="btn btn-sm btn-ver-pedidos" data-id="${cliente.id}" data-nombre="${cliente.nombre}" data-bs-toggle="modal" data-bs-target="#verPedidosModal" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
                 </td>
@@ -294,7 +297,9 @@ async function guardarCliente() {
     codInt = codInt.replace(/^\+/, '');
     const codArea = document.getElementById('clienteCodArea').value.trim();
     const numTel = document.getElementById('clienteNumTel').value.trim();
-    const contacto = numTel ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') : '';
+    const contacto = numTel 
+        ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') 
+        : `${codInt} ${codArea}`.trim().replace(/\s+/g, '');
 
     const listaPreciosId = document.getElementById('clienteListaPrecios').value;
 
@@ -335,7 +340,9 @@ async function actualizarCliente() {
     codInt = codInt.replace(/^\+/, '');
     const codArea = document.getElementById('editClienteCodArea').value.trim();
     const numTel = document.getElementById('editClienteNumTel').value.trim();
-    const contacto = numTel ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') : '';
+    const contacto = numTel 
+        ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') 
+        : `${codInt} ${codArea}`.trim().replace(/\s+/g, '');
 
     const listaPreciosId = document.getElementById('editClienteListaPrecios').value;
 
@@ -439,6 +446,21 @@ function inicializarEventos() {
                     codInt = match[1].replace(/^\+/, '');
                     codArea = match[2];
                     numTel = match[3];
+                } else {
+                    const normalized = contacto.replace(/\s+/g, '');
+                    if (normalized === '54911') {
+                        codInt = '54 9';
+                        codArea = '11';
+                        numTel = '';
+                    } else if (normalized.startsWith('54911')) {
+                        codInt = '54 9';
+                        codArea = '11';
+                        numTel = normalized.substring(5);
+                    } else {
+                        codInt = '54 9';
+                        codArea = '11';
+                        numTel = contacto;
+                    }
                 }
             }
 

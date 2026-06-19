@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 
 const fs = require('fs');
@@ -69,16 +69,34 @@ function createWindow() {
     return { action: 'deny' };
   });
 
+  let retryCount = 0;
+  const maxRetries = 10;
+  const retryInterval = 1000;
+
   // Manejo de reintentos en caso de que Express tarde en levantar (ej. sincronizando DB)
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     if (validatedURL === url) {
-      console.log('El servidor Express aún no responde. Reintentando cargar la URL en 500ms...');
-      setTimeout(() => {
-        if (mainWindow) {
-          mainWindow.loadURL(url);
-        }
-      }, 500);
+      if (retryCount < maxRetries) {
+        retryCount++;
+        console.log(`El servidor Express aún no responde (intento ${retryCount}/${maxRetries}). Reintentando en ${retryInterval}ms...`);
+        setTimeout(() => {
+          if (mainWindow) {
+            mainWindow.loadURL(url);
+          }
+        }, retryInterval);
+      } else {
+        console.error('No se pudo conectar al servidor Express después de varios intentos.');
+        dialog.showErrorBox(
+          'Error de Conexión',
+          'No se pudo conectar con el servidor interno de la aplicación. Por favor, asegúrate de que no haya otra instancia de la aplicación abierta y vuelve a iniciarla.\n\nDetalle: ' + errorDescription
+        );
+        app.quit();
+      }
     }
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    retryCount = 0;
   });
 
   mainWindow.on('closed', function () {

@@ -158,13 +158,22 @@
 }
 
 /* Buscador de Productos */
+.search-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
 .search-container .form-control {
     background-color: #0f1623 !important;
-    color: var(--text-primary) !important;
+    color: #ffffff !important;
     border: 1px solid var(--border-color) !important;
     height: 42px !important;
     border-radius: 8px !important;
     transition: all 0.3s ease !important;
+}
+.search-container .form-control::placeholder {
+    color: #94a3b8 !important;
+    opacity: 0.85 !important;
 }
 .search-container .form-control:focus {
     border-color: var(--accent-glow) !important;
