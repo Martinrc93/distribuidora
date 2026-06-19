@@ -165,13 +165,42 @@ async function sendPDF(number, pdfBase64, filename) {
  * Cierra la sesión activa de WhatsApp y limpia los archivos locales de autenticación
  */
 async function logout() {
-    if (!client) return { success: false, message: 'Cliente no inicializado' };
+    if (!client) {
+        const sessionPath = path.join(process.env.WHATSAPP_AUTH_PATH || './', 'session-distribuidora-session');
+        if (fs.existsSync(sessionPath)) {
+            try {
+                fs.rmSync(sessionPath, { recursive: true, force: true });
+                console.log('Carpeta de sesión eliminada manualmente (sin cliente).');
+            } catch (rmErr) {
+                console.error('Error al eliminar la carpeta de sesión:', rmErr);
+            }
+        }
+        initWhatsApp();
+        return { success: true };
+    }
 
     try {
         status = 'DISCONNECTED';
         qrCodeData = null;
-        await client.logout();
-        await client.destroy();
+        try {
+            await client.logout();
+        } catch (e) {
+            console.log('No se pudo desvincular de los servidores de WhatsApp:', e.message);
+            const sessionPath = path.join(process.env.WHATSAPP_AUTH_PATH || './', 'session-distribuidora-session');
+            if (fs.existsSync(sessionPath)) {
+                try {
+                    fs.rmSync(sessionPath, { recursive: true, force: true });
+                    console.log('Carpeta de sesión eliminada manualmente.');
+                } catch (rmErr) {
+                    console.error('Error al eliminar la carpeta de sesión manualmente:', rmErr);
+                }
+            }
+        }
+        try {
+            await client.destroy();
+        } catch (e) {
+            console.log('Error al destruir el cliente de WhatsApp:', e.message);
+        }
         
         // Inicializar de nuevo para generar un nuevo QR
         initWhatsApp();
@@ -182,9 +211,30 @@ async function logout() {
     }
 }
 
+/**
+ * Cierra la sesión de WhatsApp de forma definitiva y destruye el cliente antes de salir
+ */
+async function logoutAndDestroy() {
+    if (!client) return;
+    try {
+        console.log('Cerrando sesión de WhatsApp y destruyendo cliente...');
+        const currentStatus = status;
+        status = 'DISCONNECTED';
+        qrCodeData = null;
+        if (currentStatus === 'CONNECTED') {
+            await client.logout();
+        }
+        await client.destroy();
+        console.log('Cliente de WhatsApp destruido con éxito.');
+    } catch (error) {
+        console.error('Error durante el cierre de sesión de WhatsApp al salir:', error);
+    }
+}
+
 module.exports = {
     initWhatsApp,
     getStatus,
     sendPDF,
-    logout
+    logout,
+    logoutAndDestroy
 };

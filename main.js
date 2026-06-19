@@ -83,3 +83,20 @@ app.on('activate', function () {
     createWindow();
   }
 });
+
+let isQuitting = false;
+
+app.on('before-quit', (event) => {
+  if (!isQuitting) {
+    event.preventDefault();
+    isQuitting = true;
+    
+    console.log('Cerrando sesión de WhatsApp antes de salir de la aplicación...');
+    const whatsappService = require('./services/whatsappService.js');
+    whatsappService.logoutAndDestroy().catch(err => {
+      console.error('Error en el cierre de sesión:', err);
+    }).finally(() => {
+      app.exit(0);
+    });
+  }
+});

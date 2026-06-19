@@ -104,14 +104,18 @@
                     <!-- Sección Conectado -->
                     <div id="connectedSection" class="d-none">
                         <p class="text-success mb-4"><i class="fas fa-check-circle me-1"></i> Tu cuenta está vinculada y lista para enviar mensajes.</p>
-                        <button class="btn btn-danger px-4 py-2" id="btnDisconnect" style="border-radius: 8px; font-weight: 600;">
-                            <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión de WhatsApp
-                        </button>
                     </div>
 
                     <!-- Sección Inicializando -->
                     <div id="initializingSection" class="d-none">
                         <p class="text-secondary"><i class="fas fa-spinner fa-spin me-2"></i> Iniciando el navegador en segundo plano. Esto puede demorar unos segundos...</p>
+                    </div>
+
+                    <!-- Botón de Cerrar Sesión / Restablecer (siempre visible para destrabar la inicialización) -->
+                    <div class="mt-4 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                        <button class="btn btn-danger px-4 py-2" id="btnDisconnect" style="border-radius: 8px; font-weight: 600;">
+                            <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión / Restablecer
+                        </button>
                     </div>
                 </div>
             </section>

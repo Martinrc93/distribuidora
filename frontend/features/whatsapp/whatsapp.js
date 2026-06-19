@@ -118,7 +118,7 @@ async function handleDisconnect() {
         showToast('Error al cerrar la sesión de WhatsApp: ' + error.message, 'error');
     } finally {
         btnDisconnect.disabled = false;
-        btnDisconnect.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión de WhatsApp';
+        btnDisconnect.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión / Restablecer';
     }
 }
 
