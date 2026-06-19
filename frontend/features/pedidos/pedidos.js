@@ -916,10 +916,43 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '') {
     modal.show();
 
     const btnConfirmar = document.getElementById('btnConfirmarEnviarWhatsapp');
+    const btnCancelar = document.getElementById('btnCancelarEnvioWhatsapp');
+    let cancelTimer = null;
+    let abortController = null;
     
     // Clonar para remover event listeners previos
     const newBtnConfirmar = btnConfirmar.cloneNode(true);
     btnConfirmar.parentNode.replaceChild(newBtnConfirmar, btnConfirmar);
+
+    const resetState = () => {
+        if (cancelTimer) clearTimeout(cancelTimer);
+        if (btnCancelar) btnCancelar.classList.add('d-none');
+        newBtnConfirmar.disabled = false;
+        newBtnConfirmar.innerHTML = '<i class="fab fa-whatsapp me-1"></i> Enviar PDF';
+    };
+
+    if (btnCancelar) {
+        const newBtnCancelar = btnCancelar.cloneNode(true);
+        btnCancelar.parentNode.replaceChild(newBtnCancelar, btnCancelar);
+        newBtnCancelar.addEventListener('click', () => {
+            if (abortController) {
+                console.log('Abortando envío de WhatsApp por el usuario...');
+                abortController.abort();
+                showToast('Envío cancelado.', 'error');
+                resetState();
+            }
+        });
+    }
+
+    // Abortar si se cierra el modal
+    const onModalHidden = () => {
+        if (abortController) {
+            abortController.abort();
+        }
+        if (cancelTimer) clearTimeout(cancelTimer);
+        modalEl.removeEventListener('hidden.bs.modal', onModalHidden);
+    };
+    modalEl.addEventListener('hidden.bs.modal', onModalHidden);
 
     newBtnConfirmar.addEventListener('click', async () => {
         const number = inputNumero.value.trim();
@@ -952,12 +985,21 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '') {
 
             const base64Data = pdfBase64DataUri.split(',')[1];
 
-            // Enviar al backend
+            // Iniciar AbortController y temporizador de cancelación (30 segundos)
+            abortController = new AbortController();
+            cancelTimer = setTimeout(() => {
+                const btnCancelarEl = document.getElementById('btnCancelarEnvioWhatsapp');
+                if (btnCancelarEl) {
+                    btnCancelarEl.classList.remove('d-none');
+                }
+            }, 30000);
+
+            // Enviar al backend pasando el signal
             const response = await apiClient.post('/whatsapp/send-pdf', {
                 number,
                 pdfBase64: base64Data,
                 filename
-            });
+            }, { signal: abortController.signal });
 
             if (response && response.success) {
                 showToast('¡Comprobante enviado por WhatsApp con éxito!', 'success');
@@ -966,11 +1008,15 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '') {
                 showToast('Hubo un problema al enviar el WhatsApp.', 'error');
             }
         } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Envío de WhatsApp cancelado con éxito.');
+                return;
+            }
             console.error('Error al generar o enviar el PDF:', error);
             showToast(error.message || 'Error al procesar el envío por WhatsApp.', 'error');
         } finally {
-            newBtnConfirmar.disabled = false;
-            newBtnConfirmar.innerHTML = '<i class="fab fa-whatsapp me-1"></i> Enviar PDF';
+            resetState();
+            abortController = null;
         }
     });
 }

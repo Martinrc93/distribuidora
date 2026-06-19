@@ -22,6 +22,7 @@ function initWhatsApp() {
         }),
         puppeteer: {
             headless: true,
+            protocolTimeout: 90000,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
