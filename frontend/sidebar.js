@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sidebarHtml = `
         <aside class="sidebar">
+            <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Cerrar menú">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="sidebar-header">
                 <h2>Distribuidora</h2>
                 <p>Gestión de Productos, Empleados y Pedidos</p>
@@ -42,4 +45,58 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (path.includes('/whatsapp/')) {
         document.getElementById('nav-whatsapp')?.classList.add('active');
     }
+
+    // --- LÓGICA RESPONSIVA PARA DISPOSITIVOS MÓVILES ---
+    
+    // Obtener la referencia de la sidebar recién creada en el DOM
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+
+    // Inyectar dinámicamente la cabecera móvil (Mobile Header)
+    const mobileHeader = document.createElement('header');
+    mobileHeader.className = 'mobile-header';
+    mobileHeader.innerHTML = `
+        <div class="mobile-header-brand">
+            <h2>Distribuidora</h2>
+        </div>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+        </button>
+    `;
+    document.body.prepend(mobileHeader);
+
+    // Inyectar dinámicamente el backdrop translúcido
+    const backdrop = document.createElement('div');
+    backdrop.className = 'sidebar-backdrop';
+    backdrop.id = 'sidebarBackdrop';
+    document.body.appendChild(backdrop);
+
+    // Botones de interacción
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+    // Funciones para abrir y cerrar
+    function openSidebar() {
+        sidebar.classList.add('show');
+        sidebarBackdrop.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevenir scroll al estar el menú abierto
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('show');
+        sidebarBackdrop.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', openSidebar);
+    }
+    if (sidebarCloseBtn) {
+        sidebarCloseBtn.addEventListener('click', closeSidebar);
+    }
+    if (sidebarBackdrop) {
+        sidebarBackdrop.addEventListener('click', closeSidebar);
+    }
 });
+

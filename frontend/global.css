@@ -584,4 +584,283 @@ body {
     }
 }
 
+/* ==========================================
+   Estilos de Diseño Responsivo (Mobile & Tablet)
+   ========================================== */
+
+/* Botón de cierre de sidebar - por defecto oculto en desktop */
+.sidebar-close-btn {
+    display: none;
+}
+
+/* Cabecera móvil - por defecto oculta en desktop */
+.mobile-header {
+    display: none;
+}
+
+/* Backdrop de la barra lateral - por defecto oculto */
+.sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(6, 11, 20, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1040;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.sidebar-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (min-width: 992px) and (max-width: 1399.98px) {
+    /* Centrar el título en el espacio restante (entre el borde izquierdo y los botones) únicamente si hay múltiples acciones (evitando colisión en Pedidos y Productos, pero manteniendo el centrado absoluto en Clientes/Empleados) */
+    .main-header:has(.header-actions),
+    .main-header:has(div[style*="position: absolute"]),
+    .main-header:has(div[style*="position:absolute"]),
+    .main-header:has(.dropdown) {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        position: relative !important;
+        width: 100% !important;
+    }
+
+    .main-header:has(.header-actions) .header-titles,
+    .main-header:has(div[style*="position: absolute"]) .header-titles,
+    .main-header:has(div[style*="position:absolute"]) .header-titles,
+    .main-header:has(.dropdown) .header-titles {
+        flex-grow: 1 !important;
+        display: block !important;
+        padding-right: 1.5rem !important; /* Separación de seguridad con los botones */
+    }
+
+    .main-header:has(.header-actions) h1,
+    .main-header:has(div[style*="position: absolute"]) h1,
+    .main-header:has(div[style*="position:absolute"]) h1,
+    .main-header:has(.dropdown) h1 {
+        text-align: center !important;
+    }
+
+    .main-header .header-actions,
+    .main-header div[style*="position: absolute"],
+    .main-header div[style*="position:absolute"] {
+        position: static !important;
+        transform: none !important;
+        margin-top: 0 !important;
+        margin-left: auto !important; /* Empujar los botones hacia el extremo derecho */
+        flex-shrink: 0 !important;
+        width: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 0.75rem !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    html, body {
+        overflow-x: hidden !important;
+        max-width: 100% !important;
+    }
+
+    body {
+        flex-direction: column !important;
+    }
+
+    .app-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        padding: 1rem !important;
+        gap: 1.5rem !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    /* Cabecera Móvil */
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: var(--bg-sidebar);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.75rem 1.25rem;
+        height: 60px;
+        position: sticky;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .mobile-header-brand h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+    }
+
+    .mobile-menu-toggle {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-menu-toggle:hover {
+        color: var(--text-primary);
+        background-color: rgba(37, 99, 235, 0.1);
+        border-color: var(--accent-glow);
+    }
+
+    /* Sidebar Drawer Off-Canvas (Deslizable desde la derecha) */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        right: -300px; /* Escondido a la derecha */
+        width: 280px;
+        height: 100vh;
+        z-index: 1050;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 0 !important;
+        border: none !important;
+        border-left: 1px solid var(--border-color) !important;
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar.show {
+        right: 0; /* Deslizar hacia adentro */
+    }
+
+    /* Botón de cierre de la barra lateral en móvil */
+    .sidebar-close-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 1060;
+    }
+
+    .sidebar-close-btn:hover {
+        color: var(--text-primary);
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: var(--text-secondary);
+    }
+
+    /* Cabecera Principal y alineación de botones */
+    .main-header {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 1rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    .main-header .header-titles {
+        width: 100% !important;
+    }
+
+    .main-header h1 {
+        font-size: 1.75rem !important;
+        text-align: center !important;
+    }
+
+    /* Anular el posicionamiento absoluto en las acciones de la cabecera en móvil */
+    .main-header .btn-primary,
+    .main-header .header-actions,
+    .main-header div[style*="position: absolute"],
+    .main-header div[style*="position:absolute"] {
+        position: static !important;
+        transform: none !important;
+        width: auto !important;
+        display: flex !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important; /* permitir que los botones se apilen si no hay espacio */
+        gap: 0.75rem !important;
+        margin-top: 0.5rem !important;
+        margin-left: 0 !important; /* restablecer el margin-left heredado de tabletas */
+    }
+
+    /* Estadísticas */
+    .statistics-section {
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    .stat-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 1.5rem !important;
+    }
+
+    /* Tablas adaptadas a celulares */
+    .table td, .table th {
+        padding: 0.75rem 0.4rem !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Adaptación para celulares muy pequeños */
+@media (max-width: 576px) {
+    /* Hacer que los inputs w-75 de los modales ocupen el 100% */
+    .modal-body form .w-75 {
+        width: 100% !important;
+    }
+
+    /* Opciones de Impresión del desplegable en Pedidos en pantallas pequeñas */
+    .main-header div[style*="position: absolute"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+    }
+    .main-header div[style*="position: absolute"] .btn,
+    .main-header div[style*="position: absolute"] .dropdown {
+        width: 100% !important;
+    }
+    .main-header div[style*="position: absolute"] .dropdown-toggle {
+        justify-content: center !important;
+        width: 100% !important;
+    }
+
+    /* Apilar información e iconos de paginación en pantallas estrechas */
+    .pagination-controls {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        text-align: center !important;
+    }
+}
+
+
 

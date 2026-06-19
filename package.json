@@ -55,7 +55,11 @@
       "!database.sqlite",
       "!.wwebjs_auth/**/*",
       "!.wwebjs_cache/**/*",
-      "!session-distribuidora-session/**/*"
+      "!session-distribuidora-session/**/*",
+      "!.mds/**/*",
+      "!**/*.md",
+      "!docs/**/*",
+      "!scratch/**/*"
     ],
     "asar": true
   }

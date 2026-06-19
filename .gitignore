@@ -27,3 +27,7 @@ session-distribuidora-session/
 
 # Carpetas de compilación (Electron)
 dist/
+
+# Archivos Markdown
+*.md
+.mds/
