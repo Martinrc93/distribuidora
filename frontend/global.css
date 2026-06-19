@@ -310,9 +310,13 @@ body {
 
 /* Print Report Styles */
 @media print {
+    @page {
+        margin: 0;
+    }
     body {
         background: white !important;
         color: black !important;
+        padding: 1.6cm !important;
     }
 
     .app-container,

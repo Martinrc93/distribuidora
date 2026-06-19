@@ -7,11 +7,16 @@ let client = null;
 let status = 'DISCONNECTED'; // 'DISCONNECTED' | 'INITIALIZING' | 'QR_READY' | 'CONNECTED'
 let qrCodeData = null;
 let isExplicitLogout = false;
+let connectionRetries = 0;
+const maxConnectionRetries = 5;
 
 /**
  * Inicializa el cliente de WhatsApp
  */
-function initWhatsApp() {
+function initWhatsApp(isAutoReconnect = false) {
+    if (!isAutoReconnect) {
+        connectionRetries = 0;
+    }
     console.log('Iniciando cliente de WhatsApp...');
     status = 'INITIALIZING';
     qrCodeData = null;
@@ -46,6 +51,7 @@ function initWhatsApp() {
     client.on('ready', () => {
         status = 'CONNECTED';
         qrCodeData = null;
+        connectionRetries = 0; // Reiniciar contador al conectar con éxito
         console.log('¡Cliente de WhatsApp listo y conectado!');
     });
 
@@ -75,11 +81,19 @@ function initWhatsApp() {
         } catch (e) {
             console.error('Error al destruir el cliente de WhatsApp:', e);
         }
-        setTimeout(() => {
-            if (!isExplicitLogout) {
-                initWhatsApp();
-            }
-        }, 10000);
+
+        if (connectionRetries < maxConnectionRetries) {
+            connectionRetries++;
+            console.log(`Intentando reconectar WhatsApp (intento ${connectionRetries}/${maxConnectionRetries}) en 10 segundos...`);
+            setTimeout(() => {
+                if (!isExplicitLogout) {
+                    initWhatsApp(true);
+                }
+            }, 10000);
+        } else {
+            console.error(`Se alcanzó el límite máximo de reintentos de conexión de WhatsApp (${maxConnectionRetries}). Deteniendo reconexión automática.`);
+            status = 'DISCONNECTED';
+        }
     });
 
     client.initialize().catch(err => {
