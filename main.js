@@ -41,7 +41,8 @@ function createWindow() {
     height: 800,
     webPreferences: {
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
+      sandbox: true
     },
     title: 'Distribuidora',
     icon: path.join(__dirname, 'frontend/assets/logo.png')
@@ -52,6 +53,21 @@ function createWindow() {
 
   // Ocultar la barra de menú predeterminada para una interfaz más limpia
   mainWindow.setMenuBarVisibility(false);
+
+  // Limitar navegación para mayor seguridad según electron.md
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    const parsedUrl = new URL(navigationUrl);
+    if (parsedUrl.hostname !== 'localhost') {
+      event.preventDefault();
+      console.warn(`Navegación bloqueada por seguridad hacia: ${navigationUrl}`);
+    }
+  });
+
+  // Limitar creación de nuevas ventanas según electron.md
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    console.warn(`Intento de abrir ventana nueva bloqueado por seguridad: ${url}`);
+    return { action: 'deny' };
+  });
 
   // Manejo de reintentos en caso de que Express tarde en levantar (ej. sincronizando DB)
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
