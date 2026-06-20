@@ -14,6 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnDisconnect) {
         btnDisconnect.addEventListener('click', handleDisconnect);
     }
+
+    // Configurar listener para recargar la página
+    const btnRefresh = document.getElementById('btnRefresh');
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', () => {
+            window.location.reload();
+        });
+    }
 });
 
 /**
@@ -40,6 +48,7 @@ function updateUI(status, qrCodeData) {
     const qrSection = document.getElementById('qrSection');
     const connectedSection = document.getElementById('connectedSection');
     const initializingSection = document.getElementById('initializingSection');
+    const btnDisconnect = document.getElementById('btnDisconnect');
 
     // Limpiar clases previas del badge
     badge.className = 'status-badge';
@@ -49,6 +58,11 @@ function updateUI(status, qrCodeData) {
     qrSection.classList.add('d-none');
     connectedSection.classList.add('d-none');
     initializingSection.classList.add('d-none');
+
+    // Deshabilitar botón si no está conectado
+    if (btnDisconnect) {
+        btnDisconnect.disabled = (status !== 'CONNECTED');
+    }
 
     switch (status) {
         case 'CONNECTED':
@@ -107,6 +121,8 @@ function updateUI(status, qrCodeData) {
  */
 async function handleDisconnect() {
     const btnDisconnect = document.getElementById('btnDisconnect');
+    if (!btnDisconnect || btnDisconnect.disabled) return;
+
     btnDisconnect.disabled = true;
     btnDisconnect.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cerrando sesión...';
 
@@ -114,12 +130,15 @@ async function handleDisconnect() {
         await apiClient.post('/whatsapp/logout');
         showToast('Sesión de WhatsApp cerrada correctamente.', 'success');
         lastQrString = null;
-        checkWhatsAppStatus();
+        await checkWhatsAppStatus();
     } catch (error) {
         showToast('Error al cerrar la sesión de WhatsApp: ' + error.message, 'error');
+        // Si falla, volver a consultar el estado para actualizar el botón
+        await checkWhatsAppStatus();
     } finally {
-        btnDisconnect.disabled = false;
-        btnDisconnect.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión / Restablecer';
+        if (btnDisconnect) {
+            btnDisconnect.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión / Restablecer';
+        }
     }
 }
 

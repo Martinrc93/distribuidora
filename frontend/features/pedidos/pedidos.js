@@ -652,7 +652,7 @@ function generarConsolidadoHtml() {
 
     const today = new Date();
     const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-    const folioStr = today.toISOString().split('T')[0].replace(/-/g, '');
+    const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
@@ -764,7 +764,7 @@ function generarEmpleadoHtml(empleadoId) {
 
     const today = new Date();
     const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-    const folioStr = today.toISOString().split('T')[0].replace(/-/g, '') + `-EMP${empleadoId}`;
+    const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}-EMP${empleadoId}`;
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
