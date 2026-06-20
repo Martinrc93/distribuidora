@@ -1,3 +1,5 @@
+// Configurar zona horaria local para Sequelize
+require('../timezone.js');
 const { Sequelize } = require('sequelize');
 
 const storagePath = process.env.NODE_ENV === 'test' 

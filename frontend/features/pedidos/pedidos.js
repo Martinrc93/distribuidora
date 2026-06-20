@@ -2,6 +2,14 @@ import { apiClient } from '../../api/apiClient.js';
 import { escapeHtml } from '../../utils/sanitize.js';
 import { showToast } from '../../utils/ui.js';
 
+function getLocalDateStr() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Elementos del DOM
 let tablaPedidos = null;
 let formAgregarPedido = null;
@@ -696,7 +704,7 @@ function imprimirConsolidado() {
 
 function enviarConsolidadoWSP() {
     if (generarConsolidadoHtml()) {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDateStr();
         enviarPDFPorWhatsApp('printSection', `consolidado_deposito_${todayStr}.pdf`, '', 'deposito');
     }
 }
@@ -808,7 +816,7 @@ function imprimirEmpleado(empleadoId) {
 
 function enviarEmpleadoWSP(empleadoId) {
     if (generarEmpleadoHtml(empleadoId)) {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDateStr();
         enviarPDFPorWhatsApp('printSection', `consolidado_empleado_${empleadoId}_${todayStr}.pdf`);
     }
 }

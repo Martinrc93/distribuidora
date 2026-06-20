@@ -22,7 +22,14 @@ let btnLimpiarFiltros = null;
 
 let currentClienteId = null;
 let currentClienteNombre = '';
-const todayStr = new Date().toISOString().split('T')[0];
+const getLocalDateStr = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+const todayStr = getLocalDateStr();
 
 let productos = [];
 let pedidosClienteCurrent = [];
