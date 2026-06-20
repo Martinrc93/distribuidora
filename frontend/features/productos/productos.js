@@ -233,7 +233,7 @@ async function eliminarProducto(id) {
         const respuesta = await productosService.delete(id);
         console.log('Respuesta de eliminación:', respuesta);
         showToast('Producto eliminado exitosamente');
-        await cargarProductos(); // Recargar la tabla
+        await cargarProductos(currentPage); // Recargar la tabla en la página actual
     } catch (error) {
         console.error('Error completo:', error);
         const mensaje = error.data?.mensaje || error.data?.error || error.message || 'Error desconocido';
@@ -435,7 +435,7 @@ async function cargarMarcas() {
                     const nuevoNombre = input.value.trim();
 
                     if (!nuevoNombre) {
-                        alert('El nombre no puede estar vacío.');
+                        showToast('El nombre no puede estar vacío.', 'error');
                         return;
                     }
 

@@ -1,4 +1,8 @@
 // Alinear base de datos, aplicación y sistema en la misma zona horaria local
+// IMPORTANTE: Este archivo realiza monkey-patching en los componentes internos de Sequelize.
+// Ha sido testeado y es compatible con Sequelize versión 6.37.8.
+// Si se actualiza Sequelize a una versión mayor (ej. v7), verificar la compatibilidad de esta solución.
+
 try {
     const { DataTypes } = require('sequelize');
 
@@ -19,25 +23,33 @@ try {
     };
 
     // 2. Sobrescribir el parser de SQLite directamente en el parserStore para evitar problemas de empaquetado ASAR
-    const parserStore = require('sequelize/lib/dialects/parserStore')('sqlite');
-    const originalParse = parserStore.get('DATETIME');
+    let parserStore;
+    try {
+        parserStore = require('sequelize/lib/dialects/parserStore')('sqlite');
+    } catch (err) {
+        console.warn('ADVERTENCIA: No se pudo requerir "sequelize/lib/dialects/parserStore". Es posible que la versión de Sequelize sea incompatible con esta configuración de zona horaria local.', err);
+    }
 
-    const customParse = function(value, options) {
-        if (typeof value === 'string') {
-            const cleanVal = value.replace(/'/g, '').replace(/\s*[+-]\d+:\d+$/, '').replace('Z', '').trim();
-            const parts = cleanVal.split(' ');
-            const dateStr = parts[0] + (parts[1] ? 'T' + parts[1] : '');
-            return new Date(dateStr);
-        }
-        return originalParse ? originalParse(value, options) : new Date(value);
-    };
+    if (parserStore) {
+        const originalParse = parserStore.get('DATETIME');
 
-    parserStore.refresh({
-        types: {
-            sqlite: ['DATETIME']
-        },
-        parse: customParse
-    });
+        const customParse = function(value, options) {
+            if (typeof value === 'string') {
+                const cleanVal = value.replace(/'/g, '').replace(/\s*[+-]\d+:\d+$/, '').replace('Z', '').trim();
+                const parts = cleanVal.split(' ');
+                const dateStr = parts[0] + (parts[1] ? 'T' + parts[1] : '');
+                return new Date(dateStr);
+            }
+            return originalParse ? originalParse(value, options) : new Date(value);
+        };
+
+        parserStore.refresh({
+            types: {
+                sqlite: ['DATETIME']
+            },
+            parse: customParse
+        });
+    }
 } catch (e) {
     console.error('Error al configurar la alineación de zona horaria local:', e);
 }

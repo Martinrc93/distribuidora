@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const Marca = require('../models/marca.js');
+const Product = require('../models/product.js');
 
 /**
  * Obtiene todas las marcas con paginación y filtro opcional por nombre.
@@ -77,6 +78,14 @@ exports.update = async (id, marcaData) => {
 exports.deleteMarca = async (id) => {
     const marca = await Marca.findByPk(id);
     if (!marca) return false;
+
+    // Verificar si existen productos asociados a esta marca
+    const productCount = await Product.count({ where: { marcaId: id } });
+    if (productCount > 0) {
+        const error = new Error('No se puede eliminar la marca porque tiene productos asociados.');
+        error.statusCode = 409;
+        throw error;
+    }
 
     await marca.destroy();
     return true;

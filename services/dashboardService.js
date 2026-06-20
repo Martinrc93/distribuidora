@@ -57,8 +57,8 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
 
     let limitClause = '';
     if (limit !== 'all') {
-        const productsLimit = parseInt(limit) || 10;
-        limitClause = `LIMIT ${productsLimit}`;
+        replacements.queryLimit = parseInt(limit, 10) || 10;
+        limitClause = 'LIMIT :queryLimit';
     }
 
     // 1. Top productos más vendidos (usando LEFT JOIN para incluir todos los productos si es necesario)
@@ -132,8 +132,8 @@ exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
 
     let limitClause = '';
     if (limit !== 'all') {
-        const clientsLimit = parseInt(limit) || 10;
-        limitClause = `LIMIT ${clientsLimit}`;
+        replacements.queryLimit = parseInt(limit, 10) || 10;
+        limitClause = 'LIMIT :queryLimit';
     }
 
     // 1. Top clientes

@@ -209,7 +209,7 @@ async function cargarClientes() {
         
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta inválida:', respuesta);
-            alert('Error: respuesta inválida del servidor');
+            showToast('Error: respuesta inválida del servidor', 'error');
             return;
         }
         
@@ -312,7 +312,7 @@ async function guardarCliente() {
         ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') 
         : `${codInt} ${codArea}`.trim().replace(/\s+/g, '');
 
-    const listaPreciosId = document.getElementById('clienteListaPrecios').value;
+    const listaPreciosId = parseInt(document.getElementById('clienteListaPrecios').value, 10);
 
     // Validar campos obligatorios
     if (!nombre) {
@@ -355,7 +355,7 @@ async function actualizarCliente() {
         ? `${codInt} ${codArea} ${numTel}`.trim().replace(/\s+/g, ' ') 
         : `${codInt} ${codArea}`.trim().replace(/\s+/g, '');
 
-    const listaPreciosId = document.getElementById('editClienteListaPrecios').value;
+    const listaPreciosId = parseInt(document.getElementById('editClienteListaPrecios').value, 10);
 
     // Validar campos obligatorios
     if (!nombre) {

@@ -22,12 +22,30 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload();
         });
     }
+
+    // Limpiar intervalo al salir o recargar la ventana
+    window.addEventListener('beforeunload', () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+    });
 });
 
 /**
  * Consulta el estado del servicio de WhatsApp en el backend y actualiza la interfaz
  */
 async function checkWhatsAppStatus() {
+    // Si el elemento no existe en el DOM, es porque el usuario navegó a otra pestaña.
+    // Limpiamos el intervalo para evitar memory leaks en la SPA.
+    if (!document.getElementById('whatsappStatusBadge')) {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+        return;
+    }
+
     try {
         const data = await apiClient.get('/whatsapp/status');
         updateUI(data.status, data.qrCodeData);

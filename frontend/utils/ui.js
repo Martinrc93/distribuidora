@@ -81,9 +81,34 @@ export function showCustomConfirm(mensaje) {
         const btnCancel = overlay.querySelector('.btn-confirm-cancel');
         const btnAccept = overlay.querySelector('.btn-confirm-accept');
 
+        // Forzar reflow y agregar clase 'show' para que se anime la entrada
+        overlay.offsetHeight; // force reflow
+        overlay.classList.add('show');
+
+        // Foco inicial en el botón de aceptar para facilitar uso rápido con Enter
+        btnAccept.focus();
+
         const close = () => {
-            overlay.remove();
+            overlay.classList.remove('show');
+            window.removeEventListener('keydown', handleKeyDown);
+            // Esperar que termine la animación antes de quitar del DOM
+            overlay.addEventListener('transitionend', () => {
+                overlay.remove();
+            });
         };
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                close();
+                resolve(false);
+            } else if (e.key === 'Enter') {
+                close();
+                resolve(true);
+            }
+        };
+
+        // Registrar listener de teclado
+        window.addEventListener('keydown', handleKeyDown);
 
         btnCancel.addEventListener('click', () => {
             close();

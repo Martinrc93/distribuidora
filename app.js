@@ -60,6 +60,12 @@ app.get('/', (req, res) => {
 app.use(require('./middleware/errorHandler.js'));
 
 // Sincronizar base de datos e iniciar servidor
+let resolveServerReady;
+const serverReady = new Promise((resolve) => {
+  resolveServerReady = resolve;
+});
+app.serverReady = serverReady;
+
 if (process.env.NODE_ENV !== 'test') {
   const migrateDatabase = async () => {
     const tables = ['Clientes', 'Empleados', 'Products', 'Ventas', 'Detalles', 'Prices', 'Marcas', 'Users'];
@@ -79,7 +85,9 @@ if (process.env.NODE_ENV !== 'test') {
     }
   };
 
-  migrateDatabase()
+  // Inicializar pragmas de forma segura antes de migrar
+  sequelize.initPragmas()
+    .then(() => migrateDatabase())
     .then(() => sequelize.sync({ force: false }))
     .then(() => {
       console.log('Conexión a SQLite establecida y modelos sincronizados.');
@@ -88,13 +96,18 @@ if (process.env.NODE_ENV !== 'test') {
       // Inicializar cliente de WhatsApp
       initWhatsApp();
 
-      app.listen(port, () => {
-        console.log(`Servidor corriendo en http://localhost:${port}`);
+      app.listen(port, '127.0.0.1', () => {
+        console.log(`Servidor corriendo en http://127.0.0.1:${port}`);
+        resolveServerReady();
       });
     })
     .catch(err => {
       console.error('Error al conectar o sincronizar la base de datos:', err);
+      resolveServerReady(); // Resolver para no colgar Electron si hay error
     });
+} else {
+  // En test resolver inmediatamente
+  resolveServerReady();
 }
 
 module.exports = app;

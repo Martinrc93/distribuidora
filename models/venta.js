@@ -79,7 +79,13 @@ Venta.init({
     modelName: 'Venta', // Nombre del modelo
     tableName: 'Ventas', // Nombre de la tabla física en la base de datos
     timestamps: true,   // Mantiene createdAt y updatedAt
-    paranoid: true
+    paranoid: true,
+    indexes: [
+        { fields: ['empleadoId'] },
+        { fields: ['clienteId'] },
+        { fields: ['active'] },
+        { fields: ['fecha_emision'] }
+    ]
 });
 
 // 3. Relaciones (Asociaciones)

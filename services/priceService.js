@@ -1,5 +1,6 @@
 const Price = require('../models/price.js');
 const ListaPrecios = require('../models/listaPrecios.js');
+const Detalle = require('../models/detalle.js');
 
 /**
  * Obtiene todos los precios asociados a un Product ID.
@@ -56,6 +57,14 @@ exports.update = async (id, priceData) => {
 exports.deletePrice = async (id) => {
     const priceRecord = await Price.findByPk(id);
     if (!priceRecord) return false;
+
+    // Verificar si existen detalles de venta asociados a este precio
+    const detalleCount = await Detalle.count({ where: { priceId: id } });
+    if (detalleCount > 0) {
+        const error = new Error('No se puede eliminar el precio porque tiene detalles de venta asociados.');
+        error.statusCode = 409;
+        throw error;
+    }
 
     await priceRecord.destroy();
     return true;

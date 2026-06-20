@@ -5,7 +5,7 @@
  */
 class EmpleadoResponseDto {
     constructor(empleado) {
-        this.id = String(empleado.id);
+        this.id = empleado.id;
         this.nombre = empleado.nombre;
         this.apellido = empleado.apellido;
         this.active = empleado.active;

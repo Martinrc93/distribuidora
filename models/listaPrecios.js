@@ -25,7 +25,8 @@ ListaPrecios.init({
   sequelize,
   modelName: 'ListaPrecios',
   tableName: 'ListaPrecios',
-  timestamps: true
+  timestamps: true,
+  paranoid: true
 });
 
 module.exports = ListaPrecios;

@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderFinanceChart(history);
         } catch (err) {
             console.error('Error cargando finanzas:', err);
+            showToast('Error al cargar datos financieros', 'error');
         }
     }
 
@@ -300,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             console.error('Error cargando portfolio:', err);
+            showToast('Error al cargar datos del catálogo (portfolio)', 'error');
         }
     }
 
@@ -493,6 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (err) {
             console.error('Error cargando datos comerciales:', err);
+            showToast('Error al cargar datos comerciales', 'error');
         }
     }
 });

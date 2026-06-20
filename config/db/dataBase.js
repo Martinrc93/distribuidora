@@ -13,13 +13,29 @@ const sequelize = new Sequelize({
   retry: {
     max: 10,
     match: [/SQLITE_BUSY/],
+  },
+
+  hooks: {
+    afterConnect: (connection, config) => {
+      return new Promise((resolve, reject) => {
+        connection.serialize(() => {
+          connection.run('PRAGMA foreign_keys = ON;', (err) => { if (err) return reject(err); });
+          connection.run('PRAGMA journal_mode = WAL;', (err) => { if (err) return reject(err); });
+          connection.run('PRAGMA busy_timeout = 5000;', (err) => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      });
+    }
   }
 });
 
-// Habilitar restricciones de clave foránea, modo WAL y busy_timeout en SQLite inmediatamente (en la cola de consultas)
-sequelize.query('PRAGMA foreign_keys = ON;');
-sequelize.query('PRAGMA journal_mode = WAL;');
-sequelize.query('PRAGMA busy_timeout = 5000;');
+// Mantener función initPragmas vacía por compatibilidad con app.js
+async function initPragmas() {
+  // Las PRAGMAs ya se aplican automáticamente en cada conexión a través del hook afterConnect
+}
 
 module.exports = sequelize;
+module.exports.initPragmas = initPragmas;
 

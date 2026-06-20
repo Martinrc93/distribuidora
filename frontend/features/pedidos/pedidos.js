@@ -332,6 +332,7 @@ async function agregarProductoTemporal() {
 
         if (!priceRecord && prices.length > 0) {
             priceRecord = [...prices].sort((a, b) => b.listaPreciosId - a.listaPreciosId)[0];
+            showToast(`Precio no encontrado en la lista del cliente (Lista ${clientListId}). Se usó precio de Lista ${priceRecord.listaPreciosId}.`, 'warning');
         }
 
         if (!priceRecord) {
@@ -505,6 +506,7 @@ async function agregarProductoEdicion() {
 
         if (!priceRecord && prices.length > 0) {
             priceRecord = [...prices].sort((a, b) => b.listaPreciosId - a.listaPreciosId)[0];
+            showToast(`Precio no encontrado en la lista del cliente (Lista ${clientListId}). Se usó precio de Lista ${priceRecord.listaPreciosId}.`, 'warning');
         }
 
         if (!priceRecord) {
@@ -1096,6 +1098,7 @@ async function repetirUltimoPedido() {
                 
                 if (!priceRecord && prices.length > 0) {
                     priceRecord = [...prices].sort((a, b) => b.listaPreciosId - a.listaPreciosId)[0];
+                    showToast(`Precio no encontrado en la lista del cliente (Lista ${clientListId}) para ${productName}. Se usó precio de Lista ${priceRecord.listaPreciosId}.`, 'warning');
                 }
                 
                 if (priceRecord) {

@@ -1,5 +1,5 @@
 const productService = require('../services/productService');
-const { ProductCreateDto } = require('../dtos/product/request');
+const { ProductCreateDto, ProductUpdateDto } = require('../dtos/product/request');
 const { ProductResponseDto } = require('../dtos/product/response');
 
 /**
@@ -75,7 +75,7 @@ exports.create = async (req, res) => {
  */
 exports.update = async (req, res) => {
     try {
-        const productDto = new ProductCreateDto(req.body);
+        const productDto = new ProductUpdateDto(req.body);
         const validation = productDto.validate();
 
         if (!validation.isValid) {

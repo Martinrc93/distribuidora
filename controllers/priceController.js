@@ -1,5 +1,5 @@
 const priceService = require('../services/priceService');
-const { PriceCreateDto } = require('../dtos/price/request');
+const { PriceCreateDto, PriceUpdateDto } = require('../dtos/price/request');
 const { PriceResponseDto } = require('../dtos/price/response');
 
 /**
@@ -41,7 +41,7 @@ exports.create = async (req, res) => {
  */
 exports.update = async (req, res) => {
     try {
-        const priceDto = new PriceCreateDto(req.body);
+        const priceDto = new PriceUpdateDto({ id: req.params.id, ...req.body });
         
         const validation = priceDto.validate();
         if (!validation.isValid) {

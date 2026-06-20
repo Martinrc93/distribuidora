@@ -9,7 +9,7 @@ function errorHandler(err, req, res, next) {
     const status = err.statusCode || err.status || 500;
     let message = err.message || 'Error interno del servidor';
     
-    if (status === 500 && process.env.NODE_ENV === 'production') {
+    if (status === 500 && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
         message = 'Error interno del servidor';
     }
     

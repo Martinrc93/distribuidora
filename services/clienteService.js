@@ -47,7 +47,7 @@ exports.create = async (clienteData) => {
         nombre: clienteData.nombre,
         direccion: clienteData.direccion,
         contacto: clienteData.contacto,
-        listaPreciosId: clienteData.listaPreciosId || 1
+        listaPreciosId: clienteData.listaPreciosId
     });
 };
 

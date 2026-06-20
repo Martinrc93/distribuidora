@@ -31,7 +31,7 @@ process.env.WHATSAPP_AUTH_PATH = userDataPath;
 
 // Levantar el servidor Express importándolo de forma directa
 // Esto inicia automáticamente la sincronización de Sequelize y el listen
-require('./app.js');
+const expressApp = require('./app.js');
 
 let mainWindow;
 
@@ -69,34 +69,16 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  let retryCount = 0;
-  const maxRetries = 10;
-  const retryInterval = 1000;
-
-  // Manejo de reintentos en caso de que Express tarde en levantar (ej. sincronizando DB)
+  // Manejo de fallos de carga
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     if (validatedURL === url) {
-      if (retryCount < maxRetries) {
-        retryCount++;
-        console.log(`El servidor Express aún no responde (intento ${retryCount}/${maxRetries}). Reintentando en ${retryInterval}ms...`);
-        setTimeout(() => {
-          if (mainWindow) {
-            mainWindow.loadURL(url);
-          }
-        }, retryInterval);
-      } else {
-        console.error('No se pudo conectar al servidor Express después de varios intentos.');
-        dialog.showErrorBox(
-          'Error de Conexión',
-          'No se pudo conectar con el servidor interno de la aplicación. Por favor, asegúrate de que no haya otra instancia de la aplicación abierta y vuelve a iniciarla.\n\nDetalle: ' + errorDescription
-        );
-        app.quit();
-      }
+      console.error('No se pudo conectar al servidor Express.');
+      dialog.showErrorBox(
+        'Error de Conexión',
+        'No se pudo conectar con el servidor interno de la aplicación. Por favor, asegúrate de que no haya otra instancia de la aplicación abierta y vuelve a iniciarla.\n\nDetalle: ' + errorDescription
+      );
+      app.quit();
     }
-  });
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    retryCount = 0;
   });
 
   mainWindow.on('closed', function () {
@@ -104,7 +86,27 @@ function createWindow() {
   });
 }
 
-app.on('ready', createWindow);
+app.on('ready', async () => {
+  console.log('Esperando a que el servidor Express esté listo...');
+  
+  // Timeout de seguridad de 30 segundos
+  const timeout = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout esperando servidor Express')), 30000)
+  );
+
+  try {
+    await Promise.race([expressApp.serverReady, timeout]);
+    console.log('Servidor Express listo. Creando ventana...');
+    createWindow();
+  } catch (err) {
+    console.error('Error al iniciar el servidor interno:', err);
+    dialog.showErrorBox(
+      'Error de Conexión',
+      'No se pudo conectar con el servidor interno de la aplicación en el tiempo establecido. Por favor, asegúrate de que no haya otra instancia de la aplicación abierta y vuelve a iniciarla.'
+    );
+    app.quit();
+  }
+});
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') {

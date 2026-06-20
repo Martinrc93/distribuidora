@@ -56,7 +56,10 @@ Product.init({
         sequelize, // Pasamos la instancia de conexión
         modelName: 'Product', // Nombre del modelo
         timestamps: true,   // Mantiene createdAt y updatedAt
-        paranoid: true
+        paranoid: true,
+        indexes: [
+            { fields: ['marcaId'] }
+        ]
     });
 
 const Marca = require('./marca.js');

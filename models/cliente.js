@@ -59,7 +59,10 @@ Cliente.init({
     modelName: 'Cliente',
     tableName: 'Clientes',
     timestamps: true,
-    paranoid: true
+    paranoid: true,
+    indexes: [
+        { fields: ['listaPreciosId'] }
+    ]
 });
 
 Cliente.belongsTo(ListaPrecios, { foreignKey: 'listaPreciosId', as: 'listaPrecios' });

@@ -80,7 +80,12 @@ Detalle.init({
     modelName: 'Detalle',
     tableName: 'Detalles', // Forzamos el nombre de la tabla a "Detalles" en plural
     timestamps: true,
-    paranoid: true
+    paranoid: true,
+    indexes: [
+        { fields: ['sellId'] },
+        { fields: ['productId'] },
+        { fields: ['priceId'] }
+    ]
 });
 
 // 3. Relaciones (Asociaciones)

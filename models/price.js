@@ -53,7 +53,10 @@ Price.init({
     modelName: 'Price', // Nombre del modelo (generará la tabla "Prices" en plural)
     tableName: 'Prices',
     timestamps: true,   // Mantiene createdAt y updatedAt automáticamente
-    paranoid: true
+    paranoid: true,
+    indexes: [
+        { fields: ['productId', 'listaPreciosId'] }
+    ]
 });
 
 // 3. Definición de Relaciones (Asociaciones)

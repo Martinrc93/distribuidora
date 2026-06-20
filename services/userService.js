@@ -9,5 +9,7 @@ exports.obtenerPorId = async (id) => {
 };
 
 exports.crear = async (datos) => {
-  return await User.create(datos);
+  return await User.create({
+    nombre: datos.nombre
+  });
 };
