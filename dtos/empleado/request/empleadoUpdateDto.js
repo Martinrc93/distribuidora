@@ -1,3 +1,5 @@
+const sanitizeInput = require('../../sanitize.js');
+
 /**
  * DTO para la actualización de un Empleado (Empleado Update Request DTO)
  * Se encarga de limpiar, estructurar y validar los datos enviados para actualizar un empleado.
@@ -5,10 +7,10 @@
 class EmpleadoUpdateDto {
     constructor(data) {
         if (data.nombre !== undefined) {
-            this.nombre = typeof data.nombre === 'string' ? data.nombre.trim() : null;
+            this.nombre = sanitizeInput(data.nombre);
         }
         if (data.apellido !== undefined) {
-            this.apellido = typeof data.apellido === 'string' ? data.apellido.trim() : null;
+            this.apellido = sanitizeInput(data.apellido);
         }
         if (data.active !== undefined) {
             this.active = data.active === true || data.active === 'true' || data.active === 1;

@@ -1,3 +1,5 @@
+const sanitizeInput = require('../../sanitize.js');
+
 /**
  * DTO para la actualización de un Producto (Product Update Request DTO)
  * Se encarga de limpiar, estructurar y validar los datos que envía el cliente para actualizar un producto.
@@ -5,10 +7,10 @@
 class ProductUpdateDto {
     constructor(data) {
         if (data.nombre !== undefined) {
-            this.nombre = typeof data.nombre === 'string' ? data.nombre.trim() : null;
+            this.nombre = sanitizeInput(data.nombre);
         }
         if (data.marca !== undefined) {
-            this.marca = typeof data.marca === 'string' ? data.marca.trim() : null;
+            this.marca = sanitizeInput(data.marca);
         }
         if (data.costo !== undefined) {
             const parsedCosto = typeof data.costo === 'number' ? data.costo : Number.parseFloat(data.costo);

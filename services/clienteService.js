@@ -1,3 +1,4 @@
+const sequelize = require('../config/db/dataBase.js');
 const Cliente = require('../models/cliente.js');
 const Venta = require('../models/venta.js');
 const Detalle = require('../models/detalle.js');
@@ -73,31 +74,44 @@ exports.update = async (id, clienteData) => {
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
 exports.deleteCliente = async (id) => {
-    const cliente = await Cliente.findByPk(id);
-    if (!cliente) return false;
+    const t = await sequelize.transaction();
+    try {
+        const cliente = await Cliente.findByPk(id, { transaction: t });
+        if (!cliente) {
+            await t.rollback();
+            return false;
+        }
 
-    // Obtener todas las ventas del cliente
-    const ventas = await Venta.findAll({
-        where: { clienteId: id }
-    });
-
-    const ventaIds = ventas.map(v => v.id);
-
-    // Si hay ventas, eliminar los detalles primero
-    if (ventaIds.length > 0) {
-        await Detalle.destroy({
-            where: {
-                sellId: ventaIds
-            }
+        // Obtener todas las ventas del cliente
+        const ventas = await Venta.findAll({
+            where: { clienteId: id },
+            transaction: t
         });
 
-        // Luego eliminar las ventas
-        await Venta.destroy({
-            where: { clienteId: id }
-        });
+        const ventaIds = ventas.map(v => v.id);
+
+        // Si hay ventas, eliminar los detalles primero
+        if (ventaIds.length > 0) {
+            await Detalle.destroy({
+                where: {
+                    sellId: ventaIds
+                },
+                transaction: t
+            });
+
+            // Luego eliminar las ventas
+            await Venta.destroy({
+                where: { clienteId: id },
+                transaction: t
+            });
+        }
+
+        // Finalmente, eliminar el cliente
+        await cliente.destroy({ transaction: t });
+        await t.commit();
+        return true;
+    } catch (error) {
+        await t.rollback();
+        throw error;
     }
-
-    // Finalmente, eliminar el cliente
-    await cliente.destroy();
-    return true;
 };

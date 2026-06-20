@@ -26,7 +26,8 @@ Marca.init({
     sequelize,
     modelName: 'Marca',
     tableName: 'Marcas',
-    timestamps: true
+    timestamps: true,
+    paranoid: true
 });
 
 module.exports = Marca;

@@ -1,3 +1,4 @@
+const sequelize = require('../config/db/dataBase.js');
 const { Op } = require('sequelize');
 const Product = require('../models/product.js');
 const Price = require('../models/price.js');
@@ -117,34 +118,47 @@ exports.update = async (id, productData) => {
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
 exports.deleteProduct = async (id) => {
-    const product = await Product.findByPk(id);
-    if (!product) return false;
+    const t = await sequelize.transaction();
+    try {
+        const product = await Product.findByPk(id, { transaction: t });
+        if (!product) {
+            await t.rollback();
+            return false;
+        }
 
-    // Eliminar los detalles de venta que usan precios de este producto
-    // Primero obtener todos los precios del producto
-    const precios = await Price.findAll({
-        where: { productId: id }
-    });
-
-    const precioIds = precios.map(p => p.id);
-
-    // Si hay precios, eliminar los detalles que los usan
-    if (precioIds.length > 0) {
-        await Detalle.destroy({
-            where: {
-                priceId: precioIds
-            }
+        // Eliminar los detalles de venta que usan precios de este producto
+        // Primero obtener todos los precios del producto
+        const precios = await Price.findAll({
+            where: { productId: id },
+            transaction: t
         });
+
+        const precioIds = precios.map(p => p.id);
+
+        // Si hay precios, eliminar los detalles que los usan
+        if (precioIds.length > 0) {
+            await Detalle.destroy({
+                where: {
+                    priceId: precioIds
+                },
+                transaction: t
+            });
+        }
+
+        // Eliminar todos los precios del producto
+        await Price.destroy({
+            where: { productId: id },
+            transaction: t
+        });
+
+        // Finalmente, eliminar el producto
+        await product.destroy({ transaction: t });
+        await t.commit();
+        return true;
+    } catch (error) {
+        await t.rollback();
+        throw error;
     }
-
-    // Eliminar todos los precios del producto
-    await Price.destroy({
-        where: { productId: id }
-    });
-
-    // Finalmente, eliminar el producto
-    await product.destroy();
-    return true;
 };
 
 /**

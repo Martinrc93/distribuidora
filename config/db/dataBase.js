@@ -1,8 +1,12 @@
 const { Sequelize } = require('sequelize');
 
+const storagePath = process.env.NODE_ENV === 'test' 
+  ? ':memory:' 
+  : (process.env.DB_PATH || './database.sqlite');
+
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: process.env.DB_PATH || './database.sqlite',
+  storage: storagePath,
   logging: false, // Desactiva logs SQL (opcional)
 });
 

@@ -1,9 +1,11 @@
+const sanitizeInput = require('../../sanitize.js');
+
 /**
  * DTO para la creación de una Marca (Brand Create Request DTO)
  */
 class MarcaCreateDto {
     constructor({ nombre }) {
-        this.nombre = typeof nombre === 'string' ? nombre.trim() : null;
+        this.nombre = sanitizeInput(nombre);
     }
 
     /**

@@ -1,4 +1,6 @@
 import { apiClient } from '../../api/apiClient.js';
+import { escapeHtml } from '../../utils/sanitize.js';
+import { showToast } from '../../utils/ui.js';
 
 // Elementos del DOM
 let tablaPedidos = null;
@@ -252,8 +254,8 @@ async function cargarVentas() {
                 
             const fila = document.createElement('tr');
             fila.innerHTML = `
-                <td>${clienteName}</td>
-                <td>${venta.fechaEmision || 'N/A'}</td>
+                <td>${escapeHtml(clienteName)}</td>
+                <td>${escapeHtml(venta.fechaEmision) || 'N/A'}</td>
                 <td>$${Number(venta.total).toFixed(2)}</td>
                 <td>${estadoBadge}</td>
                 <td>
@@ -276,7 +278,7 @@ async function cargarVentas() {
 
     } catch (error) {
         console.error('Error al cargar ventas:', error);
-        tablaPedidos.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-3">Error al cargar pedidos: ${error.message}</td></tr>`;
+        tablaPedidos.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-3">Error al cargar pedidos: ${escapeHtml(error.message)}</td></tr>`;
     }
 }
 
@@ -385,7 +387,7 @@ function renderDetallesTemporales() {
         total += d.subtotal;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${d.nombre}</td>
+            <td>${escapeHtml(d.nombre)}</td>
             <td>$${d.precio.toFixed(2)}</td>
             <td>${d.cantidad}</td>
             <td>$${d.subtotal.toFixed(2)}</td>
@@ -552,7 +554,7 @@ function renderDetallesEdicion() {
         total += d.subtotal;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${d.nombre}</td>
+            <td>${escapeHtml(d.nombre)}</td>
             <td>$${d.precio.toFixed(2)}</td>
             <td>
                 <input type="number" min="0.5" step="0.5" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}">
@@ -1333,7 +1335,9 @@ function inicializarEventos() {
             } else {
                 venta.detalles.forEach(d => {
                     const product = productos.find(p => p.id === d.productId);
-                    const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+                    const productName = product 
+                        ? `${escapeHtml(product.nombre)} (${escapeHtml(product.marca)})` 
+                        : `Producto #${d.productId}`;
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -1570,57 +1574,7 @@ function inicializarCombobox(inputId, optionsList, onSelectCallback = null) {
     });
 }
 
-/**
- * Muestra una notificación toast elegante y autodescartable
- * @param {string} mensaje - El texto a mostrar
- * @param {string} tipo - El tipo de toast ('success' o 'error')
- */
-function showToast(mensaje, tipo = 'success') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
 
-    // Crear el elemento del toast
-    const toast = document.createElement('div');
-    toast.className = `custom-toast ${tipo}`;
-    
-    const iconHtml = tipo === 'error' 
-        ? '<i class="fas fa-times-circle"></i>' 
-        : '<i class="fas fa-check-circle"></i>';
-
-    toast.innerHTML = `
-        <div class="custom-toast-icon">
-            ${iconHtml}
-        </div>
-        <div class="custom-toast-content">${mensaje}</div>
-        <button type="button" class="custom-toast-close">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-
-    container.appendChild(toast);
-
-    // Animación de entrada: forzar reflow y agregar la clase 'show'
-    toast.offsetHeight; // force reflow
-    toast.classList.add('show');
-
-    // Función para cerrar el toast de forma animada
-    const closeToast = () => {
-        toast.classList.remove('show');
-        // Esperar a que termine la transición de salida antes de remover del DOM
-        toast.addEventListener('transitionend', () => {
-            toast.remove();
-        });
-    };
-
-    // Cerrar al hacer clic en el botón de cerrar
-    const closeBtn = toast.querySelector('.custom-toast-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeToast);
-    }
-
-    // Auto-descartar después de 3 segundos (3000 ms)
-    setTimeout(closeToast, 3000);
-}
 
 /**
  * Inicialización de la aplicación

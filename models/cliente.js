@@ -58,7 +58,8 @@ Cliente.init({
     sequelize,
     modelName: 'Cliente',
     tableName: 'Clientes',
-    timestamps: true
+    timestamps: true,
+    paranoid: true
 });
 
 Cliente.belongsTo(ListaPrecios, { foreignKey: 'listaPreciosId', as: 'listaPrecios' });

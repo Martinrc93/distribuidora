@@ -1,3 +1,5 @@
+const sanitizeInput = require('../../sanitize.js');
+
 /**
  * DTO para la actualización de un Cliente (Cliente Update Request DTO)
  * Se encarga de limpiar, estructurar y validar los datos que envía el cliente para actualizar un cliente.
@@ -5,13 +7,13 @@
 class ClienteUpdateDto {
     constructor(data) {
         if (data.nombre !== undefined) {
-            this.nombre = typeof data.nombre === 'string' ? data.nombre.trim() : null;
+            this.nombre = sanitizeInput(data.nombre);
         }
         if (data.direccion !== undefined) {
-            this.direccion = typeof data.direccion === 'string' ? data.direccion.trim() : null;
+            this.direccion = sanitizeInput(data.direccion);
         }
         if (data.contacto !== undefined) {
-            this.contacto = typeof data.contacto === 'string' ? data.contacto.trim() : null;
+            this.contacto = sanitizeInput(data.contacto);
         }
         if (data.listaPreciosId !== undefined) {
             this.listaPreciosId = Number.parseInt(data.listaPreciosId, 10) || null;

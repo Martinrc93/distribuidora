@@ -78,7 +78,8 @@ Venta.init({
     sequelize,         // Instancia de conexión
     modelName: 'Venta', // Nombre del modelo
     tableName: 'Ventas', // Nombre de la tabla física en la base de datos
-    timestamps: true   // Mantiene createdAt y updatedAt
+    timestamps: true,   // Mantiene createdAt y updatedAt
+    paranoid: true
 });
 
 // 3. Relaciones (Asociaciones)

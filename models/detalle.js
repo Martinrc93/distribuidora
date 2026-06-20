@@ -79,7 +79,8 @@ Detalle.init({
     sequelize,
     modelName: 'Detalle',
     tableName: 'Detalles', // Forzamos el nombre de la tabla a "Detalles" en plural
-    timestamps: true
+    timestamps: true,
+    paranoid: true
 });
 
 // 3. Relaciones (Asociaciones)

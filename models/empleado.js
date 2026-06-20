@@ -56,7 +56,8 @@ Empleado.init({
 }, {
     sequelize,         // Instancia de conexión
     modelName: 'Empleado', // Nombre del modelo (generará la tabla "Empleados" en plural)
-    timestamps: true   // Mantiene createdAt y updatedAt automáticamente
+    timestamps: true,   // Mantiene createdAt y updatedAt automáticamente
+    paranoid: true
 });
 
 module.exports = Empleado;

@@ -1,3 +1,15 @@
+import { apiClient } from '../../api/apiClient.js';
+import { escapeHtml } from '../../utils/sanitize.js';
+import { showToast } from '../../utils/ui.js';
+
+function isValidDate(dateStr) {
+    if (!dateStr) return false;
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateStr)) return false;
+    const time = Date.parse(dateStr);
+    return !isNaN(time);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- NAVEGACIÓN ENTRE PESTAÑAS (TABS) ---
     const tabs = document.querySelectorAll('.dashboard-tab');
@@ -121,9 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const fMin = inputFechaMin.value;
             const fMax = inputFechaMax.value;
-            const response = await fetch(`/dashboard/finance?fechaMin=${fMin}&fechaMax=${fMax}`);
-            if (!response.ok) throw new Error('Error al obtener datos financieros');
-            const data = await response.json();
+            if (!isValidDate(fMin) || !isValidDate(fMax)) {
+                showToast('Formato de fecha inválido. Utilice AAAA-MM-DD.', 'error');
+                return;
+            }
+            const data = await apiClient.get(`/dashboard/finance?fechaMin=${fMin}&fechaMax=${fMax}`);
 
             const { kpis, history } = data;
 
@@ -239,6 +253,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const fMin = inputFechaMin.value;
             const fMax = inputFechaMax.value;
+            if (!isValidDate(fMin) || !isValidDate(fMax)) {
+                showToast('Formato de fecha inválido. Utilice AAAA-MM-DD.', 'error');
+                return;
+            }
             const limit = selectProductsLimit ? selectProductsLimit.value : 10;
  
             const titleText = document.getElementById('products-title-text');
@@ -248,9 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     : `Top ${limit} Productos Más Vendidos`;
             }
  
-            const response = await fetch(`/dashboard/portfolio?fechaMin=${fMin}&fechaMax=${fMax}&limit=${limit}`);
-            if (!response.ok) throw new Error('Error al obtener datos del portfolio');
-            const data = await response.json();
+            const data = await apiClient.get(`/dashboard/portfolio?fechaMin=${fMin}&fechaMax=${fMax}&limit=${limit}`);
  
             const { topProducts, brandStats, totalProductsCount } = data;
  
@@ -270,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 topProducts.forEach(prod => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td class="text-white">${prod.nombre}</td>
+                        <td class="text-white">${escapeHtml(prod.nombre)}</td>
                         <td class="text-center font-weight-bold">${prod.cantidadVendida}</td>
                         <td class="text-right text-success">${currencyFormatter.format(prod.totalRecaudado)}</td>
                     `;
@@ -415,6 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const fMin = inputFechaMin.value;
             const fMax = inputFechaMax.value;
+            if (!isValidDate(fMin) || !isValidDate(fMax)) {
+                showToast('Formato de fecha inválido. Utilice AAAA-MM-DD.', 'error');
+                return;
+            }
             const limit = selectClientsLimit ? selectClientsLimit.value : 10;
 
             const titleText = document.getElementById('clients-title-text');
@@ -424,9 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     : `Top ${limit} Clientes de Mayor Valor`;
             }
 
-            const response = await fetch(`/dashboard/commercial?fechaMin=${fMin}&fechaMax=${fMax}&limit=${limit}`);
-            if (!response.ok) throw new Error('Error al obtener datos comerciales');
-            const data = await response.json();
+            const data = await apiClient.get(`/dashboard/commercial?fechaMin=${fMin}&fechaMax=${fMax}&limit=${limit}`);
 
             const { topClients, employeeStats, totalClientsCount } = data;
 
@@ -445,8 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 topClients.forEach(cli => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td class="text-white font-weight-bold">${cli.clienteNombre}</td>
-                        <td><span class="badge" style="font-size: 0.95rem; padding: 0.5rem 0.9rem; font-weight: 600; background-color: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3); color: #60a5fa;">${cli.listaPreciosNombre}</span></td>
+                        <td class="text-white font-weight-bold">${escapeHtml(cli.clienteNombre)}</td>
+                        <td><span class="badge" style="font-size: 0.95rem; padding: 0.5rem 0.9rem; font-weight: 600; background-color: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3); color: #60a5fa;">${escapeHtml(cli.listaPreciosNombre)}</span></td>
                         <td class="text-center">${cli.cantidadVentas}</td>
                         <td class="text-right text-success font-weight-bold">${currencyFormatter.format(cli.totalComprado)}</td>
                         <td class="text-right text-success">${currencyFormatter.format(cli.gananciaGenerada)}</td>
@@ -464,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 employeeStats.forEach(emp => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td class="text-white">${emp.empleadoNombre}</td>
+                        <td class="text-white">${escapeHtml(emp.empleadoNombre)}</td>
                         <td class="text-center">${emp.cantidadVentas}</td>
                         <td class="text-right">${currencyFormatter.format(emp.totalVendido)}</td>
                         <td class="text-right text-success">${currencyFormatter.format(emp.gananciaGenerada)}</td>

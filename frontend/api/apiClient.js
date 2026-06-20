@@ -22,7 +22,7 @@ async function request(endpoint, options = {}) {
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            const error = new Error(errorData.message || 'Error en la petición al servidor');
+            const error = new Error(errorData.error || errorData.message || 'Error en la petición al servidor');
             error.status = response.status;
             error.data = errorData;
             throw error;

@@ -8,7 +8,12 @@
     "seed": "node seed.js",
     "electron:start": "electron .",
     "electron:build": "electron-builder build --win",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
+  },
+  "jest": {
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -27,7 +32,9 @@
   },
   "devDependencies": {
     "electron": "^42.4.1",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
   },
   "build": {
     "appId": "com.distribuidora.app",

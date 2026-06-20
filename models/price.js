@@ -52,7 +52,8 @@ Price.init({
     sequelize,         // Instancia de conexión
     modelName: 'Price', // Nombre del modelo (generará la tabla "Prices" en plural)
     tableName: 'Prices',
-    timestamps: true   // Mantiene createdAt y updatedAt automáticamente
+    timestamps: true,   // Mantiene createdAt y updatedAt automáticamente
+    paranoid: true
 });
 
 // 3. Definición de Relaciones (Asociaciones)

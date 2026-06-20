@@ -1,12 +1,14 @@
+const sanitizeInput = require('../../sanitize.js');
+
 /**
  * DTO para la creación de un Cliente (Cliente Create Request DTO)
  * Se encarga de limpiar, estructurar y validar los datos que envía el cliente para crear un cliente.
  */
 class ClienteCreateDto {
     constructor({ nombre, direccion, contacto, listaPreciosId }) {
-        this.nombre = typeof nombre === 'string' ? nombre.trim() : null;
-        this.direccion = typeof direccion === 'string' ? direccion.trim() : null;
-        this.contacto = typeof contacto === 'string' ? contacto.trim() : null;
+        this.nombre = sanitizeInput(nombre);
+        this.direccion = sanitizeInput(direccion);
+        this.contacto = sanitizeInput(contacto);
         this.listaPreciosId = Number.parseInt(listaPreciosId, 10) || 1;
     }
 

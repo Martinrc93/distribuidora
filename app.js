@@ -1,40 +1,6 @@
 // Alinear base de datos, aplicación y sistema en la misma zona horaria local
-try {
-    const modulePath = require.resolve('sequelize/lib/dialects/sqlite/data-types');
-    const originalCreator = require(modulePath);
-    require.cache[modulePath].exports = function(BaseTypes) {
-        const types = originalCreator(BaseTypes);
-        const originalParse = types.DATE.parse;
-        types.DATE.parse = function(date, options) {
-            if (typeof date === 'string') {
-                const cleanVal = date.replace(/'/g, '').replace(/\s*[+-]\d+:\d+$/, '').replace('Z', '').trim();
-                const parts = cleanVal.split(' ');
-                const dateStr = parts[0] + (parts[1] ? 'T' + parts[1] : '');
-                return new Date(dateStr);
-            }
-            return originalParse.call(this, date, options);
-        };
-        return types;
-    };
-    
-    const { DataTypes } = require('sequelize');
-    const DateType = DataTypes.DATE;
-    DateType.prototype.stringify = function(date, options) {
-        if (!(date instanceof Date)) {
-            date = new Date(date);
-        }
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        const ms = String(date.getMilliseconds()).padStart(3, '0');
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`;
-    };
-} catch (e) {
-    console.error('Error al configurar la alineación de zona horaria local:', e);
-}
+require('./config/timezone.js');
+
 
 const express = require('express');
 const path = require('path');
@@ -90,19 +56,45 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// Sincronizar base de datos e iniciar servidor
-sequelize.sync({ force: false })
-  .then(() => {
-    console.log('Conexión a SQLite establecida y modelos sincronizados.');
-    console.log(`Documentación de Swagger disponible en http://localhost:${port}/api-docs`);
-    
-    // Inicializar cliente de WhatsApp
-    initWhatsApp();
+// Middleware global de manejo de errores
+app.use(require('./middleware/errorHandler.js'));
 
-    app.listen(port, () => {
-      console.log(`Servidor corriendo en http://localhost:${port}`);
+// Sincronizar base de datos e iniciar servidor
+if (process.env.NODE_ENV !== 'test') {
+  const migrateDatabase = async () => {
+    const tables = ['Clientes', 'Empleados', 'Products', 'Ventas', 'Detalles', 'Prices', 'Marcas', 'Users'];
+    for (const table of tables) {
+      try {
+        const [columns] = await sequelize.query(`PRAGMA table_info(\`${table}\`);`);
+        if (columns.length > 0) {
+          const hasDeletedAt = columns.some(col => col.name === 'deletedAt');
+          if (!hasDeletedAt) {
+            console.log(`Migración: Agregando columna deletedAt a la tabla ${table}`);
+            await sequelize.query(`ALTER TABLE \`${table}\` ADD COLUMN deletedAt DATETIME;`);
+          }
+        }
+      } catch (err) {
+        console.error(`Error al verificar/migrar la tabla ${table}:`, err);
+      }
+    }
+  };
+
+  migrateDatabase()
+    .then(() => sequelize.sync({ force: false }))
+    .then(() => {
+      console.log('Conexión a SQLite establecida y modelos sincronizados.');
+      console.log(`Documentación de Swagger disponible en http://localhost:${port}/api-docs`);
+      
+      // Inicializar cliente de WhatsApp
+      initWhatsApp();
+
+      app.listen(port, () => {
+        console.log(`Servidor corriendo en http://localhost:${port}`);
+      });
+    })
+    .catch(err => {
+      console.error('Error al conectar o sincronizar la base de datos:', err);
     });
-  })
-  .catch(err => {
-    console.error('Error al conectar o sincronizar la base de datos:', err);
-  });
+}
+
+module.exports = app;

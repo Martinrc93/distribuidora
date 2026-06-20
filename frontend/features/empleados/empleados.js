@@ -1,4 +1,6 @@
 import { apiClient } from '../../api/apiClient.js';
+import { escapeHtml } from '../../utils/sanitize.js';
+import { showToast, showCustomConfirm } from '../../utils/ui.js';
 
 // Elementos del DOM
 let tablaEmpleados = null;
@@ -122,8 +124,8 @@ async function cargarPedidosEmpleado() {
         pedidosEmpleadoCurrent.forEach(p => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="text-white">${p.fechaEmision || 'N/A'}</td>
-                <td class="text-white">${p.clienteNombre || 'N/A'}</td>
+                <td class="text-white">${escapeHtml(p.fechaEmision) || 'N/A'}</td>
+                <td class="text-white">${escapeHtml(p.clienteNombre) || 'N/A'}</td>
                 <td class="text-white">$${Number(p.total).toFixed(2)}</td>
                 <td>
                     <button class="btn btn-sm action-btn border-0 btn-ver-detalle-pedido" data-id="${p.id}" title="Ver Detalle de Pedido">
@@ -135,7 +137,7 @@ async function cargarPedidosEmpleado() {
         });
     } catch (error) {
         console.error('Error al cargar pedidos del empleado:', error);
-        tablaPedidosBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">Error: ${error.message}</td></tr>`;
+        tablaPedidosBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">Error: ${escapeHtml(error.message)}</td></tr>`;
     }
 }
 
@@ -160,7 +162,9 @@ function mostrarDetallePedidoEmpleado(pedidoId) {
     } else {
         pedido.detalles.forEach(d => {
             const product = productos.find(p => p.id === d.productId);
-            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+            const productName = product 
+                ? `${escapeHtml(product.nombre)} (${escapeHtml(product.marca)})` 
+                : `Producto #${d.productId}`;
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -214,7 +218,7 @@ async function cargarEmpleados() {
                 ? '<span class="badge bg-success">Activo</span>'
                 : '<span class="badge bg-secondary">Inactivo</span>';
             
-            const nombreCompleto = `${empleado.nombre || 'N/A'} ${empleado.apellido || 'N/A'}`;
+            const nombreCompleto = `${escapeHtml(empleado.nombre || 'N/A')} ${escapeHtml(empleado.apellido || 'N/A')}`;
             
             const fila = document.createElement('tr');
             fila.innerHTML = `
@@ -224,7 +228,7 @@ async function cargarEmpleados() {
                     <button class="btn btn-sm btn-ver-pedidos" data-id="${empleado.id}" data-nombre="${nombreCompleto}" data-bs-toggle="modal" data-bs-target="#verPedidosModal" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
                 </td>
                 <td>
-                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${empleado.id}" data-nombre="${empleado.nombre || ''}" data-apellido="${empleado.apellido || ''}" data-active="${empleado.active}" data-bs-toggle="modal" data-bs-target="#editEmpleadoModal" title="Editar">
+                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${empleado.id}" data-nombre="${escapeHtml(empleado.nombre || '')}" data-apellido="${escapeHtml(empleado.apellido || '')}" data-active="${empleado.active}" data-bs-toggle="modal" data-bs-target="#editEmpleadoModal" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm action-btn delete border-0 btn-eliminar" data-id="${empleado.id}" title="Eliminar">
@@ -239,7 +243,7 @@ async function cargarEmpleados() {
         agregarEventosTabla();
     } catch (error) {
         console.error('Error al cargar empleados:', error);
-        tablaEmpleados.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error: ${error.message}</td></tr>`;
+        tablaEmpleados.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error: ${escapeHtml(error.message)}</td></tr>`;
     }
 }
 
@@ -436,114 +440,7 @@ function inicializarEventos() {
     }
 }
 
-/**
- * Muestra una notificación toast elegante y autodescartable
- * @param {string} mensaje - El texto a mostrar
- * @param {string} tipo - El tipo de toast ('success' o 'error')
- */
-function showToast(mensaje, tipo = 'success') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
 
-    // Crear el elemento del toast
-    const toast = document.createElement('div');
-    toast.className = `custom-toast ${tipo}`;
-    
-    const iconHtml = tipo === 'error' 
-        ? '<i class="fas fa-times-circle"></i>' 
-        : '<i class="fas fa-check-circle"></i>';
-
-    toast.innerHTML = `
-        <div class="custom-toast-icon">
-            ${iconHtml}
-        </div>
-        <div class="custom-toast-content">${mensaje}</div>
-        <button type="button" class="custom-toast-close">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-
-    container.appendChild(toast);
-
-    // Animación de entrada: forzar reflow y agregar la clase 'show'
-    toast.offsetHeight; // force reflow
-    toast.classList.add('show');
-
-    // Función para cerrar el toast de forma animada
-    const closeToast = () => {
-        toast.classList.remove('show');
-        // Esperar a que termine la transición de salida antes de remover del DOM
-        toast.addEventListener('transitionend', () => {
-            toast.remove();
-        });
-    };
-
-    // Cerrar al hacer clic en el botón de cerrar
-    const closeBtn = toast.querySelector('.custom-toast-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeToast);
-    }
-
-    // Auto-descartar después de 3 segundos (3000 ms)
-    setTimeout(closeToast, 3000);
-}
-
-/**
- * Muestra una ventana modal de confirmación personalizada
- * @param {string} mensaje - Mensaje a mostrar en la ventana
- * @returns {Promise<boolean>} Promesa que se resuelve con true si acepta, false si cancela
- */
-function showCustomConfirm(mensaje) {
-    return new Promise((resolve) => {
-        // Crear el overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-confirm-overlay';
-        
-        overlay.innerHTML = `
-            <div class="custom-confirm-box">
-                <div class="custom-confirm-header">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h5>Confirmación</h5>
-                </div>
-                <div class="custom-confirm-body">
-                    <p>${mensaje}</p>
-                </div>
-                <div class="custom-confirm-footer">
-                    <button class="btn btn-secondary btn-confirm-cancel">Cancelar</button>
-                    <button class="btn btn-danger btn-confirm-accept">Aceptar</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(overlay);
-        
-        // Animación de entrada
-        setTimeout(() => overlay.classList.add('show'), 10);
-        
-        const closeConfirm = (res) => {
-            overlay.classList.remove('show');
-            overlay.addEventListener('transitionend', () => {
-                overlay.remove();
-            });
-            resolve(res);
-        };
-        
-        overlay.querySelector('.btn-confirm-cancel').addEventListener('click', () => {
-            closeConfirm(false);
-        });
-        
-        overlay.querySelector('.btn-confirm-accept').addEventListener('click', () => {
-            closeConfirm(true);
-        });
-        
-        // Cerrar al hacer clic en el overlay (cancelar)
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                closeConfirm(false);
-            }
-        });
-    });
-}
 
 /**
  * Inicializa la página

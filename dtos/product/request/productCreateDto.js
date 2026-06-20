@@ -1,11 +1,13 @@
+const sanitizeInput = require('../../sanitize.js');
+
 /**
  * DTO para la creación de un Producto (Product Create Request DTO)
  * Se encarga de limpiar, estructurar y validar los datos que envía el cliente para crear un producto.
  */
 class ProductCreateDto {
     constructor({ nombre, marca, costo }) {
-        this.nombre = typeof nombre === 'string' ? nombre.trim() : null;
-        this.marca = typeof marca === 'string' ? marca.trim() : null;
+        this.nombre = sanitizeInput(nombre);
+        this.marca = sanitizeInput(marca);
         const parsedCosto = typeof costo === 'number' ? costo : Number.parseFloat(costo);
         this.costo = Number.isNaN(parsedCosto) ? parsedCosto : Number.parseFloat(parsedCosto.toFixed(2));
     }

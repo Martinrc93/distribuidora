@@ -30,7 +30,8 @@ User.init({
 }, {
   sequelize, // Pasamos la instancia de conexión
   modelName: 'User', // Nombre del modelo
-  timestamps: true   // Mantiene createdAt y updatedAt
+  timestamps: true,   // Mantiene createdAt y updatedAt
+  paranoid: true
 });
 
 // 4. No olvides exportarlo para usarlo en tus controladores

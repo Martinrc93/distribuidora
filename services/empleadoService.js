@@ -1,3 +1,4 @@
+const sequelize = require('../config/db/dataBase.js');
 const { Op } = require('sequelize');
 const Empleado = require('../models/empleado.js');
 const Venta = require('../models/venta.js');
@@ -82,31 +83,44 @@ exports.update = async (id, empleadoData) => {
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
 exports.deleteEmpleado = async (id) => {
-    const empleado = await Empleado.findByPk(id);
-    if (!empleado) return false;
+    const t = await sequelize.transaction();
+    try {
+        const empleado = await Empleado.findByPk(id, { transaction: t });
+        if (!empleado) {
+            await t.rollback();
+            return false;
+        }
 
-    // Obtener todas las ventas del empleado
-    const ventas = await Venta.findAll({
-        where: { empleadoId: id }
-    });
-
-    const ventaIds = ventas.map(v => v.id);
-
-    // Si hay ventas, eliminar los detalles primero
-    if (ventaIds.length > 0) {
-        await Detalle.destroy({
-            where: {
-                sellId: ventaIds
-            }
+        // Obtener todas las ventas del empleado
+        const ventas = await Venta.findAll({
+            where: { empleadoId: id },
+            transaction: t
         });
 
-        // Luego eliminar las ventas
-        await Venta.destroy({
-            where: { empleadoId: id }
-        });
+        const ventaIds = ventas.map(v => v.id);
+
+        // Si hay ventas, eliminar los detalles primero
+        if (ventaIds.length > 0) {
+            await Detalle.destroy({
+                where: {
+                    sellId: ventaIds
+                },
+                transaction: t
+            });
+
+            // Luego eliminar las ventas
+            await Venta.destroy({
+                where: { empleadoId: id },
+                transaction: t
+            });
+        }
+
+        // Finalmente, eliminar el empleado
+        await empleado.destroy({ transaction: t });
+        await t.commit();
+        return true;
+    } catch (error) {
+        await t.rollback();
+        throw error;
     }
-
-    // Finalmente, eliminar el empleado
-    await empleado.destroy();
-    return true;
 };

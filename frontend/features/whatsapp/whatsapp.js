@@ -1,4 +1,5 @@
 import { apiClient } from '../../api/apiClient.js';
+import { showToast } from '../../utils/ui.js';
 
 let lastQrString = null;
 let pollingInterval = null;
@@ -122,45 +123,4 @@ async function handleDisconnect() {
     }
 }
 
-/**
- * Muestra una notificación toast elegante y autodescartable
- */
-function showToast(mensaje, tipo = 'success') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
 
-    const toast = document.createElement('div');
-    toast.className = `custom-toast ${tipo}`;
-    
-    const iconHtml = tipo === 'error' 
-        ? '<i class="fas fa-times-circle"></i>' 
-        : '<i class="fas fa-check-circle"></i>';
-
-    toast.innerHTML = `
-        <div class="custom-toast-icon">
-            ${iconHtml}
-        </div>
-        <div class="custom-toast-content">${mensaje}</div>
-        <button type="button" class="custom-toast-close">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-
-    container.appendChild(toast);
-    toast.offsetHeight; // force reflow
-    toast.classList.add('show');
-
-    const closeToast = () => {
-        toast.classList.remove('show');
-        toast.addEventListener('transitionend', () => {
-            toast.remove();
-        });
-    };
-
-    const closeBtn = toast.querySelector('.custom-toast-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeToast);
-    }
-
-    setTimeout(closeToast, 3000);
-}

@@ -1,11 +1,13 @@
+const sanitizeInput = require('../../sanitize.js');
+
 /**
  * DTO para la creación de un Empleado (Empleado Create Request DTO)
  * Se encarga de limpiar, estructurar y validar los datos enviados para crear un empleado.
  */
 class EmpleadoCreateDto {
     constructor({ nombre, apellido, active }) {
-        this.nombre = typeof nombre === 'string' ? nombre.trim() : null;
-        this.apellido = typeof apellido === 'string' ? apellido.trim() : null;
+        this.nombre = sanitizeInput(nombre);
+        this.apellido = sanitizeInput(apellido);
         this.active = active !== undefined ? (active === true || active === 'true' || active === 1) : true;
     }
 
