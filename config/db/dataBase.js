@@ -12,9 +12,11 @@ const sequelize = new Sequelize({
   logging: false, // Desactiva logs SQL (opcional)
 });
 
-// Habilitar restricciones de clave foránea en SQLite
-sequelize.authenticate().then(() => {
-  sequelize.query('PRAGMA foreign_keys = ON');
+// Habilitar restricciones de clave foránea, modo WAL y busy_timeout en SQLite
+sequelize.authenticate().then(async () => {
+  await sequelize.query('PRAGMA foreign_keys = ON;');
+  await sequelize.query('PRAGMA journal_mode = WAL;');
+  await sequelize.query('PRAGMA busy_timeout = 5000;');
 });
 
 module.exports = sequelize;

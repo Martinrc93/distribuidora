@@ -118,7 +118,7 @@ exports.update = async (id, productData) => {
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
 exports.deleteProduct = async (id) => {
-    const t = await sequelize.transaction();
+    const t = await sequelize.transaction({ type: 'IMMEDIATE' });
     try {
         const product = await Product.findByPk(id, { transaction: t });
         if (!product) {
@@ -167,7 +167,7 @@ exports.deleteProduct = async (id) => {
  * @param {number} priceId ID del registro de precio.
  * @returns {Promise<number>} La ganancia calculada (precio - costo).
  */
-exports.getGanancia = async (productId, priceId) => {
+exports.getGanancia = async (productId, priceId, options = {}) => {
     const prodId = Number.parseInt(productId, 10);
     const prcId = Number.parseInt(priceId, 10);
 
@@ -175,12 +175,12 @@ exports.getGanancia = async (productId, priceId) => {
         throw new TypeError('El ID de producto y el ID de precio deben ser números válidos.');
     }
 
-    const product = await Product.findByPk(prodId);
+    const product = await Product.findByPk(prodId, { transaction: options.transaction });
     if (!product) {
         throw new Error('Producto no encontrado.');
     }
 
-    const priceRecord = await Price.findByPk(prcId);
+    const priceRecord = await Price.findByPk(prcId, { transaction: options.transaction });
     if (!priceRecord) {
         throw new Error('Registro de precio no encontrado.');
     }

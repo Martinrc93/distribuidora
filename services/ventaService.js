@@ -82,7 +82,7 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '', fecha
  * @param {{empleadoId: number, detalles: {productId: number, priceId: number, cantidad: number}[]}} ventaData Datos validados.
  */
 exports.createVenta = async (ventaData) => {
-    const t = await sequelize.transaction();
+    const t = await sequelize.transaction({ type: 'IMMEDIATE' });
 
     try {
         // 1. Crear la cabecera de la Venta con total y ganancia iniciales en 0
@@ -116,7 +116,7 @@ exports.createVenta = async (ventaData) => {
             totalVenta += subtotal;
 
             // Calcular ganancia unitaria para acumular
-            const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId);
+            const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId, { transaction: t });
             totalGanancia += gananciaUnidad * item.cantidad;
 
             // Guardamos el detalle en la base de datos a través de detalleService
@@ -161,7 +161,7 @@ exports.createVenta = async (ventaData) => {
  * @param {Array} detalles Listado opcional de nuevos detalles [{productId, priceId, cantidad}].
  */
 exports.updateVenta = async (id, active, detalles = null) => {
-    const t = await sequelize.transaction();
+    const t = await sequelize.transaction({ type: 'IMMEDIATE' });
 
     try {
         const venta = await Venta.findByPk(id, { transaction: t });
@@ -199,7 +199,7 @@ exports.updateVenta = async (id, active, detalles = null) => {
                 totalVenta += subtotal;
 
                 // Calcular ganancia acumulada
-                const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId);
+                const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId, { transaction: t });
                 totalGanancia += gananciaUnidad * item.cantidad;
 
                 // Crear el detalle en la DB

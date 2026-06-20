@@ -83,7 +83,7 @@ exports.update = async (id, empleadoData) => {
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
 exports.deleteEmpleado = async (id) => {
-    const t = await sequelize.transaction();
+    const t = await sequelize.transaction({ type: 'IMMEDIATE' });
     try {
         const empleado = await Empleado.findByPk(id, { transaction: t });
         if (!empleado) {
