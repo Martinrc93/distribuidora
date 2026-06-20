@@ -126,32 +126,19 @@ exports.deleteProduct = async (id) => {
             return false;
         }
 
-        // Eliminar los detalles de venta que usan precios de este producto
-        // Primero obtener todos los precios del producto
-        const precios = await Price.findAll({
+        // 1. Eliminar los detalles de venta que pertenecen a este producto
+        await Detalle.destroy({
             where: { productId: id },
             transaction: t
         });
 
-        const precioIds = precios.map(p => p.id);
-
-        // Si hay precios, eliminar los detalles que los usan
-        if (precioIds.length > 0) {
-            await Detalle.destroy({
-                where: {
-                    priceId: precioIds
-                },
-                transaction: t
-            });
-        }
-
-        // Eliminar todos los precios del producto
+        // 2. Eliminar todos los precios del producto
         await Price.destroy({
             where: { productId: id },
             transaction: t
         });
 
-        // Finalmente, eliminar el producto
+        // 3. Finalmente, eliminar el producto
         await product.destroy({ transaction: t });
         await t.commit();
         return true;
