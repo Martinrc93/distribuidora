@@ -1,13 +1,10 @@
 const { Sequelize, DataTypes } = require('sequelize');
 
-// Override DATE stringify for SQLite
-const DateType = DataTypes.DATE;
-DateType.prototype.stringify = function(date, options) {
+// 1. Override stringify globally on DataTypes.DATE
+DataTypes.DATE.prototype.stringify = function(date, options) {
     if (!(date instanceof Date)) {
         date = new Date(date);
     }
-    
-    // Format as local YYYY-MM-DD HH:mm:ss.SSS
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -15,34 +12,41 @@ DateType.prototype.stringify = function(date, options) {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
     const ms = String(date.getMilliseconds()).padStart(3, '0');
-    
-    return `'${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}'`;
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`;
 };
 
+// 2. Initialize Sequelize
 const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: ':memory:',
     logging: false
 });
 
-// Override parse for sqlite dialect
-const sqliteDialect = sequelize.connectionManager.dialect;
-const originalParse = sqliteDialect.DataTypes.DATE.parse;
+// 3. Override parser directly in parserStore
+const parserStore = require('sequelize/lib/dialects/parserStore')('sqlite');
+const originalParse = parserStore.get('DATETIME');
 
-sqliteDialect.DataTypes.DATE.parse = function(value, options) {
-    console.log('--- Overridden parse called with value:', value);
+const customParse = function(value, options) {
+    console.log('--- Custom parser called with value:', value);
     if (typeof value === 'string') {
         const cleanVal = value.replace(/'/g, '').replace(/\s*[+-]\d+:\d+$/, '').replace('Z', '').trim();
         const parts = cleanVal.split(' ');
         const dateStr = parts[0] + (parts[1] ? 'T' + parts[1] : '');
         const parsed = new Date(dateStr);
-        console.log('--- Parsed Date object:', parsed.toString());
+        console.log('--- Parsed local Date:', parsed.toString());
         return parsed;
     }
-    return originalParse.call(this, value, options);
+    return originalParse ? originalParse(value, options) : new Date(value);
 };
-sequelize.connectionManager.refreshTypeParser(sqliteDialect.DataTypes.DATE);
 
+parserStore.refresh({
+    types: {
+        sqlite: ['DATETIME']
+    },
+    parse: customParse
+});
+
+// 4. Test Model
 const Test = sequelize.define('Test', {
     dateVal: DataTypes.DATE
 });
