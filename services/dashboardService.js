@@ -16,7 +16,7 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
             COALESCE(SUM(ganancia), 0) as totalGanancia,
             COUNT(id) as totalVentas
         FROM Ventas
-        WHERE active = 1 AND fecha_emision BETWEEN :fechaMin AND :fechaMax;
+        WHERE activo = 1 AND fecha_emision BETWEEN :fechaMin AND :fechaMax;
     `;
     const kpis = await sequelize.query(kpiQuery, { 
         replacements,
@@ -31,7 +31,7 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
             COALESCE(SUM(ganancia), 0) as totalGanancia,
             COUNT(id) as cantidadVentas
         FROM Ventas
-        WHERE active = 1 AND fecha_emision BETWEEN :fechaMin AND :fechaMax
+        WHERE activo = 1 AND fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY date(fecha_emision)
         ORDER BY fecha ASC;
     `;
@@ -64,21 +64,21 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
     // 1. Top productos más vendidos (usando LEFT JOIN para incluir todos los productos si es necesario)
     const topProductsQuery = `
         SELECT 
-            p.id as productId,
+            p.id as productoId,
             p.nombre as nombre,
             COALESCE(sv.cantidadVendida, 0) as cantidadVendida,
             COALESCE(sv.totalRecaudado, 0) as totalRecaudado
         FROM Products p
         LEFT JOIN (
             SELECT 
-                d.productId,
+                d.productoId,
                 SUM(d.cantidad) as cantidadVendida,
                 SUM(d.cantidad * d.precio) as totalRecaudado
             FROM Detalles d
-            INNER JOIN Ventas v ON d.sellId = v.id
-            WHERE v.active = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
-            GROUP BY d.productId
-        ) sv ON p.id = sv.productId
+            INNER JOIN Ventas v ON d.ventaId = v.id
+            WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+            GROUP BY d.productoId
+        ) sv ON p.id = sv.productoId
         ORDER BY cantidadVendida DESC, p.nombre ASC
         ${limitClause};
     `;
@@ -96,10 +96,10 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
             COALESCE(SUM(d.cantidad * d.precio), 0) as totalRecaudado,
             COALESCE(SUM(d.cantidad * (d.precio - p.costo)), 0) as totalGanancia
         FROM Detalles d
-        INNER JOIN Products p ON d.productId = p.id
+        INNER JOIN Products p ON d.productoId = p.id
         INNER JOIN Marcas m ON p.marcaId = m.id
-        INNER JOIN Ventas v ON d.sellId = v.id
-        WHERE v.active = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+        INNER JOIN Ventas v ON d.ventaId = v.id
+        WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY m.id, m.nombre
         ORDER BY totalRecaudado DESC;
     `;
@@ -148,7 +148,7 @@ exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
         FROM Ventas v
         INNER JOIN Clientes c ON v.clienteId = c.id
         INNER JOIN ListaPrecios lp ON c.listaPreciosId = lp.id
-        WHERE v.active = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+        WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY c.id, c.nombre, lp.nombre
         ORDER BY totalComprado DESC
         ${limitClause};
@@ -168,7 +168,7 @@ exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
             COUNT(v.id) as cantidadVentas
         FROM Ventas v
         INNER JOIN Empleados e ON v.empleadoId = e.id
-        WHERE v.active = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+        WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY e.id, e.nombre, e.apellido
         ORDER BY totalVendido DESC;
     `;

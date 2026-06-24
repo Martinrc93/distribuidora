@@ -23,7 +23,7 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '', fecha
     // Solo obtenemos las ventas que estén activas para este empleado
     const where = {
         empleadoId,
-        active: true
+        activo: true
     };
 
     if (fechaMin || fechaMax) {
@@ -91,7 +91,7 @@ exports.createVenta = async (ventaData) => {
             clienteId: ventaData.clienteId,
             total: 0,
             ganancia: 0,
-            active: true
+            activo: true
         }, { transaction: t });
 
         let totalVenta = 0;
@@ -100,15 +100,15 @@ exports.createVenta = async (ventaData) => {
         // 2. Iterar por cada detalle del DTO, verificar producto y precio, y guardarlo mediante el detalleService
         for (const item of ventaData.detalles) {
             // Buscamos el registro de precio específico enviado por el cliente
-            const priceRecord = await Price.findByPk(item.priceId, { transaction: t });
+            const priceRecord = await Price.findByPk(item.precioId, { transaction: t });
 
             if (!priceRecord) {
-                throw new Error(`El registro de precio con ID ${item.priceId} no existe.`);
+                throw new Error(`El registro de precio con ID ${item.precioId} no existe.`);
             }
 
             // Validación de seguridad: verificamos que el precio corresponda al producto indicado
-            if (priceRecord.productId !== item.productId) {
-                throw new Error(`El precio con ID ${item.priceId} no pertenece al producto con ID ${item.productId}.`);
+            if (priceRecord.productoId !== item.productoId) {
+                throw new Error(`El precio con ID ${item.precioId} no pertenece al producto con ID ${item.productoId}.`);
             }
 
             const unitPrice = Number.parseFloat(priceRecord.precio);
@@ -116,14 +116,14 @@ exports.createVenta = async (ventaData) => {
             totalVenta += subtotal;
 
             // Calcular ganancia unitaria para acumular
-            const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId, { transaction: t });
+            const gananciaUnidad = await productService.getGanancia(item.productoId, item.precioId, { transaction: t });
             totalGanancia += gananciaUnidad * item.cantidad;
 
             // Guardamos el detalle en la base de datos a través de detalleService
             await detalleService.createDetalle({
-                sellId: nuevaVenta.id,
-                productId: item.productId,
-                priceId: item.priceId,
+                ventaId: nuevaVenta.id,
+                productoId: item.productoId,
+                precioId: item.precioId,
                 cantidad: item.cantidad,
                 precio: unitPrice
             }, { transaction: t });
@@ -157,10 +157,10 @@ exports.createVenta = async (ventaData) => {
 /**
  * Actualiza el estado activo/inactivo de una venta y, opcionalmente, sus detalles asociados de forma atómica.
  * @param {number} id ID de la venta.
- * @param {boolean} active Nuevo estado activo.
- * @param {Array} detalles Listado opcional de nuevos detalles [{productId, priceId, cantidad}].
+ * @param {boolean} activo Nuevo estado activo.
+ * @param {Array} detalles Listado opcional de nuevos detalles [{productoId, precioId, cantidad}].
  */
-exports.updateVenta = async (id, active, detalles = null) => {
+exports.updateVenta = async (id, activo, detalles = null) => {
     const t = await sequelize.transaction({ type: 'IMMEDIATE' });
 
     try {
@@ -171,13 +171,13 @@ exports.updateVenta = async (id, active, detalles = null) => {
         }
 
         // 1. Actualizar el estado activo
-        await venta.update({ active }, { transaction: t });
+        await venta.update({ activo }, { transaction: t });
 
         // 2. Si se envían nuevos detalles, actualizarlos de forma atómica
         if (detalles) {
             // Eliminar detalles previos de la venta
             await Detalle.destroy({
-                where: { sellId: id },
+                where: { ventaId: id },
                 transaction: t
             });
 
@@ -186,12 +186,12 @@ exports.updateVenta = async (id, active, detalles = null) => {
 
             // Registrar los nuevos detalles
             for (const item of detalles) {
-                const priceRecord = await Price.findByPk(item.priceId, { transaction: t });
+                const priceRecord = await Price.findByPk(item.precioId, { transaction: t });
                 if (!priceRecord) {
-                    throw new Error(`El registro de precio con ID ${item.priceId} no existe.`);
+                    throw new Error(`El registro de precio con ID ${item.precioId} no existe.`);
                 }
-                if (priceRecord.productId !== item.productId) {
-                    throw new Error(`El precio con ID ${item.priceId} no pertenece al producto con ID ${item.productId}.`);
+                if (priceRecord.productoId !== item.productoId) {
+                    throw new Error(`El precio con ID ${item.precioId} no pertenece al producto con ID ${item.productoId}.`);
                 }
 
                 const unitPrice = Number.parseFloat(priceRecord.precio);
@@ -199,14 +199,14 @@ exports.updateVenta = async (id, active, detalles = null) => {
                 totalVenta += subtotal;
 
                 // Calcular ganancia acumulada
-                const gananciaUnidad = await productService.getGanancia(item.productId, item.priceId, { transaction: t });
+                const gananciaUnidad = await productService.getGanancia(item.productoId, item.precioId, { transaction: t });
                 totalGanancia += gananciaUnidad * item.cantidad;
 
                 // Crear el detalle en la DB
                 await detalleService.createDetalle({
-                    sellId: id,
-                    productId: item.productId,
-                    priceId: item.priceId,
+                    ventaId: id,
+                    productoId: item.productoId,
+                    precioId: item.precioId,
                     cantidad: item.cantidad,
                     precio: unitPrice
                 }, { transaction: t });
@@ -252,7 +252,7 @@ exports.getUltimaVenta = async (clienteId) => {
     return await Venta.findOne({
         where: {
             clienteId: clId,
-            active: true
+            activo: true
         },
         include: [
             { model: Detalle, as: 'detalles' },
@@ -283,7 +283,7 @@ exports.getByCliente = async (clienteId, page = 1, limit = 10, fechaMin = '', fe
 
     const where = {
         clienteId: clId,
-        active: true
+        activo: true
     };
 
     const dateFilter = {};

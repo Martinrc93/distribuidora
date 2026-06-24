@@ -6,8 +6,8 @@
 class DetalleResponseDto {
     constructor(detalle) {
         this.id = detalle.id;
-        this.productId = detalle.productId;
-        this.priceId = detalle.priceId;
+        this.productoId = detalle.productoId;
+        this.precioId = detalle.precioId;
         this.cantidad = detalle.cantidad;
         this.precio = parseFloat(parseFloat(detalle.precio).toFixed(2));
         this.subtotal = parseFloat((this.cantidad * this.precio).toFixed(2)); // Subtotal calculado y redondeado

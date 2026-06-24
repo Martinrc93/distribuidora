@@ -46,12 +46,12 @@ describe('Parameter Validation Middleware Tests', () => {
             .expect(404);
     });
 
-    test('should return 400 for other parameter names like productId', async () => {
+    test('should return 400 for other parameter names like productoId', async () => {
         const response = await request(app)
             .get('/prices/product/xyz')
             .expect(400);
 
         expect(response.body).toHaveProperty('error');
-        expect(response.body.error).toContain('El parámetro "productId" debe ser un número entero positivo válido.');
+        expect(response.body.error).toContain('El parámetro "productoId" debe ser un número entero positivo válido.');
     });
 });

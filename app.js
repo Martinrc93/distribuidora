@@ -25,6 +25,7 @@ const Detalle = require('./models/detalle.js');
 const Cliente = require('./models/cliente.js');
 const ListaPrecios = require('./models/listaPrecios.js');
 const Marca = require('./models/marca.js');
+const Configuracion = require('./models/configuracion.js');
 
 const app = express();
 app.disable('x-powered-by');
@@ -51,6 +52,30 @@ app.use('/marcas', marcaRoutes);
 app.use('/whatsapp', whatsappRoutes);
 app.use('/dashboard', dashboardRoutes);
 
+// Endpoint para obtener la configuración del negocio
+app.get('/api/config', async (req, res, next) => {
+  try {
+    const configs = await Configuracion.findAll();
+    const configMap = {};
+    configs.forEach(c => {
+      configMap[c.clave] = c.valor;
+    });
+    res.json(configMap);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Endpoint para obtener las listas de precios
+app.get('/api/lista-precios', async (req, res, next) => {
+  try {
+    const listas = await ListaPrecios.findAll({ order: [['id', 'ASC']] });
+    res.json(listas);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Servir index.html en la raíz
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
@@ -68,7 +93,7 @@ app.serverReady = serverReady;
 
 if (process.env.NODE_ENV !== 'test') {
   const migrateDatabase = async () => {
-    const tables = ['Clientes', 'Empleados', 'Products', 'Ventas', 'Detalles', 'Prices', 'Marcas', 'Users'];
+    const tables = ['Clientes', 'Empleados', 'Products', 'Ventas', 'Detalles', 'Prices', 'Marcas', 'Users', 'Configuraciones'];
     for (const table of tables) {
       try {
         const [columns] = await sequelize.query(`PRAGMA table_info(\`${table}\`);`);

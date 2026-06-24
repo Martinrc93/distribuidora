@@ -28,11 +28,11 @@ Venta.init({
             }
         }
     },
-    active: {
+    activo: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true,
-        field: 'active'
+        field: 'activo'
     },
     empleadoId: {
         type: DataTypes.INTEGER,
@@ -83,7 +83,7 @@ Venta.init({
     indexes: [
         { fields: ['empleadoId'] },
         { fields: ['clienteId'] },
-        { fields: ['active'] },
+        { fields: ['activo'] },
         { fields: ['fecha_emision'] }
     ]
 });

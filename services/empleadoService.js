@@ -51,13 +51,13 @@ exports.getById = async (id) => {
 
 /**
  * Crea un nuevo empleado.
- * @param {{nombre: string, apellido: string, active?: boolean}} empleadoData Datos limpios del empleado.
+ * @param {{nombre: string, apellido: string, activo?: boolean}} empleadoData Datos limpios del empleado.
  */
 exports.create = async (empleadoData) => {
     return await Empleado.create({
         nombre: empleadoData.nombre,
         apellido: empleadoData.apellido,
-        active: empleadoData.active !== undefined ? empleadoData.active : true
+        activo: empleadoData.activo !== undefined ? empleadoData.activo : true
     });
 };
 
@@ -73,7 +73,7 @@ exports.update = async (id, empleadoData) => {
     return await empleado.update({
         nombre: empleadoData.nombre !== undefined ? empleadoData.nombre : empleado.nombre,
         apellido: empleadoData.apellido !== undefined ? empleadoData.apellido : empleado.apellido,
-        active: empleadoData.active !== undefined ? empleadoData.active : empleado.active
+        activo: empleadoData.activo !== undefined ? empleadoData.activo : empleado.activo
     });
 };
 
@@ -103,7 +103,7 @@ exports.deleteEmpleado = async (id) => {
         if (ventaIds.length > 0) {
             await Detalle.destroy({
                 where: {
-                    sellId: ventaIds
+                    ventaId: ventaIds
                 },
                 transaction: t
             });

@@ -33,12 +33,12 @@ async function sembrarPedidos() {
     }
 
     // Organizar precios por producto y lista de precios para búsqueda rápida
-    const mapaPrecios = {}; // { productId: { listaPreciosId: PriceRecord } }
+    const mapaPrecios = {}; // { productoId: { listaPreciosId: PriceRecord } }
     precios.forEach(p => {
-      if (!mapaPrecios[p.productId]) {
-        mapaPrecios[p.productId] = {};
+      if (!mapaPrecios[p.productoId]) {
+        mapaPrecios[p.productoId] = {};
       }
-      mapaPrecios[p.productId][p.listaPreciosId] = p;
+      mapaPrecios[p.productoId][p.listaPreciosId] = p;
     });
 
     // Iniciar transacción inmediata
@@ -68,7 +68,7 @@ async function sembrarPedidos() {
           fechaEmision: fechaEmision,
           total: 0,
           ganancia: 0,
-          active: true
+          activo: true
         }, { transaction: t });
 
         // Elegir entre 1 y 4 productos aleatorios distintos para este pedido
@@ -116,9 +116,9 @@ async function sembrarPedidos() {
 
           // Crear el detalle
           await Detalle.create({
-            sellId: venta.id,
-            productId: prod.id,
-            priceId: priceRecord.id,
+            ventaId: venta.id,
+            productoId: prod.id,
+            precioId: priceRecord.id,
             cantidad: cantidad,
             precio: unitPrice
           }, { transaction: t });

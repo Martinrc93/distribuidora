@@ -43,17 +43,17 @@ exports.create = async (req, res) => {
 };
 
 /**
- * Actualizar el estado activo/inactivo (active) de una venta.
+ * Actualizar el estado activo/inactivo (activo) de una venta.
  * Ruta: PUT /ventas/:id/status o PUT /ventas/:id
  */
 exports.updateStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { active, detalles } = req.body;
+        const { activo, detalles } = req.body;
 
-        // Validación: el estado active es obligatorio
-        if (active === undefined || typeof active !== 'boolean') {
-            return res.status(400).json({ error: 'El campo "active" es obligatorio y debe ser un valor booleano (true/false).' });
+        // Validación: el estado activo es obligatorio
+        if (activo === undefined || typeof activo !== 'boolean') {
+            return res.status(400).json({ error: 'El campo "activo" es obligatorio y debe ser un valor booleano (true/false).' });
         }
 
         // Si se envían detalles, validarlos
@@ -63,13 +63,13 @@ exports.updateStatus = async (req, res) => {
             }
             for (let i = 0; i < detalles.length; i++) {
                 const item = detalles[i];
-                if (!item.productId || !item.priceId || !item.cantidad || item.cantidad <= 0) {
-                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productId, priceId y cantidad mayor a 0.` });
+                if (!item.productoId || !item.precioId || !item.cantidad || item.cantidad <= 0) {
+                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productoId, precioId y cantidad mayor a 0.` });
                 }
             }
         }
 
-        const ventaActualizada = await ventaService.updateVenta(id, active, detalles);
+        const ventaActualizada = await ventaService.updateVenta(id, activo, detalles);
         if (!ventaActualizada) {
             return res.status(404).json({ mensaje: 'Venta no encontrada para actualizar' });
         }

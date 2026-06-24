@@ -22,11 +22,11 @@ Price.init({
             }
         }
     },
-    productId: {
+    productoId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Products', // Hace referencia a la tabla Products
+            model: 'Products',
             key: 'id'
         },
         validate: {
@@ -55,16 +55,16 @@ Price.init({
     timestamps: true,   // Mantiene createdAt y updatedAt automáticamente
     paranoid: true,
     indexes: [
-        { fields: ['productId', 'listaPreciosId'] }
+        { fields: ['productoId', 'listaPreciosId'] }
     ]
 });
 
 // 3. Definición de Relaciones (Asociaciones)
-Price.belongsTo(Product, { foreignKey: 'productId', as: 'producto' });
+Price.belongsTo(Product, { foreignKey: 'productoId', as: 'producto' });
 Product.hasMany(Price, { 
-    foreignKey: 'productId', 
+    foreignKey: 'productoId', 
     as: 'precios',
-    onDelete: 'CASCADE',  // Eliminar precios cuando se elimine el producto
+    onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
 });
 

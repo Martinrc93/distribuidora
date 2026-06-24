@@ -8,7 +8,7 @@ class EmpleadoResponseDto {
         this.id = empleado.id;
         this.nombre = empleado.nombre;
         this.apellido = empleado.apellido;
-        this.active = empleado.active;
+        this.activo = empleado.activo;
     }
 
     /**

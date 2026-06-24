@@ -221,7 +221,7 @@ async function cargarEmpleados() {
 
         // Renderizar cada empleado
         empleados.forEach(empleado => {
-            const estadoBadge = empleado.active 
+            const estadoBadge = empleado.activo 
                 ? '<span class="badge bg-success">Activo</span>'
                 : '<span class="badge bg-secondary">Inactivo</span>';
             
@@ -235,7 +235,7 @@ async function cargarEmpleados() {
                     <button class="btn btn-sm btn-ver-pedidos" data-id="${empleado.id}" data-nombre="${nombreCompleto}" data-bs-toggle="modal" data-bs-target="#verPedidosModal" style="font-size: 0.75rem; border-radius: 6px; padding: 0.3rem 0.6rem; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); transition: all 0.3s ease;">Ver Pedidos</button>
                 </td>
                 <td>
-                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${empleado.id}" data-nombre="${escapeHtml(empleado.nombre || '')}" data-apellido="${escapeHtml(empleado.apellido || '')}" data-active="${empleado.active}" data-bs-toggle="modal" data-bs-target="#editEmpleadoModal" title="Editar">
+                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${empleado.id}" data-nombre="${escapeHtml(empleado.nombre || '')}" data-apellido="${escapeHtml(empleado.apellido || '')}" data-activo="${empleado.activo}" data-bs-toggle="modal" data-bs-target="#editEmpleadoModal" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm action-btn delete border-0 btn-eliminar" data-id="${empleado.id}" title="Eliminar">
@@ -308,12 +308,12 @@ async function guardarEmpleado() {
         console.log('Creando empleado:', { nombre, apellido, estado });
         
         // Convertir estado a booleano
-        const active = estado === 'activo' || estado === 'true' || estado === true;
+        const activo = estado === 'activo' || estado === 'true' || estado === true;
         
         await empleadosService.create({
             nombre,
             apellido,
-            active
+            activo
         });
 
         showToast('Empleado creado exitosamente');
@@ -345,12 +345,12 @@ async function actualizarEmpleado() {
         console.log('Actualizando empleado:', { id, nombre, apellido, estado });
         
         // Convertir estado a booleano
-        const active = estado === 'activo';
+        const activo = estado === 'activo';
         
         await empleadosService.update(id, {
             nombre,
             apellido,
-            active
+            activo
         });
 
         showToast('Empleado actualizado exitosamente');
@@ -429,12 +429,12 @@ function inicializarEventos() {
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const apellido = button.getAttribute('data-apellido');
-            const active = button.getAttribute('data-active') === 'true' || button.getAttribute('data-active') === '1';
+            const activo = button.getAttribute('data-activo') === 'true' || button.getAttribute('data-activo') === '1';
 
             document.getElementById('editEmpleadoId').value = id;
             document.getElementById('editEmpleadoNombre').value = nombre;
             document.getElementById('editEmpleadoApellido').value = apellido;
-            document.getElementById('editEmpleadoEstado').value = active ? 'activo' : 'inactivo';
+            document.getElementById('editEmpleadoEstado').value = activo ? 'activo' : 'inactivo';
         });
     }
 

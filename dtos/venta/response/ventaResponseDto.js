@@ -20,7 +20,7 @@ class VentaResponseDto {
             this.fechaEmision = null;
         }
         this.total = Number.parseFloat(Number.parseFloat(venta.total).toFixed(2));
-        this.active = venta.active;
+        this.activo = venta.activo;
         this.empleadoId = venta.empleadoId;
         this.empleadoNombre = venta.empleado ? venta.empleado.nombre : null;
         this.empleadoApellido = venta.empleado ? venta.empleado.apellido : null;

@@ -3,12 +3,12 @@ const { PriceCreateDto, PriceUpdateDto } = require('../dtos/price/request');
 const { PriceResponseDto } = require('../dtos/price/response');
 
 /**
- * Obtener todos los precios asociados a un Product ID.
- * Ruta: GET /prices/product/:productId
+ * Obtener todos los precios asociados a un producto ID.
+ * Ruta: GET /prices/product/:productoId
  */
-exports.findByProductId = async (req, res) => {
+exports.findByProductoId = async (req, res) => {
     try {
-        const prices = await priceService.findByProductId(req.params.productId);
+        const prices = await priceService.findByProductoId(req.params.productoId);
         res.json(PriceResponseDto.fromModel(prices));
     } catch (err) {
         res.status(500).json({ error: err.message });

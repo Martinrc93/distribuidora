@@ -1,7 +1,7 @@
 /**
  * DTO para la creación de una Venta (Venta Create Request DTO)
  * Se encarga de recibir, sanitizar y validar los datos para registrar una venta,
- * que consiste en el ID del empleado y una lista de detalles con su productId, priceId y cantidad.
+ * que consiste en el ID del empleado y una lista de detalles con su productoId, precioId y cantidad.
  */
 class VentaCreateDto {
     constructor({ empleadoId, clienteId, detalles }) {
@@ -9,8 +9,8 @@ class VentaCreateDto {
         this.clienteId = typeof clienteId === 'number' ? clienteId : Number.parseInt(clienteId, 10);
         this.detalles = Array.isArray(detalles) 
             ? detalles.map(d => ({
-                productId: typeof d.productId === 'number' ? d.productId : Number.parseInt(d.productId, 10),
-                priceId: typeof d.priceId === 'number' ? d.priceId : Number.parseInt(d.priceId, 10),
+                productoId: typeof d.productoId === 'number' ? d.productoId : Number.parseInt(d.productoId, 10),
+                precioId: typeof d.precioId === 'number' ? d.precioId : Number.parseInt(d.precioId, 10),
                 cantidad: typeof d.cantidad === 'number' ? d.cantidad : Number.parseInt(d.cantidad, 10)
               }))
             : null;
@@ -47,16 +47,16 @@ class VentaCreateDto {
             this.detalles.forEach((d, idx) => {
                 const itemNum = idx + 1;
 
-                if (!d.productId || Number.isNaN(d.productId)) {
-                    errors.push(`Detalle #${itemNum}: el campo "productId" es obligatorio y debe ser un número entero.`);
-                } else if (d.productId <= 0) {
-                    errors.push(`Detalle #${itemNum}: el "productId" debe ser un ID de producto positivo.`);
+                if (!d.productoId || Number.isNaN(d.productoId)) {
+                    errors.push(`Detalle #${itemNum}: el campo "productoId" es obligatorio y debe ser un número entero.`);
+                } else if (d.productoId <= 0) {
+                    errors.push(`Detalle #${itemNum}: el "productoId" debe ser un ID de producto positivo.`);
                 }
 
-                if (!d.priceId || Number.isNaN(d.priceId)) {
-                    errors.push(`Detalle #${itemNum}: el campo "priceId" es obligatorio y debe ser un número entero.`);
-                } else if (d.priceId <= 0) {
-                    errors.push(`Detalle #${itemNum}: el "priceId" debe ser un ID de precio positivo.`);
+                if (!d.precioId || Number.isNaN(d.precioId)) {
+                    errors.push(`Detalle #${itemNum}: el campo "precioId" es obligatorio y debe ser un número entero.`);
+                } else if (d.precioId <= 0) {
+                    errors.push(`Detalle #${itemNum}: el "precioId" debe ser un ID de precio positivo.`);
                 }
 
                 if (d.cantidad === undefined || d.cantidad === null || Number.isNaN(d.cantidad)) {

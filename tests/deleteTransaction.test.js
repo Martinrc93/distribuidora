@@ -24,7 +24,7 @@ describe('Transactional Delete Tests', () => {
         const empleado = await Empleado.create({
             nombre: 'Juan',
             apellido: 'Perez',
-            active: true
+            activo: true
         });
 
         // Create a client
@@ -41,7 +41,7 @@ describe('Transactional Delete Tests', () => {
             ganancia: 20.0,
             clienteId: cliente.id,
             empleadoId: empleado.id,
-            active: true,
+            activo: true,
             fecha_emision: new Date()
         });
 
@@ -71,7 +71,7 @@ describe('Transactional Delete Tests', () => {
         const empleado = await Empleado.create({
             nombre: 'Juan 2',
             apellido: 'Perez 2',
-            active: true
+            activo: true
         });
 
         // Create a client
@@ -88,7 +88,7 @@ describe('Transactional Delete Tests', () => {
             ganancia: 30.0,
             clienteId: cliente.id,
             empleadoId: empleado.id,
-            active: true,
+            activo: true,
             fecha_emision: new Date()
         });
 

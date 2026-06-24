@@ -94,7 +94,7 @@ exports.deleteCliente = async (id) => {
         if (ventaIds.length > 0) {
             await Detalle.destroy({
                 where: {
-                    sellId: ventaIds
+                    ventaId: ventaIds
                 },
                 transaction: t
             });

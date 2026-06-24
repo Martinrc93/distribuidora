@@ -4,7 +4,7 @@ const priceController = require('../controllers/priceController.js');
 const validateParams = require('../middleware/validateParams.js');
 
 // Buscar precios por productId
-router.get('/product/:productId', validateParams(['productId']), priceController.findByProductId);
+router.get('/product/:productoId', validateParams(['productoId']), priceController.findByProductoId);
 
 // Crear precio (recibe precio y productId en body)
 router.post('/', priceController.create);

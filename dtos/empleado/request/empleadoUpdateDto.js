@@ -12,8 +12,8 @@ class EmpleadoUpdateDto {
         if (data.apellido !== undefined) {
             this.apellido = sanitizeInput(data.apellido);
         }
-        if (data.active !== undefined) {
-            this.active = data.active === true || data.active === 'true' || data.active === 1;
+        if (data.activo !== undefined) {
+            this.activo = data.activo === true || data.activo === 'true' || data.activo === 1;
         }
     }
 

@@ -10,24 +10,24 @@ class Detalle extends Model {
 
 // 2. Inicialización del modelo
 Detalle.init({
-    sellId: {
+    ventaId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Ventas', // Tabla física de Ventas
+            model: 'Ventas',
             key: 'id'
         },
         validate: {
             notNull: {
-                msg: 'El ID de venta (sellId) es obligatorio.'
+                msg: 'El ID de venta (ventaId) es obligatorio.'
             }
         }
     },
-    productId: {
+    productoId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Products', // Tabla física de Productos
+            model: 'Products',
             key: 'id'
         },
         validate: {
@@ -36,16 +36,16 @@ Detalle.init({
             }
         }
     },
-    priceId: {
+    precioId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Prices', // Tabla física de Precios
+            model: 'Prices',
             key: 'id'
         },
         validate: {
             notNull: {
-                msg: 'El ID de precio (priceId) es obligatorio.'
+                msg: 'El ID de precio (precioId) es obligatorio.'
             }
         }
     },
@@ -82,25 +82,25 @@ Detalle.init({
     timestamps: true,
     paranoid: true,
     indexes: [
-        { fields: ['sellId'] },
-        { fields: ['productId'] },
-        { fields: ['priceId'] }
+        { fields: ['ventaId'] },
+        { fields: ['productoId'] },
+        { fields: ['precioId'] }
     ]
 });
 
 // 3. Relaciones (Asociaciones)
-Detalle.belongsTo(Venta, { foreignKey: 'sellId', as: 'venta' });
-Venta.hasMany(Detalle, { foreignKey: 'sellId', as: 'detalles' });
+Detalle.belongsTo(Venta, { foreignKey: 'ventaId', as: 'venta' });
+Venta.hasMany(Detalle, { foreignKey: 'ventaId', as: 'detalles' });
 
-Detalle.belongsTo(Product, { foreignKey: 'productId', as: 'producto' });
+Detalle.belongsTo(Product, { foreignKey: 'productoId', as: 'producto' });
 Product.hasMany(Detalle, { 
-    foreignKey: 'productId', 
+    foreignKey: 'productoId', 
     as: 'detalles',
-    onDelete: 'CASCADE',  // Eliminar detalles cuando se elimine el producto
+    onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
 });
 
-Detalle.belongsTo(Price, { foreignKey: 'priceId', as: 'precioHistorico' });
-Price.hasMany(Detalle, { foreignKey: 'priceId', as: 'detalles' });
+Detalle.belongsTo(Price, { foreignKey: 'precioId', as: 'precioHistorico' });
+Price.hasMany(Detalle, { foreignKey: 'precioId', as: 'detalles' });
 
 module.exports = Detalle;

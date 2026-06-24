@@ -137,7 +137,7 @@ INSERT INTO "Products" (nombre, marcaId, costo, createdAt, updatedAt) VALUES
 ('GOMITAS X 30 (VARIOS MOTIVOS)', 17, 0.00, datetime('now'), datetime('now')),
 ('Pitillos XL', 17, 0.00, datetime('now'), datetime('now'));
 
-INSERT INTO "Prices" (precio, productId, listaPreciosId, createdAt, updatedAt) VALUES
+INSERT INTO "Prices" (precio, productoId, listaPreciosId, createdAt, updatedAt) VALUES
 (15.00, 1, 1, datetime('now'), datetime('now')),
 (15.00, 2, 1, datetime('now'), datetime('now')),
 (15.00, 3, 1, datetime('now'), datetime('now')),
@@ -252,19 +252,19 @@ INSERT INTO "Prices" (precio, productId, listaPreciosId, createdAt, updatedAt) V
 (45.00, 53, 2, datetime('now'), datetime('now')),
 (50.00, 53, 3, datetime('now'), datetime('now'));
 
-INSERT INTO "Empleados" (nombre, apellido, active, createdAt, updatedAt) VALUES 
+INSERT INTO "Empleados" (nombre, apellido, activo, createdAt, updatedAt) VALUES 
 ('Martín', 'Gómez', 1, datetime('now'), datetime('now')), 
 ('Florencia', 'Díaz', 1, datetime('now'), datetime('now')), 
 ('Roberto', 'Sánchez', 1, datetime('now'), datetime('now'));
 
-INSERT INTO "Ventas" (fecha_emision, total, ganancia, active, empleadoId, clienteId, createdAt, updatedAt) VALUES
+INSERT INTO "Ventas" (fecha_emision, total, ganancia, activo, empleadoId, clienteId, createdAt, updatedAt) VALUES
 (datetime('now', '-2 days'), 235.00, 235.00, 1, 1, 1, datetime('now'), datetime('now')),
 (datetime('now', '-1 days'), 265.00, 265.00, 1, 2, 2, datetime('now'), datetime('now')),
 (datetime('now'), 750.00, 750.00, 1, 1, 3, datetime('now'), datetime('now')),
 (datetime('now'), 145.00, 145.00, 1, 2, 1, datetime('now'), datetime('now')),
 (datetime('now'), 290.00, 290.00, 1, 3, 2, datetime('now'), datetime('now'));
 
-INSERT INTO "Detalles" (sellId, productId, priceId, cantidad, precio, createdAt, updatedAt) VALUES
+INSERT INTO "Detalles" (ventaId, productoId, precioId, cantidad, precio, createdAt, updatedAt) VALUES
 (1, 3, 3, 5, 15.00, datetime('now'), datetime('now')),
 (1, 11, 11, 4, 20.00, datetime('now'), datetime('now')),
 (1, 49, 99, 2, 40.00, datetime('now'), datetime('now')),
@@ -278,3 +278,8 @@ INSERT INTO "Detalles" (sellId, productId, priceId, cantidad, precio, createdAt,
 (4, 25, 67, 5, 20.00, datetime('now'), datetime('now')),
 (5, 25, 68, 8, 25.00, datetime('now'), datetime('now')),
 (5, 53, 112, 2, 45.00, datetime('now'), datetime('now'));
+
+INSERT INTO "Configuraciones" (clave, valor, createdAt, updatedAt) VALUES
+('nombre_negocio', 'Distri-Pipipuch', datetime('now'), datetime('now')),
+('info_contacto', 'LORENA 1150222520 - DANIEL 1150222413', datetime('now'), datetime('now'));
+

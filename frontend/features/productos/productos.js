@@ -266,15 +266,16 @@ async function guardarProducto() {
         const newProductId = resp.id;
 
         // Guardar precios de lista
-        for (let i = 1; i <= 8; i++) {
-            const valStr = document.getElementById(`precioLista${i}`).value;
+        for (const lista of listasPrecios) {
+            const input = document.getElementById(`precioLista${lista.id}`);
+            const valStr = input ? input.value : '';
             if (valStr && valStr.trim() !== '') {
                 const precio = parseFloat(valStr);
                 if (!isNaN(precio)) {
                     await productosService.createPrice({
                         precio,
                         productId: newProductId,
-                        listaPreciosId: i
+                        listaPreciosId: lista.id
                     });
                 }
             }
@@ -318,13 +319,14 @@ async function actualizarProducto() {
         const respPrecios = await productosService.getPricesByProduct(id);
         const preciosExistentes = Array.isArray(respPrecios) ? respPrecios : (respPrecios?.data || []);
 
-        // Sincronizar precios de lista 1 a 8
-        for (let i = 1; i <= 8; i++) {
-            const valStr = document.getElementById(`editPrecioLista${i}`).value.trim();
+        // Sincronizar precios de lista dinámicamente
+        for (const lista of listasPrecios) {
+            const input = document.getElementById(`editPrecioLista${lista.id}`);
+            const valStr = input ? input.value.trim() : '';
             const precio = valStr !== '' ? parseFloat(valStr) : NaN;
 
             // Encontrar si ya existe precio para esta lista
-            const precioExistente = preciosExistentes.find(p => p.listaPreciosId === i);
+            const precioExistente = preciosExistentes.find(p => p.listaPreciosId === lista.id);
 
             if (!isNaN(precio)) {
                 if (precioExistente) {
@@ -333,7 +335,7 @@ async function actualizarProducto() {
                         await productosService.updatePrice(precioExistente.id, {
                             precio,
                             productId: id,
-                            listaPreciosId: i
+                            listaPreciosId: lista.id
                         });
                     }
                 } else {
@@ -341,7 +343,7 @@ async function actualizarProducto() {
                     await productosService.createPrice({
                         precio,
                         productId: id,
-                        listaPreciosId: i
+                        listaPreciosId: lista.id
                     });
                 }
             } else {
@@ -676,9 +678,10 @@ function inicializarEventos() {
             const id = button.getAttribute('data-id');
 
             // Limpiar inputs de precios primero
-            for (let i = 1; i <= 8; i++) {
-                document.getElementById(`editPrecioLista${i}`).value = '';
-            }
+            listasPrecios.forEach(lista => {
+                const input = document.getElementById(`editPrecioLista${lista.id}`);
+                if (input) input.value = '';
+            });
 
             try {
                 // Asegurar que las marcas estén al día
@@ -772,13 +775,53 @@ function inicializarEventos() {
 
 
 
+let listasPrecios = [];
+
+async function inicializarListasPrecios() {
+    try {
+        const respuesta = await apiClient.get('/lista-precios');
+        listasPrecios = Array.isArray(respuesta) ? respuesta : (respuesta?.data || []);
+        
+        const addPreciosContainer = document.getElementById('addPreciosContainer');
+        const editPreciosContainer = document.getElementById('editPreciosContainer');
+        
+        if (addPreciosContainer && editPreciosContainer) {
+            let addHtml = '';
+            let editHtml = '';
+            
+            listasPrecios.forEach((lista, idx) => {
+                const isRequired = idx === 0 ? 'required' : '';
+                addHtml += `
+                    <div class="col-md-3">
+                        <label for="precioLista${lista.id}" class="form-label text-secondary">${escapeHtml(lista.nombre)} ($)</label>
+                        <input type="number" step="0.01" class="form-control" id="precioLista${lista.id}" ${isRequired}>
+                    </div>
+                `;
+                editHtml += `
+                    <div class="col-md-3">
+                        <label for="editPrecioLista${lista.id}" class="form-label text-secondary">${escapeHtml(lista.nombre)} ($)</label>
+                        <input type="number" step="0.01" class="form-control" id="editPrecioLista${lista.id}" ${isRequired}>
+                    </div>
+                `;
+            });
+            
+            addPreciosContainer.innerHTML = addHtml;
+            editPreciosContainer.innerHTML = editHtml;
+        }
+    } catch (error) {
+        console.error('Error al inicializar listas de precios dinámicas:', error);
+        showToast('Error al cargar las listas de precios.', 'error');
+    }
+}
+
 /**
  * Inicializa la página
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('Página de productos cargada, inicializando...');
     
     if (inicializarElementos()) {
+        await inicializarListasPrecios();
         cargarProductos();
         actualizarSelectsMarcas();
         inicializarEventos();

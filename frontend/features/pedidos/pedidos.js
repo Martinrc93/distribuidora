@@ -49,6 +49,10 @@ let ventas = [];
 let detallesTemporales = [];
 let detallesEdicion = [];
 let currentClienteEdicion = null;
+let configuracionNegocio = {
+    nombre_negocio: 'Distri-Pipipuch',
+    info_contacto: 'LORENA 1150222520 - DANIEL 1150222413'
+};
 
 /**
  * Inicializa los elementos del DOM y modales de Bootstrap
@@ -107,11 +111,15 @@ function inicializarElementos() {
 async function cargarDatosAuxiliares() {
     try {
         console.log('Cargando datos auxiliares...');
-        const [respClientes, respEmpleados, respProductos, respMarcas] = await Promise.all([
+        const [respClientes, respEmpleados, respProductos, respMarcas, respConfig] = await Promise.all([
             apiClient.get('/clientes'),
             apiClient.get('/empleados'),
             apiClient.get('/products/all'),
-            apiClient.get('/marcas/all')
+            apiClient.get('/marcas/all'),
+            apiClient.get('/api/config').catch(err => {
+                console.error('Error al cargar config del backend, usando defaults:', err);
+                return null;
+            })
         ]);
 
         clientes = respClientes?.data || [];
@@ -119,8 +127,12 @@ async function cargarDatosAuxiliares() {
         productos = Array.isArray(respProductos) ? respProductos : (respProductos?.data || []);
         marcas = Array.isArray(respMarcas) ? respMarcas : (respMarcas?.data || []);
 
+        if (respConfig && respConfig.data) {
+            configuracionNegocio = respConfig.data;
+        }
+
         // Inicializar comboboxes de búsqueda interactivos
-        inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.active).map(e => `${e.nombre} ${e.apellido}`));
+        inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.activo).map(e => `${e.nombre} ${e.apellido}`));
         inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre), (selectedClientName) => {
             const client = clientes.find(c => c.nombre === selectedClientName);
             const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
@@ -287,16 +299,16 @@ function renderVentasTable(filterQuery = '') {
         return;
     }
 
-    // Ordenar: Activos (active = true) primero, Cancelados (active = false) después
+    // Ordenar: Activos (activo = true) primero, Cancelados (activo = false) después
     ventasFiltradas.sort((a, b) => {
-        if (a.active && !b.active) return -1;
-        if (!a.active && b.active) return 1;
+        if (a.activo && !b.activo) return -1;
+        if (!a.activo && b.activo) return 1;
         return 0;
     });
 
     ventasFiltradas.forEach(venta => {
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
-        const estadoBadge = venta.active 
+        const estadoBadge = venta.activo 
             ? '<span class="badge bg-success">Activo</span>'
             : '<span class="badge bg-danger">Cancelado</span>';
             
@@ -310,7 +322,7 @@ function renderVentasTable(filterQuery = '') {
                 <button class="btn btn-sm action-btn border-0 btn-ver" data-id="${venta.id}" data-bs-toggle="modal" data-bs-target="#verPedidoModal" title="Ver Detalle">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${venta.id}" data-active="${venta.active}" data-bs-toggle="modal" data-bs-target="#editPedidoModal" title="Editar Pedido">
+                <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${venta.id}" data-activo="${venta.activo}" data-bs-toggle="modal" data-bs-target="#editPedidoModal" title="Editar Pedido">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn btn-sm action-btn border-0 btn-imprimir-fila" data-id="${venta.id}" title="Imprimir Comprobante">
@@ -356,11 +368,8 @@ async function agregarProductoTemporal() {
     }
 
     try {
-        btnAgregarProducto.disabled = true;
-        
-        // Obtener los precios del producto
-        const respPrecios = await apiClient.get(`/prices/product/${product.id}`);
-        const prices = Array.isArray(respPrecios) ? respPrecios : (respPrecios?.data || []);
+        // Obtener los precios del producto desde memoria
+        const prices = product.precios || [];
         
         const clientListId = client.listaPreciosId || 1;
         let priceRecord = prices.find(p => p.listaPreciosId === clientListId);
@@ -376,14 +385,14 @@ async function agregarProductoTemporal() {
             return;
         }
 
-        const existingIndex = detallesTemporales.findIndex(d => d.productId === product.id);
+        const existingIndex = detallesTemporales.findIndex(d => d.productoId === product.id);
         if (existingIndex !== -1) {
             detallesTemporales[existingIndex].cantidad = cantidad;
             detallesTemporales[existingIndex].subtotal = parseFloat((cantidad * detallesTemporales[existingIndex].precio).toFixed(2));
         } else {
             detallesTemporales.push({
-                productId: product.id,
-                priceId: priceRecord.id,
+                productoId: product.id,
+                precioId: priceRecord.id,
                 nombre: product.nombre,
                 precio: priceRecord.precio,
                 cantidad: cantidad,
@@ -484,8 +493,8 @@ async function guardarPedido() {
         empleadoId: employee.id,
         clienteId: client.id,
         detalles: detallesTemporales.map(d => ({
-            productId: d.productId,
-            priceId: d.priceId,
+            productoId: d.productoId,
+            precioId: d.precioId,
             cantidad: d.cantidad
         }))
     };
@@ -530,11 +539,8 @@ async function agregarProductoEdicion() {
     }
 
     try {
-        btnEditAgregarProducto.disabled = true;
-        
-        // Obtener los precios del producto
-        const respPrecios = await apiClient.get(`/prices/product/${product.id}`);
-        const prices = Array.isArray(respPrecios) ? respPrecios : (respPrecios?.data || []);
+        // Obtener los precios del producto desde memoria
+        const prices = product.precios || [];
         
         const clientListId = currentClienteEdicion.listaPreciosId || 1;
         let priceRecord = prices.find(p => p.listaPreciosId === clientListId);
@@ -550,14 +556,14 @@ async function agregarProductoEdicion() {
             return;
         }
 
-        const existingIndex = detallesEdicion.findIndex(d => d.productId === product.id);
+        const existingIndex = detallesEdicion.findIndex(d => d.productoId === product.id);
         if (existingIndex !== -1) {
             detallesEdicion[existingIndex].cantidad = cantidad;
             detallesEdicion[existingIndex].subtotal = parseFloat((cantidad * detallesEdicion[existingIndex].precio).toFixed(2));
         } else {
             detallesEdicion.push({
-                productId: product.id,
-                priceId: priceRecord.id,
+                productoId: product.id,
+                precioId: priceRecord.id,
                 nombre: `${product.nombre} (${product.marca})`,
                 precio: priceRecord.precio,
                 cantidad: cantidad,
@@ -649,11 +655,11 @@ function generarConsolidadoHtml() {
     
     // Sumar cantidades por producto únicamente para ventas activas
     ventas.forEach(venta => {
-        if (!venta.active) return;
+        if (!venta.activo) return;
         
         venta.detalles.forEach(d => {
-            const product = productos.find(p => p.id === d.productId);
-            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+            const product = productos.find(p => p.id === d.productoId);
+            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
             
             if (consolidado[productName]) {
                 consolidado[productName] += d.cantidad;
@@ -697,8 +703,8 @@ function generarConsolidadoHtml() {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Recibo de venta</p>
-                    <h1>Distri-Pipipuch</h1>
-                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Cliente: CONSOLIDADO DE CARGA</p>
                     <p class="info-line">Depósito General</p>
                 </div>
@@ -754,7 +760,7 @@ function generarResumenDiarioHtml() {
     let totalGeneral = 0;
 
     ventas.forEach(venta => {
-        if (!venta.active) return;
+        if (!venta.activo) return;
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
         const total = Number(venta.total) || 0;
         
@@ -785,8 +791,8 @@ function generarResumenDiarioHtml() {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Resumen Diario de Clientes</p>
-                    <h1>Distri-Pipipuch</h1>
-                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Reporte: TOTALES A PAGAR POR CLIENTE</p>
                 </div>
                 <div class="header-right">
@@ -834,7 +840,7 @@ function imprimirResumenDiario() {
  * Agrupa todos los pedidos activos de hoy y genera una sola sección de impresión con saltos de página entre cada uno.
  */
 function generarTodosLosPedidosHtml() {
-    const activeVentas = ventas.filter(v => v.active);
+    const activeVentas = ventas.filter(v => v.activo);
     if (activeVentas.length === 0) {
         showToast('No hay pedidos activos registrados el día de hoy.', 'error');
         return false;
@@ -855,8 +861,8 @@ function generarTodosLosPedidosHtml() {
         const folioStr = venta.id.toString().padStart(6, '0');
 
         const detailsHtml = venta.detalles.map(d => {
-            const product = productos.find(p => p.id === d.productId);
-            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+            const product = productos.find(p => p.id === d.productoId);
+            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
             return `
                 <tr>
                     <td>${productName.toUpperCase()}</td>
@@ -875,8 +881,8 @@ function generarTodosLosPedidosHtml() {
                 <div class="header-container">
                     <div class="header-left">
                         <p class="recibo-label">Comprobante de Pedido</p>
-                        <h1>Distri-Pipipuch</h1>
-                        <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                        <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                        <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                         <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
                         <p class="info-line">Vendedor: ${empleadoName}</p>
                     </div>
@@ -934,12 +940,12 @@ function generarEmpleadoHtml(empleadoId) {
     const employeeName = `${employee.nombre} ${employee.apellido}`;
 
     // Filtrar ventas de este empleado (sólo las activas)
-    const employeeVentas = ventas.filter(v => v.active && String(v.empleadoId) === String(empleadoId));
+    const employeeVentas = ventas.filter(v => v.activo && String(v.empleadoId) === String(empleadoId));
 
     employeeVentas.forEach(venta => {
         venta.detalles.forEach(d => {
-            const product = productos.find(p => p.id === d.productId);
-            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+            const product = productos.find(p => p.id === d.productoId);
+            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
             
             if (consolidado[productName]) {
                 consolidado[productName] += d.cantidad;
@@ -983,8 +989,8 @@ function generarEmpleadoHtml(empleadoId) {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Detalle por Empleado</p>
-                    <h1>Distri-Pipipuch</h1>
-                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Empleado: ${employeeName.toUpperCase()}</p>
                     <p class="info-line">Consolidado de Carga Asignada</p>
                 </div>
@@ -1051,8 +1057,8 @@ function generarClienteHtml(ventaId) {
     const folioStr = venta.id.toString().padStart(6, '0');
 
     const detailsHtml = venta.detalles.map(d => {
-        const product = productos.find(p => p.id === d.productId);
-        const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+        const product = productos.find(p => p.id === d.productoId);
+        const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
         return `
             <tr>
                 <td>${productName.toUpperCase()}</td>
@@ -1071,8 +1077,8 @@ function generarClienteHtml(ventaId) {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Comprobante de Pedido</p>
-                    <h1>Distri-Pipipuch</h1>
-                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
                     <p class="info-line">Vendedor: ${empleadoName}</p>
                 </div>
@@ -1281,27 +1287,18 @@ async function repetirUltimoPedido() {
             return;
         }
 
-        // Cargar precios actuales de todos los productos en paralelo
-        const promesasPrecios = ultimoPedido.detalles.map(d => 
-            apiClient.get(`/prices/product/${d.productId}`)
-                .then(resp => ({ detail: d, resp }))
-                .catch(err => ({ detail: d, error: err }))
-        );
-
-        const resultadosPrecios = await Promise.all(promesasPrecios);
         const nuevosDetalles = [];
 
-        for (const item of resultadosPrecios) {
-            const d = item.detail;
-            const product = productos.find(p => p.id === d.productId);
-            const productName = product ? product.nombre : `Producto #${d.productId}`;
+        for (const d of ultimoPedido.detalles) {
+            const product = productos.find(p => p.id === d.productoId);
+            const productName = product ? product.nombre : `Producto #${d.productoId}`;
 
             let price = d.precio;
-            let priceId = d.priceId;
+            let precioId = d.precioId;
 
-            // Intentar usar el precio actual si está disponible en la lista del cliente
-            if (!item.error) {
-                const prices = Array.isArray(item.resp) ? item.resp : (item.resp?.data || []);
+            // Intentar usar el precio actual desde memoria
+            if (product && product.precios) {
+                const prices = product.precios;
                 const clientListId = client.listaPreciosId || 1;
                 let priceRecord = prices.find(p => p.listaPreciosId === clientListId);
                 
@@ -1312,15 +1309,15 @@ async function repetirUltimoPedido() {
                 
                 if (priceRecord) {
                     price = priceRecord.precio;
-                    priceId = priceRecord.id;
+                    precioId = priceRecord.id;
                 }
             }
 
             nuevosDetalles.push({
-                productId: d.productId,
-                priceId: priceId,
+                productoId: d.productoId,
+                precioId: precioId,
                 nombre: productName,
-                precio: price,
+                precio: parseFloat(price),
                 cantidad: d.cantidad,
                 subtotal: parseFloat((d.cantidad * price).toFixed(2))
             });
@@ -1355,7 +1352,7 @@ async function repetirUltimoPedido() {
 function updateImprimirEmpleadoSelect() {
     const select = document.getElementById('selectImprimirEmpleado');
     if (!select) return;
-    const activeEmployees = empleados.filter(e => e.active);
+    const activeEmployees = empleados.filter(e => e.activo);
     select.innerHTML = '<option value="">-- Seleccione un Empleado --</option>' + 
         activeEmployees.map(e => `<option value="${e.id}">${e.nombre} ${e.apellido}</option>`).join('');
 }
@@ -1366,7 +1363,7 @@ function updateImprimirEmpleadoSelect() {
 function updateImprimirClienteSelect() {
     const select = document.getElementById('selectImprimirCliente');
     if (!select) return;
-    const activeVentas = ventas.filter(v => v.active);
+    const activeVentas = ventas.filter(v => v.activo);
     select.innerHTML = '<option value="">-- Seleccione un Pedido --</option>' + 
         activeVentas.map(v => `<option value="${v.id}">${v.clienteNombre || 'Cliente Desconocido'} - $${Number(v.total).toFixed(2)}</option>`).join('');
 }
@@ -1556,7 +1553,7 @@ function inicializarEventos() {
             verPedidoFecha.textContent = venta.fechaEmision || 'N/A';
 
             // Configurar badge de estado
-            if (venta.active) {
+            if (venta.activo) {
                 verPedidoEstadoBadge.className = 'badge bg-success';
                 verPedidoEstadoBadge.textContent = 'Activo';
             } else {
@@ -1570,10 +1567,10 @@ function inicializarEventos() {
                 verPedidoDetallesBody.innerHTML = '<tr><td colspan="4" class="text-secondary py-3">No hay productos registrados en este pedido</td></tr>';
             } else {
                 venta.detalles.forEach(d => {
-                    const product = productos.find(p => p.id === d.productId);
+                    const product = productos.find(p => p.id === d.productoId);
                     const productName = product 
                         ? `${escapeHtml(product.nombre)} (${escapeHtml(product.marca)})` 
-                        : `Producto #${d.productId}`;
+                        : `Producto #${d.productoId}`;
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -1606,15 +1603,15 @@ function inicializarEventos() {
 
             editPedidoId.value = venta.id;
             editPedidoCliente.value = venta.clienteNombre || 'Cliente Desconocido';
-            editPedidoEstado.value = venta.active ? 'activo' : 'inactivo';
+            editPedidoEstado.value = venta.activo ? 'activo' : 'inactivo';
 
             // Clonar los detalles de la venta en nuestro listado de edición
             detallesEdicion = venta.detalles.map(d => {
-                const product = productos.find(p => p.id === d.productId);
+                const product = productos.find(p => p.id === d.productoId);
                 return {
-                    productId: d.productId,
-                    priceId: d.priceId,
-                    nombre: product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`,
+                    productoId: d.productoId,
+                    precioId: d.precioId,
+                    nombre: product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`,
                     precio: d.precio,
                     cantidad: d.cantidad,
                     subtotal: d.subtotal
@@ -1641,7 +1638,7 @@ function inicializarEventos() {
     if (btnActualizarPedido) {
         btnActualizarPedido.addEventListener('click', async () => {
             const id = editPedidoId.value;
-            const active = editPedidoEstado.value === 'activo';
+            const activo = editPedidoEstado.value === 'activo';
 
             if (detallesEdicion.length === 0) {
                 showToast('Debe tener al menos un producto agregado al pedido.', 'error');
@@ -1649,10 +1646,10 @@ function inicializarEventos() {
             }
 
             const payload = {
-                active,
+                activo,
                 detalles: detallesEdicion.map(d => ({
-                    productId: d.productId,
-                    priceId: d.priceId,
+                    productoId: d.productoId,
+                    precioId: d.precioId,
                     cantidad: d.cantidad
                 }))
             };
@@ -1764,9 +1761,17 @@ function inicializarCombobox(inputId, optionsList, onSelectCallback = null) {
             return;
         }
 
-        dropdown.innerHTML = filtered.map(opt => 
+        const maxVisible = 30;
+        const sliced = filtered.slice(0, maxVisible);
+        let itemsHtml = sliced.map(opt => 
             `<div class="combobox-item" data-value="${opt}">${opt}</div>`
         ).join('');
+
+        if (filtered.length > maxVisible) {
+            itemsHtml += `<div class="combobox-more-results text-center py-2 text-muted" style="font-size: 0.8rem; border-top: 1px solid var(--border-color, #444); background: var(--bg-card, #2d2d2d);">Mostrando ${maxVisible} de ${filtered.length} (escribí para buscar)</div>`;
+        }
+
+        dropdown.innerHTML = itemsHtml;
 
         dropdown.querySelectorAll('.combobox-item').forEach(item => {
             item.addEventListener('click', (e) => {

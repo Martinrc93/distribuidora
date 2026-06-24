@@ -7,7 +7,7 @@ class PriceResponseDto {
     constructor(price) {
         this.id = price.id;
         this.precio = parseFloat(parseFloat(price.precio).toFixed(2));
-        this.productId = price.productId;
+        this.productoId = price.productoId;
         this.listaPreciosId = price.listaPreciosId;
     }
 

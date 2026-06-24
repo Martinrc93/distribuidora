@@ -43,7 +43,7 @@ Empleado.init({
             }
         }
     },
-    active: {
+    activo: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true,
@@ -59,7 +59,7 @@ Empleado.init({
     timestamps: true,   // Mantiene createdAt y updatedAt automáticamente
     paranoid: true,
     indexes: [
-        { fields: ['active'] }
+        { fields: ['activo'] }
     ]
 });
 

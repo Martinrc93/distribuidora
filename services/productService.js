@@ -52,7 +52,10 @@ exports.getAll = async (page = 1, limit = 10, q = '') => {
  */
 exports.getAllWithoutPagination = async () => {
     return await Product.findAll({
-        include: [{ model: Marca, as: 'marca' }],
+        include: [
+            { model: Marca, as: 'marca' },
+            { model: Price, as: 'precios' }
+        ],
         order: [
             [sequelize.fn('lower', sequelize.col('marca.nombre')), 'ASC'],
             [sequelize.fn('lower', sequelize.col('Product.nombre')), 'ASC']
@@ -134,13 +137,13 @@ exports.deleteProduct = async (id) => {
 
         // 1. Eliminar los detalles de venta que pertenecen a este producto
         await Detalle.destroy({
-            where: { productId: id },
+            where: { productoId: id },
             transaction: t
         });
 
         // 2. Eliminar todos los precios del producto
         await Price.destroy({
-            where: { productId: id },
+            where: { productoId: id },
             transaction: t
         });
 
@@ -156,13 +159,13 @@ exports.deleteProduct = async (id) => {
 
 /**
  * Calcula la ganancia de un producto en base a su costo y un ID de precio de venta específico.
- * @param {number} productId ID del producto.
- * @param {number} priceId ID del registro de precio.
+ * @param {number} productoId ID del producto.
+ * @param {number} precioId ID del registro de precio.
  * @returns {Promise<number>} La ganancia calculada (precio - costo).
  */
-exports.getGanancia = async (productId, priceId, options = {}) => {
-    const prodId = Number.parseInt(productId, 10);
-    const prcId = Number.parseInt(priceId, 10);
+exports.getGanancia = async (productoId, precioId, options = {}) => {
+    const prodId = Number.parseInt(productoId, 10);
+    const prcId = Number.parseInt(precioId, 10);
 
     if (Number.isNaN(prodId) || Number.isNaN(prcId)) {
         throw new TypeError('El ID de producto y el ID de precio deben ser números válidos.');
@@ -178,7 +181,7 @@ exports.getGanancia = async (productId, priceId, options = {}) => {
         throw new Error('Registro de precio no encontrado.');
     }
 
-    if (priceRecord.productId !== product.id) {
+    if (priceRecord.productoId !== product.id) {
         throw new Error('El registro de precio no pertenece al producto especificado.');
     }
 

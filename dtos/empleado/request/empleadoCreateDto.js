@@ -5,10 +5,10 @@ const sanitizeInput = require('../../sanitize.js');
  * Se encarga de limpiar, estructurar y validar los datos enviados para crear un empleado.
  */
 class EmpleadoCreateDto {
-    constructor({ nombre, apellido, active }) {
+    constructor({ nombre, apellido, activo }) {
         this.nombre = sanitizeInput(nombre);
         this.apellido = sanitizeInput(apellido);
-        this.active = active !== undefined ? (active === true || active === 'true' || active === 1) : true;
+        this.activo = activo !== undefined ? (activo === true || activo === 'true' || activo === 1) : true;
     }
 
     /**
