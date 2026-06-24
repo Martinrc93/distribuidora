@@ -240,54 +240,89 @@ async function cargarVentas() {
         ventas = respuesta.data;
         console.log('Pedidos cargados hoy:', ventas);
 
-        tablaPedidos.innerHTML = '';
-
-        if (ventas.length === 0) {
-            tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados el día de hoy</td></tr>';
-            return;
-        }
-
-        // Ordenar: Activos (active = true) primero, Cancelados (active = false) después
-        ventas.sort((a, b) => {
-            if (a.active && !b.active) return -1;
-            if (!a.active && b.active) return 1;
-            return 0;
-        });
-
-        ventas.forEach(venta => {
-            const clienteName = venta.clienteNombre || 'Cliente Desconocido';
-            const estadoBadge = venta.active 
-                ? '<span class="badge bg-success">Activo</span>'
-                : '<span class="badge bg-danger">Cancelado</span>';
-                
-            const fila = document.createElement('tr');
-            fila.innerHTML = `
-                <td>${escapeHtml(clienteName)}</td>
-                <td>${escapeHtml(venta.fechaEmision) || 'N/A'}</td>
-                <td>$${Number(venta.total).toFixed(2)}</td>
-                <td>${estadoBadge}</td>
-                <td>
-                    <button class="btn btn-sm action-btn border-0 btn-ver" data-id="${venta.id}" data-bs-toggle="modal" data-bs-target="#verPedidoModal" title="Ver Detalle">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${venta.id}" data-active="${venta.active}" data-bs-toggle="modal" data-bs-target="#editPedidoModal" title="Editar Pedido">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm action-btn border-0 btn-imprimir-fila" data-id="${venta.id}" title="Imprimir Comprobante">
-                        <i class="fas fa-print"></i>
-                    </button>
-                    <button class="btn btn-sm action-btn border-0 btn-whatsapp-fila" data-id="${venta.id}" title="Enviar por WhatsApp" style="color: #25d366;">
-                        <i class="fab fa-whatsapp"></i>
-                    </button>
-                </td>
-            `;
-            tablaPedidos.appendChild(fila);
-        });
+        // Obtener el valor actual del buscador si existe y renderizar
+        const searchInput = document.getElementById('pedidoSearchInput');
+        const query = searchInput ? searchInput.value : '';
+        renderVentasTable(query);
 
     } catch (error) {
         console.error('Error al cargar ventas:', error);
         tablaPedidos.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-3">Error al cargar pedidos: ${escapeHtml(error.message)}</td></tr>`;
     }
+}
+
+/**
+ * Renderiza la tabla de pedidos filtrando localmente por el texto provisto.
+ */
+function renderVentasTable(filterQuery = '') {
+    if (!tablaPedidos) return;
+
+    tablaPedidos.innerHTML = '';
+    const query = filterQuery.toLowerCase().trim();
+
+    // Filtrar localmente en base al query
+    const ventasFiltradas = ventas.filter(venta => {
+        if (!query) return true;
+        const clienteName = (venta.clienteNombre || '').toLowerCase();
+        const vendedorName = (venta.empleadoNombre || '').toLowerCase();
+        const vendedorLastName = (venta.empleadoApellido || '').toLowerCase();
+        const fecha = (venta.fechaEmision || '').toLowerCase();
+        const total = String(venta.total || '');
+        const id = String(venta.id || '');
+
+        return clienteName.includes(query) || 
+               vendedorName.includes(query) || 
+               vendedorLastName.includes(query) ||
+               fecha.includes(query) ||
+               total.includes(query) ||
+               id.includes(query);
+    });
+
+    if (ventasFiltradas.length === 0) {
+        if (query) {
+            tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No se encontraron pedidos que coincidan con la búsqueda</td></tr>';
+        } else {
+            tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados el día de hoy</td></tr>';
+        }
+        return;
+    }
+
+    // Ordenar: Activos (active = true) primero, Cancelados (active = false) después
+    ventasFiltradas.sort((a, b) => {
+        if (a.active && !b.active) return -1;
+        if (!a.active && b.active) return 1;
+        return 0;
+    });
+
+    ventasFiltradas.forEach(venta => {
+        const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+        const estadoBadge = venta.active 
+            ? '<span class="badge bg-success">Activo</span>'
+            : '<span class="badge bg-danger">Cancelado</span>';
+            
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td>${escapeHtml(clienteName)}</td>
+            <td>${escapeHtml(venta.fechaEmision) || 'N/A'}</td>
+            <td>$${Number(venta.total).toFixed(2)}</td>
+            <td>${estadoBadge}</td>
+            <td>
+                <button class="btn btn-sm action-btn border-0 btn-ver" data-id="${venta.id}" data-bs-toggle="modal" data-bs-target="#verPedidoModal" title="Ver Detalle">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm action-btn border-0 btn-editar" data-id="${venta.id}" data-active="${venta.active}" data-bs-toggle="modal" data-bs-target="#editPedidoModal" title="Editar Pedido">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm action-btn border-0 btn-imprimir-fila" data-id="${venta.id}" title="Imprimir Comprobante">
+                    <i class="fas fa-print"></i>
+                </button>
+                <button class="btn btn-sm action-btn border-0 btn-whatsapp-fila" data-id="${venta.id}" title="Enviar por WhatsApp" style="color: #25d366;">
+                    <i class="fab fa-whatsapp"></i>
+                </button>
+            </td>
+        `;
+        tablaPedidos.appendChild(fila);
+    });
 }
 
 /**
@@ -1674,6 +1709,18 @@ function inicializarEventos() {
             // Cerrar dropdowns de combobox abiertos
             document.querySelectorAll('.combobox-dropdown').forEach(d => d.classList.add('d-none'));
             document.querySelectorAll('.custom-combobox-container').forEach(c => c.classList.remove('open'));
+        });
+    }
+
+    // Buscador con Debounce
+    const searchInput = document.getElementById('pedidoSearchInput');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                renderVentasTable(searchInput.value);
+            }, 300);
         });
     }
 }
