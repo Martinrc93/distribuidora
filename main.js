@@ -48,7 +48,7 @@ function createWindow() {
     icon: path.join(__dirname, 'frontend/assets/logo.png')
   });
 
-  const url = 'http://localhost:3000';
+  const url = 'http://127.0.0.1:3000';
   mainWindow.loadURL(url);
 
   // Ocultar la barra de menú predeterminada para una interfaz más limpia
@@ -57,7 +57,7 @@ function createWindow() {
   // Limitar navegación para mayor seguridad según electron.md
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
-    if (parsedUrl.hostname !== 'localhost') {
+    if (parsedUrl.hostname !== '127.0.0.1' && parsedUrl.hostname !== 'localhost') {
       event.preventDefault();
       console.warn(`Navegación bloqueada por seguridad hacia: ${navigationUrl}`);
     }
