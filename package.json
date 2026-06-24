@@ -51,7 +51,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Distribuidora"
+      "shortcutName": "Distribuidora",
+      "deleteAppDataOnUninstall": true
     },
     "files": [
       "**/*",

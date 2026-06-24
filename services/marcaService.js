@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+const sequelize = require('../config/db/dataBase.js');
 const Marca = require('../models/marca.js');
 const Product = require('../models/product.js');
 
@@ -24,7 +25,7 @@ exports.getAll = async (page = 1, limit = 10, nombreFilter = '') => {
         where,
         limit: limitNum,
         offset: offsetNum,
-        order: [['createdAt', 'DESC']]
+        order: [[sequelize.fn('lower', sequelize.col('nombre')), 'ASC']]
     });
 
     const totalPages = Math.ceil(count / limitNum);
@@ -96,6 +97,6 @@ exports.deleteMarca = async (id) => {
  */
 exports.getAllWithoutPagination = async () => {
     return await Marca.findAll({
-        order: [['nombre', 'ASC']]
+        order: [[sequelize.fn('lower', sequelize.col('nombre')), 'ASC']]
     });
 };

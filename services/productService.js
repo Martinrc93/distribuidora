@@ -30,7 +30,10 @@ exports.getAll = async (page = 1, limit = 10, q = '') => {
         include: [{ model: Marca, as: 'marca' }],
         limit: limitNum,
         offset: offsetNum,
-        order: [['createdAt', 'DESC']]
+        order: [
+            [sequelize.fn('lower', sequelize.col('marca.nombre')), 'ASC'],
+            [sequelize.fn('lower', sequelize.col('Product.nombre')), 'ASC']
+        ]
     });
 
     const totalPages = Math.ceil(count / limitNum);
@@ -50,7 +53,10 @@ exports.getAll = async (page = 1, limit = 10, q = '') => {
 exports.getAllWithoutPagination = async () => {
     return await Product.findAll({
         include: [{ model: Marca, as: 'marca' }],
-        order: [['createdAt', 'DESC']]
+        order: [
+            [sequelize.fn('lower', sequelize.col('marca.nombre')), 'ASC'],
+            [sequelize.fn('lower', sequelize.col('Product.nombre')), 'ASC']
+        ]
     });
 };
 
