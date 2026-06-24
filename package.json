@@ -68,7 +68,8 @@
       "!.mds/**/*",
       "!**/*.md",
       "!docs/**/*",
-      "!scratch/**/*"
+      "!scratch/**/*",
+      "!tests/**/*"
     ],
     "asar": true
   }
