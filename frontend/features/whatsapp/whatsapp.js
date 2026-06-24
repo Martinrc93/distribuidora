@@ -77,9 +77,9 @@ function updateUI(status, qrCodeData) {
     connectedSection.classList.add('d-none');
     initializingSection.classList.add('d-none');
 
-    // Deshabilitar botón si no está conectado
+    // Habilitar el botón siempre (excepto en estado ERROR) para poder restablecer la sesión si se traba la inicialización
     if (btnDisconnect) {
-        btnDisconnect.disabled = (status !== 'CONNECTED');
+        btnDisconnect.disabled = (status === 'ERROR');
     }
 
     switch (status) {
