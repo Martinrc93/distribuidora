@@ -712,6 +712,180 @@ function enviarConsolidadoWSP() {
 }
 
 /**
+ * Agrupa los pedidos activos de hoy por cliente y genera el resumen de cobros.
+ */
+function generarResumenDiarioHtml() {
+    const resumen = {};
+    let totalGeneral = 0;
+
+    ventas.forEach(venta => {
+        if (!venta.active) return;
+        const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+        const total = Number(venta.total) || 0;
+        
+        if (resumen[clienteName]) {
+            resumen[clienteName] += total;
+        } else {
+            resumen[clienteName] = total;
+        }
+        totalGeneral += total;
+    });
+
+    const items = Object.entries(resumen).map(([cliente, total]) => ({ cliente, total }));
+    
+    // Ordenar alfabéticamente por cliente
+    items.sort((a, b) => a.cliente.localeCompare(b.cliente));
+
+    if (items.length === 0) {
+        showToast('No hay pedidos activos registrados el día de hoy.', 'error');
+        return false;
+    }
+
+    const today = new Date();
+    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+
+    const printSection = document.getElementById('printSection');
+    if (printSection) {
+        printSection.innerHTML = `
+            <div class="header-container">
+                <div class="header-left">
+                    <p class="recibo-label">Resumen Diario de Clientes</p>
+                    <h1>Distri-Pipipuch</h1>
+                    <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                    <p class="info-line">Reporte: TOTALES A PAGAR POR CLIENTE</p>
+                </div>
+                <div class="header-right">
+                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
+                </div>
+            </div>
+            
+            <div class="meta-section">
+                <span>Fecha: <span>${formattedDate}</span></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 70%;">CLIENTE</th>
+                        <th class="text-right" style="width: 30%;">TOTAL A PAGAR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map(item => `
+                        <tr>
+                            <td>${item.cliente.toUpperCase()}</td>
+                            <td class="text-right">$${item.total.toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                    <tr style="border-top: 2px solid #000; font-weight: bold;">
+                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL GENERAL:</td>
+                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${totalGeneral.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+        return true;
+    }
+    return false;
+}
+
+function imprimirResumenDiario() {
+    if (generarResumenDiarioHtml()) {
+        window.print();
+    }
+}
+
+/**
+ * Agrupa todos los pedidos activos de hoy y genera una sola sección de impresión con saltos de página entre cada uno.
+ */
+function generarTodosLosPedidosHtml() {
+    const activeVentas = ventas.filter(v => v.active);
+    if (activeVentas.length === 0) {
+        showToast('No hay pedidos activos registrados el día de hoy.', 'error');
+        return false;
+    }
+
+    const printSection = document.getElementById('printSection');
+    if (!printSection) return false;
+
+    let combinedHtml = '';
+
+    activeVentas.forEach((venta, index) => {
+        const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+        const empleadoName = venta.empleadoNombre && venta.empleadoApellido
+            ? `${venta.empleadoNombre} ${venta.empleadoApellido}`
+            : (venta.empleadoNombre || 'N/A');
+
+        const formattedDate = venta.fechaEmision || 'N/A';
+        const folioStr = venta.id.toString().padStart(6, '0');
+
+        const detailsHtml = venta.detalles.map(d => {
+            const product = productos.find(p => p.id === d.productId);
+            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productId}`;
+            return `
+                <tr>
+                    <td>${productName.toUpperCase()}</td>
+                    <td class="text-center">${d.cantidad}</td>
+                    <td class="text-right">$${Number(d.precio).toFixed(2)}</td>
+                    <td class="text-right">$${Number(d.subtotal).toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const totalStr = Number(venta.total).toFixed(2);
+        const pageBreakStyle = index < activeVentas.length - 1 ? 'page-break-after: always; break-after: page;' : '';
+
+        combinedHtml += `
+            <div class="ticket-pedido-print" style="${pageBreakStyle} padding-bottom: 20px;">
+                <div class="header-container">
+                    <div class="header-left">
+                        <p class="recibo-label">Comprobante de Pedido</p>
+                        <h1>Distri-Pipipuch</h1>
+                        <p class="info-line"><strong>LORENA 1150222520 - DANIEL 1150222413</strong></p>
+                        <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
+                        <p class="info-line">Vendedor: ${empleadoName}</p>
+                    </div>
+                    <div class="header-right">
+                        <img src="../../assets/logo.png" alt="Logo Cigarrillo">
+                    </div>
+                </div>
+                
+                <div class="meta-section">
+                    <span>Pedido N°: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">PRODUCTO</th>
+                            <th class="text-center" style="width: 15%;">CANTIDAD</th>
+                            <th class="text-right" style="width: 17%;">PRECIO UNIT.</th>
+                            <th class="text-right" style="width: 18%;">SUBTOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${detailsHtml}
+                        <tr style="border-top: 2px solid #000; font-weight: bold;">
+                            <td colspan="3" class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL A PAGAR:</td>
+                            <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${totalStr}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    });
+
+    printSection.innerHTML = combinedHtml;
+    return true;
+}
+
+function imprimirTodosLosPedidos() {
+    if (generarTodosLosPedidosHtml()) {
+        window.print();
+    }
+}
+
+/**
  * Agrupa los pedidos activos de hoy para un empleado específico y genera su consolidado.
  */
 function generarEmpleadoHtml(empleadoId) {
@@ -1216,6 +1390,22 @@ function inicializarEventos() {
         btnOptEnviarDepositoWSP.addEventListener('click', (e) => {
             e.preventDefault();
             enviarConsolidadoWSP();
+        });
+    }
+
+    const btnOptImprimirResumenDiario = document.getElementById('btnOptImprimirResumenDiario');
+    if (btnOptImprimirResumenDiario) {
+        btnOptImprimirResumenDiario.addEventListener('click', (e) => {
+            e.preventDefault();
+            imprimirResumenDiario();
+        });
+    }
+
+    const btnOptImprimirTodosLosPedidos = document.getElementById('btnOptImprimirTodosLosPedidos');
+    if (btnOptImprimirTodosLosPedidos) {
+        btnOptImprimirTodosLosPedidos.addEventListener('click', (e) => {
+            e.preventDefault();
+            imprimirTodosLosPedidos();
         });
     }
 
