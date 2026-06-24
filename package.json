@@ -8,7 +8,8 @@
     "seed": "node seed.js",
     "electron:start": "electron .",
     "electron:build": "electron-builder build --win",
-    "test": "jest"
+    "test": "jest",
+    "db:clear": "node clean-db.js"
   },
   "jest": {
     "testMatch": [
