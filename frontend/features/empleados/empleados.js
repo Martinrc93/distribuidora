@@ -168,10 +168,10 @@ function mostrarDetallePedidoEmpleado(pedidoId) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-secondary py-3">No hay productos en este pedido</td></tr>';
     } else {
         pedido.detalles.forEach(d => {
-            const product = productos.find(p => p.id === d.productId);
+            const product = productos.find(p => p.id === d.productoId);
             const productName = product 
                 ? `${escapeHtml(product.nombre)} (${escapeHtml(product.marca)})` 
-                : `Producto #${d.productId}`;
+                : `Producto #${d.productoId}`;
             
             const tr = document.createElement('tr');
             tr.innerHTML = `

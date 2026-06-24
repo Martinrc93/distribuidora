@@ -274,7 +274,7 @@ async function guardarProducto() {
                 if (!isNaN(precio)) {
                     await productosService.createPrice({
                         precio,
-                        productId: newProductId,
+                        productoId: newProductId,
                         listaPreciosId: lista.id
                     });
                 }
@@ -334,7 +334,7 @@ async function actualizarProducto() {
                     if (parseFloat(precioExistente.precio) !== precio) {
                         await productosService.updatePrice(precioExistente.id, {
                             precio,
-                            productId: id,
+                            productoId: id,
                             listaPreciosId: lista.id
                         });
                     }
@@ -342,7 +342,7 @@ async function actualizarProducto() {
                     // Si no existía, crearlo
                     await productosService.createPrice({
                         precio,
-                        productId: id,
+                        productoId: id,
                         listaPreciosId: lista.id
                     });
                 }
@@ -779,7 +779,7 @@ let listasPrecios = [];
 
 async function inicializarListasPrecios() {
     try {
-        const respuesta = await apiClient.get('/lista-precios');
+        const respuesta = await apiClient.get('/api/lista-precios');
         listasPrecios = Array.isArray(respuesta) ? respuesta : (respuesta?.data || []);
         
         const addPreciosContainer = document.getElementById('addPreciosContainer');
