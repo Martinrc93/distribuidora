@@ -52,7 +52,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Distribuidora",
-      "deleteAppDataOnUninstall": true
+      "include": "build/installer.nsh"
     },
     "files": [
       "**/*",
