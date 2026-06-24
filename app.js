@@ -5,7 +5,6 @@ require('./config/timezone.js');
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
 const empleadoRoutes = require('./routes/empleadoRoutes.js');
 const priceRoutes = require('./routes/priceRoutes.js');
 const userRoutes = require('./routes/userRoutes.js');
@@ -39,8 +38,15 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Servir archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Servir la documentación de Swagger en /api-docs
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// Servir la documentación de Swagger en /api-docs únicamente en desarrollo/test
+if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !process.env.NODE_ENV) {
+  try {
+    const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+  } catch (err) {
+    console.warn('No se pudo inicializar Swagger:', err.message);
+  }
+}
 
 app.use('/users', userRoutes);
 app.use('/products', productRoutes);
@@ -116,7 +122,9 @@ if (process.env.NODE_ENV !== 'test') {
     .then(() => sequelize.sync({ force: false }))
     .then(() => {
       console.log('Conexión a SQLite establecida y modelos sincronizados.');
-      console.log(`Documentación de Swagger disponible en http://localhost:${port}/api-docs`);
+      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !process.env.NODE_ENV) {
+        console.log(`Documentación de Swagger disponible en http://localhost:${port}/api-docs`);
+      }
       
       // Inicializar cliente de WhatsApp
       initWhatsApp();
