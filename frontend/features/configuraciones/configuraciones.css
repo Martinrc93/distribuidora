@@ -1,0 +1,12 @@
+/* configuraciones.css - Estilos específicos para la vista de configuraciones */
+.config-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-control:focus {
+    background-color: #2d2d2d;
+    color: #fff;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 0.25rem rgba(96, 165, 250, 0.25);
+}

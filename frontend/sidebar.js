@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <li><a href="../clientes/clientes.html" id="nav-clientes"><i class="fas fa-user-friends"></i> Clientes</a></li>
                     <li><a href="../empleados/empleados.html" id="nav-empleados"><i class="fas fa-users"></i> Empleados</a></li>
                     <li><a href="../whatsapp/whatsapp.html" id="nav-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a></li>
+                    <li><a href="../configuraciones/configuraciones.html" id="nav-configuraciones"><i class="fas fa-cog"></i> Configuración</a></li>
                 </ul>
             </nav>
         </aside>
@@ -44,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('nav-empleados')?.classList.add('active');
     } else if (path.includes('/whatsapp/')) {
         document.getElementById('nav-whatsapp')?.classList.add('active');
+    } else if (path.includes('/configuraciones/')) {
+        document.getElementById('nav-configuraciones')?.classList.add('active');
     }
 
     // --- LÓGICA RESPONSIVA PARA DISPOSITIVOS MÓVILES ---

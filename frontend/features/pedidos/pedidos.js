@@ -703,8 +703,8 @@ function generarConsolidadoHtml() {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Recibo de venta</p>
-                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
+                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Cliente: CONSOLIDADO DE CARGA</p>
                     <p class="info-line">Depósito General</p>
                 </div>
@@ -791,8 +791,8 @@ function generarResumenDiarioHtml() {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Resumen Diario de Clientes</p>
-                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
+                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Reporte: TOTALES A PAGAR POR CLIENTE</p>
                 </div>
                 <div class="header-right">
@@ -881,8 +881,8 @@ function generarTodosLosPedidosHtml() {
                 <div class="header-container">
                     <div class="header-left">
                         <p class="recibo-label">Comprobante de Pedido</p>
-                        <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                        <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
+                        <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                        <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                         <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
                         <p class="info-line">Vendedor: ${empleadoName}</p>
                     </div>
@@ -989,8 +989,8 @@ function generarEmpleadoHtml(empleadoId) {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Detalle por Empleado</p>
-                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
+                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Empleado: ${employeeName.toUpperCase()}</p>
                     <p class="info-line">Consolidado de Carga Asignada</p>
                 </div>
@@ -1077,8 +1077,8 @@ function generarClienteHtml(ventaId) {
             <div class="header-container">
                 <div class="header-left">
                     <p class="recibo-label">Comprobante de Pedido</p>
-                    <h1>\${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>\${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
+                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
                     <p class="info-line">Vendedor: ${empleadoName}</p>
                 </div>
