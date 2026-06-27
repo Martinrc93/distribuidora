@@ -760,9 +760,36 @@ function generarConsolidadoHtml() {
     return false;
 }
 
+function waitImagesAndPrint(elementId = 'printSection') {
+    const printSection = document.getElementById(elementId);
+    if (!printSection) {
+        window.print();
+        return;
+    }
+    const images = printSection.querySelectorAll('img');
+    if (images.length === 0) {
+        window.print();
+        return;
+    }
+    const promises = Array.from(images).map(img => {
+        if (img.complete) {
+            return Promise.resolve();
+        }
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+        });
+    });
+    Promise.all(promises).then(() => {
+        setTimeout(() => {
+            window.print();
+        }, 50);
+    });
+}
+
 function imprimirConsolidado() {
     if (generarConsolidadoHtml()) {
-        window.print();
+        waitImagesAndPrint();
     }
 }
 
@@ -853,7 +880,7 @@ function generarResumenDiarioHtml() {
 
 function imprimirResumenDiario() {
     if (generarResumenDiarioHtml()) {
-        window.print();
+        waitImagesAndPrint();
     }
 }
 
@@ -943,7 +970,7 @@ function generarTodosLosPedidosHtml() {
 
 function imprimirTodosLosPedidos() {
     if (generarTodosLosPedidosHtml()) {
-        window.print();
+        waitImagesAndPrint();
     }
 }
 
@@ -1048,7 +1075,7 @@ function generarEmpleadoHtml(empleadoId) {
 
 function imprimirEmpleado(empleadoId) {
     if (generarEmpleadoHtml(empleadoId)) {
-        window.print();
+        waitImagesAndPrint();
     }
 }
 
@@ -1137,7 +1164,7 @@ function generarClienteHtml(ventaId) {
 
 function imprimirCliente(ventaId) {
     if (generarClienteHtml(ventaId)) {
-        window.print();
+        waitImagesAndPrint();
     }
 }
 

@@ -255,15 +255,26 @@ async function guardarProducto() {
         return;
     }
 
+    if (costo <= 0) {
+        showToast('El costo del producto debe ser superior a 0.', 'error');
+        return;
+    }
+
     // Validar que los precios de lista no sean menores que el costo
     for (const lista of listasPrecios) {
         const input = document.getElementById(`precioLista${lista.id}`);
         const valStr = input ? input.value : '';
         if (valStr && valStr.trim() !== '') {
             const precio = parseFloat(valStr);
-            if (!isNaN(precio) && precio < costo) {
-                showToast(`El precio para "${lista.nombre}" ($${precio}) no puede ser menor que el costo del producto ($${costo}).`, 'error');
-                return;
+            if (!isNaN(precio)) {
+                if (precio <= 0) {
+                    showToast(`El precio para "${lista.nombre}" debe ser superior a 0.`, 'error');
+                    return;
+                }
+                if (precio < costo) {
+                    showToast(`El precio para "${lista.nombre}" ($${precio}) no puede ser menor que el costo del producto ($${costo}).`, 'error');
+                    return;
+                }
             }
         }
     }
@@ -320,14 +331,25 @@ async function actualizarProducto() {
         return;
     }
 
+    if (costo <= 0) {
+        showToast('El costo del producto debe ser superior a 0.', 'error');
+        return;
+    }
+
     // Validar que los precios de lista no sean menores que el costo
     for (const lista of listasPrecios) {
         const input = document.getElementById(`editPrecioLista${lista.id}`);
         const valStr = input ? input.value.trim() : '';
         const precio = valStr !== '' ? parseFloat(valStr) : NaN;
-        if (!isNaN(precio) && precio < costo) {
-            showToast(`El precio para "${lista.nombre}" ($${precio}) no puede ser menor que el costo del producto ($${costo}).`, 'error');
-            return;
+        if (!isNaN(precio)) {
+            if (precio <= 0) {
+                showToast(`El precio para "${lista.nombre}" debe ser superior a 0.`, 'error');
+                return;
+            }
+            if (precio < costo) {
+                showToast(`El precio para "${lista.nombre}" ($${precio}) no puede ser menor que el costo del producto ($${costo}).`, 'error');
+                return;
+            }
         }
     }
 

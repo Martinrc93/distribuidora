@@ -29,8 +29,8 @@ class ProductCreateDto {
 
         if (this.costo === undefined || this.costo === null || Number.isNaN(this.costo)) {
             errors.push('El campo "costo" es obligatorio y debe ser un número decimal.');
-        } else if (this.costo < 0) {
-            errors.push('El campo "costo" no puede ser negativo.');
+        } else if (this.costo <= 0) {
+            errors.push('El campo "costo" debe ser superior a 0.');
         }
 
         return {
