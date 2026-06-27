@@ -11,6 +11,57 @@ let connectionRetries = 0;
 const maxConnectionRetries = 5;
 
 /**
+ * Detecta un navegador Chromium instalado en el sistema (Chrome o Edge).
+ * En una app empaquetada con Electron, Puppeteer no puede encontrar su Chrome
+ * descargado (vive en ~/.cache/puppeteer/ que no se incluye en el build),
+ * así que usamos Chrome o Edge del sistema como alternativa.
+ * En desarrollo retorna undefined para que Puppeteer use su Chrome normal.
+ */
+function detectSystemBrowser() {
+    // Solo buscar navegador del sistema si estamos en una app Electron empaquetada
+    let isPackaged = false;
+    try {
+        if (process.versions && process.versions.electron) {
+            isPackaged = require('electron').app.isPackaged;
+        }
+    } catch (e) {
+        // No estamos en contexto Electron, no hace falta buscar
+    }
+
+    if (!isPackaged) {
+        return undefined;
+    }
+
+    const programFiles = process.env['PROGRAMFILES'] || 'C:\\Program Files';
+    const programFilesX86 = process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)';
+    const localAppData = process.env.LOCALAPPDATA || '';
+
+    const candidatePaths = [
+        // Google Chrome
+        path.join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        path.join(programFilesX86, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        path.join(localAppData, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        // Microsoft Edge (preinstalado en Windows 10/11)
+        path.join(programFilesX86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+        path.join(programFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+    ];
+
+    for (const browserPath of candidatePaths) {
+        if (browserPath && fs.existsSync(browserPath)) {
+            console.log(`Navegador del sistema detectado para WhatsApp: ${browserPath}`);
+            return browserPath;
+        }
+    }
+
+    console.error(
+        'ERROR: No se encontró Chrome ni Edge en el sistema. ' +
+        'WhatsApp necesita un navegador Chromium para funcionar. ' +
+        'Instalá Google Chrome o Microsoft Edge.'
+    );
+    return undefined;
+}
+
+/**
  * Inicializa el cliente de WhatsApp
  */
 function initWhatsApp(isAutoReconnect = false) {
@@ -21,6 +72,8 @@ function initWhatsApp(isAutoReconnect = false) {
     status = 'INITIALIZING';
     qrCodeData = null;
 
+    const executablePath = detectSystemBrowser();
+
     client = new Client({
         authStrategy: new LocalAuth({
             clientId: 'distribuidora-session',
@@ -28,6 +81,7 @@ function initWhatsApp(isAutoReconnect = false) {
         }),
         puppeteer: {
             headless: true,
+            executablePath: executablePath,
             protocolTimeout: 90000,
             args: [
                 '--no-sandbox',
