@@ -1,6 +1,27 @@
 const whatsappService = require('../services/whatsappService');
 
 /**
+ * Known user-facing error messages from the service layer.
+ * These are safe to forward to the frontend as-is.
+ */
+const KNOWN_USER_MESSAGES = [
+    'WhatsApp no está conectado',
+    'no está registrado en WhatsApp',
+    'no se pudo verificar'
+];
+
+/**
+ * Returns a user-friendly error message. If the original message is a known
+ * business-logic error, it is returned unchanged. Otherwise, a generic message
+ * is returned to avoid leaking internal/library details to the UI.
+ */
+function toUserMessage(error) {
+    const msg = error.message || '';
+    const isKnown = KNOWN_USER_MESSAGES.some(known => msg.includes(known));
+    return isKnown ? msg : 'Error desde el servicio de WhatsApp.';
+}
+
+/**
  * Obtener el estado de la conexión de WhatsApp
  * GET /whatsapp/status
  */
@@ -9,8 +30,9 @@ exports.getStatus = (req, res) => {
         const statusData = whatsappService.getStatus();
         res.json(statusData);
     } catch (error) {
-        console.error('Error al obtener estado de WhatsApp:', error);
-        res.status(500).json({ message: error.message, error: error.message });
+        console.error('[WhatsApp] Error getting status:', error);
+        const message = toUserMessage(error);
+        res.status(500).json({ message, error: message });
     }
 };
 
@@ -35,8 +57,9 @@ exports.sendPdf = async (req, res) => {
         const result = await whatsappService.sendPDF(number, pdfBase64, filename);
         res.json({ success: true, mensaje: 'PDF enviado con éxito.', result });
     } catch (error) {
-        console.error('Error al enviar PDF por WhatsApp:', error);
-        res.status(500).json({ message: error.message, error: error.message });
+        console.error('[WhatsApp] Error sending PDF:', error);
+        const message = toUserMessage(error);
+        res.status(500).json({ message, error: message });
     }
 };
 
@@ -49,7 +72,8 @@ exports.logout = async (req, res) => {
         const result = await whatsappService.logout();
         res.json({ success: true, mensaje: 'Sesión cerrada con éxito y datos limpiados.', result });
     } catch (error) {
-        console.error('Error al cerrar sesión de WhatsApp:', error);
-        res.status(500).json({ message: error.message, error: error.message });
+        console.error('[WhatsApp] Error during logout:', error);
+        const message = toUserMessage(error);
+        res.status(500).json({ message, error: message });
     }
 };
