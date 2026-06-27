@@ -26,6 +26,7 @@ const Cliente = require('./models/cliente.js');
 const ListaPrecios = require('./models/listaPrecios.js');
 const Marca = require('./models/marca.js');
 const Configuracion = require('./models/configuracion.js');
+const { verificarYCrearListasPrecios } = require('./services/initListaPrecios.js');
 
 const app = express();
 app.disable('x-powered-by');
@@ -122,6 +123,7 @@ if (process.env.NODE_ENV !== 'test') {
   sequelize.initPragmas()
     .then(() => migrateDatabase())
     .then(() => sequelize.sync({ force: false }))
+    .then(() => verificarYCrearListasPrecios())
     .then(() => {
       console.log('Conexión a SQLite establecida y modelos sincronizados.');
       if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !process.env.NODE_ENV) {
