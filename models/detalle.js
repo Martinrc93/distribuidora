@@ -56,6 +56,9 @@ Detalle.init({
             notNull: {
                 msg: 'La cantidad es obligatoria.'
             },
+            isInt: {
+                msg: 'La cantidad debe ser un número entero.'
+            },
             min: {
                 args: [1],
                 msg: 'La cantidad debe ser al menos 1.'
