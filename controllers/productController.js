@@ -65,7 +65,7 @@ exports.create = async (req, res) => {
         const nuevoProducto = await productService.create(productDto);
         res.status(201).json(ProductResponseDto.fromModel(nuevoProducto));
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 };
 
@@ -89,7 +89,7 @@ exports.update = async (req, res) => {
 
         res.json(ProductResponseDto.fromModel(productoActualizado));
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 };
 

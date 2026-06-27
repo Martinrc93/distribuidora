@@ -255,6 +255,19 @@ async function guardarProducto() {
         return;
     }
 
+    // Validar que los precios de lista no sean menores que el costo
+    for (const lista of listasPrecios) {
+        const input = document.getElementById(`precioLista${lista.id}`);
+        const valStr = input ? input.value : '';
+        if (valStr && valStr.trim() !== '') {
+            const precio = parseFloat(valStr);
+            if (!isNaN(precio) && precio < costo) {
+                showToast(`El precio para "${lista.nombre}" ($${precio}) no puede ser menor que el costo del producto ($${costo}).`, 'error');
+                return;
+            }
+        }
+    }
+
     try {
         console.log('Creando producto:', { nombre, marca, costo });
         const resp = await productosService.create({
@@ -288,7 +301,7 @@ async function guardarProducto() {
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
         console.error('Error al crear producto:', error);
-        showToast('Hubo un error al crear el producto.', 'error');
+        showToast('Hubo un error al crear el producto: ' + error.message, 'error');
     }
 }
 
@@ -305,6 +318,17 @@ async function actualizarProducto() {
     if (!nombre || !marca || isNaN(costo)) {
         showToast('Por favor completa todos los campos obligatorios', 'error');
         return;
+    }
+
+    // Validar que los precios de lista no sean menores que el costo
+    for (const lista of listasPrecios) {
+        const input = document.getElementById(`editPrecioLista${lista.id}`);
+        const valStr = input ? input.value.trim() : '';
+        const precio = valStr !== '' ? parseFloat(valStr) : NaN;
+        if (!isNaN(precio) && precio < costo) {
+            showToast(`El precio para "${lista.nombre}" ($${precio}) no puede ser menor que el costo del producto ($${costo}).`, 'error');
+            return;
+        }
     }
 
     try {
@@ -359,7 +383,7 @@ async function actualizarProducto() {
         await cargarProductos(); // Recargar la tabla
     } catch (error) {
         console.error('Error al actualizar producto:', error);
-        showToast('Hubo un error al actualizar el producto.', 'error');
+        showToast('Hubo un error al actualizar el producto: ' + error.message, 'error');
     }
 }
 

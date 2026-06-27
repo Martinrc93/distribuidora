@@ -31,7 +31,7 @@ exports.create = async (req, res) => {
         const nuevoPrecio = await priceService.create(priceDto);
         res.status(201).json(PriceResponseDto.fromModel(nuevoPrecio));
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 };
 
@@ -55,7 +55,7 @@ exports.update = async (req, res) => {
 
         res.json(PriceResponseDto.fromModel(precioActualizado));
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 };
 
@@ -71,6 +71,6 @@ exports.deletePrice = async (req, res) => {
         }
         res.json({ mensaje: 'Precio eliminado exitosamente' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 };

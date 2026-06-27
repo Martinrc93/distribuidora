@@ -102,6 +102,18 @@ exports.update = async (id, productData) => {
     const product = await Product.findByPk(id);
     if (!product) return null;
 
+    if (productData.costo !== undefined) {
+        const nuevoCosto = Number.parseFloat(productData.costo);
+        const preciosExistentes = await Price.findAll({ where: { productoId: id } });
+        for (const p of preciosExistentes) {
+            if (Number.parseFloat(p.precio) < nuevoCosto) {
+                const error = new Error(`El costo ($${nuevoCosto}) no puede ser mayor que el precio de lista existente ($${p.precio}).`);
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+    }
+
     let marcaId = product.marcaId;
     if (productData.marca !== undefined) {
         const [marcaObj] = await Marca.findOrCreate({
