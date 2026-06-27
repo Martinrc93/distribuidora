@@ -226,6 +226,24 @@ async function cargarDatosAuxiliares() {
 }
 
 /**
+ * Recarga la lista de clientes desde el backend para incluir clientes creados recientemente.
+ * Se llama al abrir el modal de nuevo pedido para mantener los datos actualizados.
+ */
+async function recargarClientes() {
+    try {
+        const respClientes = await apiClient.get('/clientes');
+        clientes = respClientes?.data || [];
+        // Actualizar las opciones del combobox de clientes
+        const pedidoClienteInput = document.getElementById('pedidoCliente');
+        if (pedidoClienteInput) {
+            pedidoClienteInput.comboboxOptions = clientes.map(c => c.nombre);
+        }
+    } catch (error) {
+        console.error('Error al recargar clientes:', error);
+    }
+}
+
+/**
  * Carga las ventas/pedidos del backend filtrando por la fecha de hoy
  */
 async function cargarVentas() {
@@ -1141,8 +1159,15 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
         inputNumero.value = defaultPhone ? defaultPhone.replace(/[-\s]/g, '') : '';
     }
 
+    // Capturar el contenido HTML del comprobante inmediatamente para evitar
+    // que otra acción lo sobreescriba antes de que el usuario confirme el envío
+    const sourceElement = document.getElementById(elementId);
+    const capturedHtml = sourceElement ? sourceElement.innerHTML : '';
+
     const modalEl = document.getElementById('modalEnviarWhatsapp');
-    const modal = new bootstrap.Modal(modalEl);
+    // Reutilizar la instancia existente del modal en lugar de crear una nueva
+    // para evitar instancias duplicadas que causan que el segundo envío falle
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 
     const btnConfirmar = document.getElementById('btnConfirmarEnviarWhatsapp');
@@ -1196,6 +1221,11 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
 
         try {
             const element = document.getElementById(elementId);
+            // Restaurar el contenido capturado al inicio para asegurar que el PDF
+            // contenga el comprobante correcto incluso si printSection fue reutilizado
+            if (capturedHtml) {
+                element.innerHTML = capturedHtml;
+            }
             
             // html2pdf requiere visibilidad temporal en el DOM
             element.classList.remove('d-none');
@@ -1674,6 +1704,12 @@ function inicializarEventos() {
     // Limpiar formulario al cerrar el modal de creación
     const addModalEl = document.getElementById('addPedidoModal');
     if (addModalEl) {
+        // Recargar la lista de clientes al abrir el modal para incluir
+        // clientes creados recientemente en la misma sesión
+        addModalEl.addEventListener('show.bs.modal', () => {
+            recargarClientes();
+        });
+
         addModalEl.addEventListener('hidden.bs.modal', () => {
             formAgregarPedido.reset();
             detallesTemporales = [];
