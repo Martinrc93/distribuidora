@@ -168,9 +168,7 @@ def main():
             page-break-inside: avoid;
         }}
         hr {{
-            border: 0;
-            border-top: 1px solid #e2e8f0;
-            margin: 30px 0;
+            display: none;
         }}
     </style>
 </head>
@@ -237,11 +235,10 @@ app.whenReady().then(async () => {{
         print(f"Error executing Electron: {e}")
     finally:
         # Cleanup temp files
-        # if os.path.exists(temp_html):
-        #     os.remove(temp_html)
-        # if os.path.exists(electron_script):
-        #     os.remove(electron_script)
-        pass
+        if os.path.exists(temp_html):
+            os.remove(temp_html)
+        if os.path.exists(electron_script):
+            os.remove(electron_script)
 
 if __name__ == "__main__":
     main()
