@@ -9,7 +9,8 @@
     "electron:start": "electron .",
     "electron:build": "electron-builder build --win",
     "test": "jest",
-    "db:clear": "node clean-db.js"
+    "db:clear": "node clean-db.js",
+    "db:init-listas": "node init-listas.js"
   },
   "jest": {
     "testMatch": [
