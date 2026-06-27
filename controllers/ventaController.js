@@ -63,8 +63,21 @@ exports.updateStatus = async (req, res) => {
             }
             for (let i = 0; i < detalles.length; i++) {
                 const item = detalles[i];
-                if (!item.productoId || !item.precioId || !item.cantidad || item.cantidad <= 0) {
-                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productoId, precioId y cantidad mayor a 0.` });
+                let parsedCantidad;
+                if (typeof item.cantidad === 'number') {
+                    parsedCantidad = item.cantidad;
+                } else if (typeof item.cantidad === 'string') {
+                    parsedCantidad = Number.parseFloat(item.cantidad.replace(',', '.'));
+                } else {
+                    parsedCantidad = Number.parseFloat(item.cantidad);
+                }
+                item.cantidad = parsedCantidad;
+
+                if (!item.productoId || !item.precioId || isNaN(item.cantidad) || item.cantidad < 1) {
+                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productoId, precioId y cantidad mayor o igual a 1.` });
+                }
+                if (!Number.isInteger(item.cantidad)) {
+                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. La cantidad debe ser un número entero (ej. 1, 2, 3).` });
                 }
             }
         }

@@ -8,11 +8,21 @@ class VentaCreateDto {
         this.empleadoId = typeof empleadoId === 'number' ? empleadoId : Number.parseInt(empleadoId, 10);
         this.clienteId = typeof clienteId === 'number' ? clienteId : Number.parseInt(clienteId, 10);
         this.detalles = Array.isArray(detalles) 
-            ? detalles.map(d => ({
-                productoId: typeof d.productoId === 'number' ? d.productoId : Number.parseInt(d.productoId, 10),
-                precioId: typeof d.precioId === 'number' ? d.precioId : Number.parseInt(d.precioId, 10),
-                cantidad: typeof d.cantidad === 'number' ? d.cantidad : Number.parseInt(d.cantidad, 10)
-              }))
+            ? detalles.map(d => {
+                let parsedCantidad;
+                if (typeof d.cantidad === 'number') {
+                    parsedCantidad = d.cantidad;
+                } else if (typeof d.cantidad === 'string') {
+                    parsedCantidad = Number.parseFloat(d.cantidad.replace(',', '.'));
+                } else {
+                    parsedCantidad = Number.parseFloat(d.cantidad);
+                }
+                return {
+                    productoId: typeof d.productoId === 'number' ? d.productoId : Number.parseInt(d.productoId, 10),
+                    precioId: typeof d.precioId === 'number' ? d.precioId : Number.parseInt(d.precioId, 10),
+                    cantidad: parsedCantidad
+                };
+              })
             : null;
     }
 
@@ -61,8 +71,10 @@ class VentaCreateDto {
 
                 if (d.cantidad === undefined || d.cantidad === null || Number.isNaN(d.cantidad)) {
                     errors.push(`Detalle #${itemNum}: el campo "cantidad" es obligatorio y debe ser un número.`);
-                } else if (d.cantidad <= 0) {
+                } else if (d.cantidad < 1) {
                     errors.push(`Detalle #${itemNum}: la "cantidad" de producto debe ser de al menos 1.`);
+                } else if (!Number.isInteger(d.cantidad)) {
+                    errors.push(`Detalle #${itemNum}: la "cantidad" debe ser un número entero (ej. 1, 2, 3).`);
                 }
             });
         }
