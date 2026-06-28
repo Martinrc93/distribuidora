@@ -54,6 +54,33 @@ function detectSystemBrowser() {
 }
 
 /**
+ * Cleans up stale Chromium lock files left behind by ungraceful crashes.
+ */
+function cleanStaleLockFiles(authPath, clientId) {
+    const resolvedAuthPath = authPath || process.env.WHATSAPP_AUTH_PATH || './';
+    const sessionDir = path.join(resolvedAuthPath, `session-${clientId}`);
+    const targets = [
+        sessionDir,
+        path.join(sessionDir, 'Default')
+    ];
+    const filesToClean = ['lockfile', 'DevToolsActivePort', 'SingletonLock', 'SingletonCookie', 'SingletonSocket'];
+    for (const targetDir of targets) {
+        if (!fs.existsSync(targetDir)) continue;
+        for (const file of filesToClean) {
+            const filePath = path.join(targetDir, file);
+            if (fs.existsSync(filePath)) {
+                try {
+                    fs.unlinkSync(filePath);
+                    console.log(`[WhatsApp] Cleaned stale lock file: ${filePath}`);
+                } catch (e) {
+                    // Ignore error if file cannot be unlinked
+                }
+            }
+        }
+    }
+}
+
+/**
  * Creates and returns a configured whatsapp-web.js Client instance.
  *
  * @param {object} options
@@ -62,6 +89,7 @@ function detectSystemBrowser() {
  * @returns {Client}
  */
 function createWhatsAppClient({ clientId = 'distribuidora-session', authPath } = {}) {
+    cleanStaleLockFiles(authPath, clientId);
     const executablePath = detectSystemBrowser();
 
     return new Client({

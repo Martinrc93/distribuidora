@@ -89,7 +89,6 @@ function createWindow() {
 }
 
 app.on('ready', async () => {
-  app.setLocale('es');
   console.log('Esperando a que el servidor Express esté listo...');
   
   // Timeout de seguridad de 30 segundos
