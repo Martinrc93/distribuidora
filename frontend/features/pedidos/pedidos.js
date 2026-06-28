@@ -10,6 +10,54 @@ function getLocalDateStr() {
     return `${year}-${month}-${day}`;
 }
 
+function getRangoFechasFormateado() {
+    const fechaMinEl = document.getElementById('fechaMinInput');
+    const fechaMaxEl = document.getElementById('fechaMaxInput');
+    
+    if (fechaMinEl && fechaMinEl.value && fechaMaxEl && fechaMaxEl.value) {
+        const minVal = fechaMinEl.value; // YYYY-MM-DD
+        const maxVal = fechaMaxEl.value; // YYYY-MM-DD
+        
+        const formatFecha = (fStr) => {
+            const parts = fStr.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        };
+        
+        if (minVal === maxVal) {
+            return formatFecha(minVal);
+        } else {
+            return `${formatFecha(minVal)} - ${formatFecha(maxVal)}`;
+        }
+    }
+    
+    const today = new Date();
+    return `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+}
+
+let fpMin = null;
+let fpMax = null;
+
+function inicializarFiltroFechas() {
+    const todayStr = getLocalDateStr();
+    
+    // Inicializar Flatpickr con idioma español y formato d/m/Y
+    fpMin = flatpickr("#fechaMinInput", {
+        locale: "es",
+        altInput: true,
+        altFormat: "d/m/Y",
+        dateFormat: "Y-m-d",
+        defaultDate: todayStr
+    });
+    
+    fpMax = flatpickr("#fechaMaxInput", {
+        locale: "es",
+        altInput: true,
+        altFormat: "d/m/Y",
+        dateFormat: "Y-m-d",
+        defaultDate: todayStr
+    });
+}
+
 // Elementos del DOM
 let tablaPedidos = null;
 let formAgregarPedido = null;
@@ -248,18 +296,27 @@ async function recargarClientes() {
  */
 async function cargarVentas() {
     try {
-        console.log('Cargando pedidos/ventas del día...');
+        console.log('Cargando pedidos/ventas...');
         tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin"></i> Cargando pedidos...</td></tr>';
         
-        // Obtener la fecha local de hoy en formato YYYY-MM-DD
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
+        const fechaMinEl = document.getElementById('fechaMinInput');
+        const fechaMaxEl = document.getElementById('fechaMaxInput');
+        
+        let url = '/ventas?limit=100';
+        if (fechaMinEl && fechaMinEl.value) {
+            url += `&fechaMin=${fechaMinEl.value}`;
+        }
+        if (fechaMaxEl && fechaMaxEl.value) {
+            url += `&fechaMax=${fechaMaxEl.value}`;
+        }
+        
+        // Si no existen los inputs de rango de fechas aún, caemos al día de hoy por defecto
+        if ((!fechaMinEl || !fechaMinEl.value) && (!fechaMaxEl || !fechaMaxEl.value)) {
+            const todayStr = getLocalDateStr();
+            url += `&dia=${todayStr}`;
+        }
 
-        // Hacemos el fetch mandando el filtro de día
-        const respuesta = await apiClient.get(`/ventas?limit=100&dia=${todayStr}`);
+        const respuesta = await apiClient.get(url);
         
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta inválida:', respuesta);
@@ -268,7 +325,7 @@ async function cargarVentas() {
         }
         
         ventas = respuesta.data;
-        console.log('Pedidos cargados hoy:', ventas);
+        console.log('Pedidos cargados:', ventas);
 
         // Obtener el valor actual del buscador si existe y renderizar
         const searchInput = document.getElementById('pedidoSearchInput');
@@ -312,7 +369,15 @@ function renderVentasTable(filterQuery = '') {
         if (query) {
             tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No se encontraron pedidos que coincidan con la búsqueda</td></tr>';
         } else {
-            tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados el día de hoy</td></tr>';
+            const fechaMinEl = document.getElementById('fechaMinInput');
+            const fechaMaxEl = document.getElementById('fechaMaxInput');
+            const todayStr = getLocalDateStr();
+            
+            if (fechaMinEl && fechaMaxEl && (fechaMinEl.value !== todayStr || fechaMaxEl.value !== todayStr)) {
+                tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados en el rango de fechas seleccionado</td></tr>';
+            } else {
+                tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados el día de hoy</td></tr>';
+            }
         }
         return;
     }
@@ -710,12 +775,12 @@ function generarConsolidadoHtml() {
     });
 
     if (items.length === 0) {
-        showToast('No hay pedidos activos registrados el día de hoy para enviar al depósito.', 'error');
+        showToast('No hay pedidos activos registrados en el rango seleccionado para enviar al depósito.', 'error');
         return false;
     }
 
+    const formattedDate = getRangoFechasFormateado();
     const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
     const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
 
     const printSection = document.getElementById('printSection');
@@ -826,12 +891,11 @@ function generarResumenDiarioHtml() {
     items.sort((a, b) => a.cliente.localeCompare(b.cliente));
 
     if (items.length === 0) {
-        showToast('No hay pedidos activos registrados el día de hoy.', 'error');
+        showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');
         return false;
     }
 
-    const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    const formattedDate = getRangoFechasFormateado();
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
@@ -890,7 +954,7 @@ function imprimirResumenDiario() {
 function generarTodosLosPedidosHtml() {
     const activeVentas = ventas.filter(v => v.activo);
     if (activeVentas.length === 0) {
-        showToast('No hay pedidos activos registrados el día de hoy.', 'error');
+        showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');
         return false;
     }
 
@@ -1023,12 +1087,12 @@ function generarEmpleadoHtml(empleadoId) {
     });
 
     if (items.length === 0) {
-        showToast(`No hay pedidos activos asignados a ${employeeName} el día de hoy.`, 'error');
+        showToast(`No hay pedidos activos asignados a ${employeeName} en el rango seleccionado.`, 'error');
         return false;
     }
 
+    const formattedDate = getRangoFechasFormateado();
     const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
     const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}-EMP${empleadoId}`;
 
     const printSection = document.getElementById('printSection');
@@ -1786,6 +1850,30 @@ function inicializarEventos() {
             }, 300);
         });
     }
+
+    // Filtro de Fechas
+    const fechaMinEl = document.getElementById('fechaMinInput');
+    const fechaMaxEl = document.getElementById('fechaMaxInput');
+    const btnFechaHoy = document.getElementById('btnFechaHoy');
+
+    if (fechaMinEl) {
+        fechaMinEl.addEventListener('change', () => {
+            cargarVentas();
+        });
+    }
+    if (fechaMaxEl) {
+        fechaMaxEl.addEventListener('change', () => {
+            cargarVentas();
+        });
+    }
+    if (btnFechaHoy) {
+        btnFechaHoy.addEventListener('click', () => {
+            const todayStr = getLocalDateStr();
+            if (fpMin) fpMin.setDate(todayStr);
+            if (fpMax) fpMax.setDate(todayStr);
+            cargarVentas();
+        });
+    }
 }
 
 /**
@@ -1902,6 +1990,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Página de pedidos cargada. Inicializando...');
     if (inicializarElementos()) {
         await cargarDatosAuxiliares();
+        inicializarFiltroFechas();
         await cargarVentas();
         inicializarEventos();
     }

@@ -1,7 +1,9 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
-
 const fs = require('fs');
+
+// Configurar idioma de Electron en español para que los calendarios (input type="date") se muestren en formato DD/MM/YYYY
+app.commandLine.appendSwitch('lang', 'es');
 
 // Configurar rutas escribibles en AppData antes de cargar Express
 const userDataPath = app.getPath('userData');
@@ -87,6 +89,7 @@ function createWindow() {
 }
 
 app.on('ready', async () => {
+  app.setLocale('es');
   console.log('Esperando a que el servidor Express esté listo...');
   
   // Timeout de seguridad de 30 segundos
