@@ -129,11 +129,12 @@ app.on('before-quit', (event) => {
     
     console.log('Cerrando sesión de WhatsApp antes de salir de la aplicación...');
     
-    // Temporizador de seguridad de 3 segundos para evitar que la app quede en segundo plano (modo fantasma)
+    // Temporizador de seguridad de 10 segundos para dar tiempo a Puppeteer/Chromium
+    // a cerrar limpiamente y persistir la sesión de WhatsApp
     const forceQuitTimer = setTimeout(() => {
       console.warn('El cierre de sesión de WhatsApp excedió el tiempo límite. Forzando salida...');
       app.exit(0);
-    }, 3000);
+    }, 10000);
 
     const whatsappService = require('./services/whatsappService.js');
     whatsappService.logoutAndDestroy().catch(err => {

@@ -97,7 +97,7 @@ function registerClientEvents(whatsappClient) {
         logError('Authentication failed:', msg);
     });
 
-    whatsappClient.on('disconnected', async (reason) => {
+    whatsappClient.on('disconnected', (reason) => {
         status = STATES.DISCONNECTED;
         qrCodeData = null;
         logInfo(`Client disconnected: ${reason}`);
@@ -107,11 +107,7 @@ function registerClientEvents(whatsappClient) {
             return;
         }
 
-        try {
-            await whatsappClient.destroy();
-        } catch (e) {
-            logError('Error destroying client after disconnect:', e);
-        }
+        // No llamar destroy aquí — initWhatsApp ya destruye el cliente previo
 
         if (connectionRetries < MAX_RETRIES) {
             connectionRetries++;
@@ -133,11 +129,29 @@ function registerClientEvents(whatsappClient) {
 
 /**
  * Initializes the WhatsApp client.
+ * Destroys any previous client instance to prevent Chromium zombie processes.
  * @param {boolean} isAutoReconnect — true when called by the reconnect loop
  */
-function initWhatsApp(isAutoReconnect = false) {
+async function initWhatsApp(isAutoReconnect = false) {
     if (!isAutoReconnect) {
         connectionRetries = 0;
+    }
+
+    // Destroy previous client instance to avoid Chromium zombie processes
+    if (client) {
+        logInfo('Destroying previous client instance before re-init...');
+        try {
+            client.removeAllListeners();
+            await Promise.race([
+                client.destroy(),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Destroy previous client timeout')), 10000)
+                )
+            ]);
+        } catch (e) {
+            logError('Error destroying previous client (continuing):', e);
+        }
+        client = null;
     }
 
     logInfo('Initializing client...');
@@ -250,20 +264,41 @@ async function logout() {
         status = STATES.DISCONNECTED;
         qrCodeData = null;
 
+        // Save reference and clear global immediately to prevent
+        // the disconnected handler from interfering
+        const oldClient = client;
+        client = null;
+        oldClient.removeAllListeners();
+
+        // Attempt to unlink from WhatsApp servers (with timeout)
         try {
-            await client.logout();
+            await Promise.race([
+                oldClient.logout(),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Logout timeout')), 15000)
+                )
+            ]);
         } catch (e) {
             logInfo(`Could not unlink from WhatsApp servers: ${e.message}`);
-            cleanSessionFolder();
         }
 
+        // Always clean session folder on explicit logout
+        cleanSessionFolder();
+
+        // Destroy the Chromium browser process (with timeout)
         try {
-            await client.destroy();
+            await Promise.race([
+                oldClient.destroy(),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Destroy timeout')), 10000)
+                )
+            ]);
         } catch (e) {
             logInfo(`Error destroying client during logout: ${e.message}`);
         }
 
         isExplicitLogout = false;
+        // Re-initialize with a fresh client
         initWhatsApp();
         return { success: true };
     } catch (error) {
