@@ -15,7 +15,7 @@ class VentaResponseDto {
             const year = date.getFullYear();
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
-            this.fechaEmision = `${day}-${month}-${year} ${hours}:${minutes}`;
+            this.fechaEmision = `${day}/${month}/${year} ${hours}:${minutes}`;
         } else {
             this.fechaEmision = null;
         }

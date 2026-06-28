@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../../global.css">
     <link rel="stylesheet" href="pedidos.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,11 +46,25 @@
             </header>
 
             <section class="table-container">
-                <!-- Buscador -->
+                <!-- Buscador y Rango de Fechas -->
                 <div class="search-container mb-4">
                     <div class="position-relative w-100" style="max-width: 400px;">
                         <i class="fas fa-search search-icon position-absolute text-secondary" style="left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
                         <input type="text" id="pedidoSearchInput" class="form-control" placeholder="Buscar por cliente..." style="padding-left: 40px;">
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2 flex-wrap ms-auto date-filter-group mt-2 mt-md-0">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="fechaMinInput" class="text-secondary mb-0" style="font-size: 0.85rem; font-weight: 500;">Desde:</label>
+                            <input type="date" id="fechaMinInput" class="form-control date-filter-input" style="width: 150px; height: 42px !important; color-scheme: dark;">
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="fechaMaxInput" class="text-secondary mb-0" style="font-size: 0.85rem; font-weight: 500;">Hasta:</label>
+                            <input type="date" id="fechaMaxInput" class="form-control date-filter-input" style="width: 150px; height: 42px !important; color-scheme: dark;">
+                        </div>
+                        <button id="btnFechaHoy" class="btn btn-primary d-flex align-items-center justify-content-center" style="height: 42px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; padding: 0 1.25rem; position: static; box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);" title="Establecer fecha en Hoy">
+                            Hoy
+                        </button>
                     </div>
                 </div>
 
@@ -380,7 +396,9 @@
 
     <!-- Contenedor para Notificaciones Toast -->
     <div id="toastContainer" class="toast-container"></div>
-
+ 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../sidebar.js"></script>
     <script type="module" src="pedidos.js"></script>
