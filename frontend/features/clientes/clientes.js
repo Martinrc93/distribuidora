@@ -34,9 +34,14 @@ const todayStr = getLocalDateStr();
 let productos = [];
 let pedidosClienteCurrent = [];
 
+// Variables de paginación
+let currentPage = 1;
+let totalPages = 1;
+const itemsPerPage = 10;
+
 // Service local para clientes
 const clientesService = {
-    getAll: () => apiClient.get('/clientes'),
+    getAll: (page = 1, limit = 10) => apiClient.get(`/clientes?page=${page}&limit=${limit}`),
     getById: (id) => apiClient.get(`/clientes/${id}`),
     create: (clienteData) => apiClient.post('/clientes', clienteData),
     update: (id, clienteData) => apiClient.put(`/clientes/${id}`, clienteData),
@@ -200,12 +205,13 @@ function mostrarDetallePedidoCliente(pedidoId) {
 }
 
 /**
- * Carga todos los clientes del backend y renderiza la tabla
+ * Carga los clientes del backend con paginación y renderiza la tabla
+ * @param {number} page Número de página a cargar.
  */
-async function cargarClientes() {
+async function cargarClientes(page = 1) {
     try {
-        console.log('Cargando clientes...');
-        const respuesta = await clientesService.getAll();
+        console.log('Cargando clientes, página:', page);
+        const respuesta = await clientesService.getAll(page, itemsPerPage);
         
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta inválida:', respuesta);
@@ -214,13 +220,23 @@ async function cargarClientes() {
         }
         
         const clientes = respuesta.data;
+        currentPage = respuesta.paginaActual || page;
+        totalPages = respuesta.paginas || 1;
+        const totalItems = respuesta.total || 0;
         console.log('Clientes cargados:', clientes);
+
+        // Si la página actual se quedó vacía pero hay items (por ejemplo tras eliminar el último item de una página)
+        if (clientes.length === 0 && currentPage > 1 && totalItems > 0) {
+            await cargarClientes(currentPage - 1);
+            return;
+        }
 
         // Limpiar la tabla
         tablaClientes.innerHTML = '';
 
         if (clientes.length === 0) {
             tablaClientes.innerHTML = '<tr><td colspan="6" class="text-center">No hay clientes</td></tr>';
+            renderPaginationControls(0);
             return;
         }
 
@@ -255,10 +271,72 @@ async function cargarClientes() {
 
         // Agregar eventos a los botones
         agregarEventosTabla();
+
+        // Renderizar controles de paginación
+        renderPaginationControls(totalItems);
     } catch (error) {
         console.error('Error al cargar clientes:', error);
         tablaClientes.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${escapeHtml(error.message)}</td></tr>`;
     }
+}
+
+/**
+ * Renderiza los controles de paginación
+ * @param {number} totalItems Cantidad total de clientes en la base de datos
+ */
+function renderPaginationControls(totalItems) {
+    const paginationInfo = document.getElementById('paginationInfo');
+    const paginationList = document.getElementById('paginationList');
+    if (!paginationInfo || !paginationList) return;
+
+    // Actualizar texto informativo
+    const startItem = totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    paginationInfo.textContent = totalItems > 0 
+        ? `Mostrando ${startItem}-${endItem} de ${totalItems} clientes`
+        : 'Mostrando 0-0 de 0 clientes';
+
+    // Limpiar botones
+    paginationList.innerHTML = '';
+
+    if (totalItems === 0) return;
+
+    // Botón Anterior
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<button class="page-link" aria-label="Anterior" type="button"><i class="fas fa-chevron-left"></i></button>`;
+    if (currentPage > 1) {
+        prevLi.querySelector('button').addEventListener('click', () => cargarClientes(currentPage - 1));
+    }
+    paginationList.appendChild(prevLi);
+
+    // Botones Numéricos con ventana deslizable
+    const maxVisiblePages = window.innerWidth < 576 ? 3 : 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const pageLi = document.createElement('li');
+        pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageLi.innerHTML = `<button class="page-link" type="button">${i}</button>`;
+        if (i !== currentPage) {
+            pageLi.querySelector('button').addEventListener('click', () => cargarClientes(i));
+        }
+        paginationList.appendChild(pageLi);
+    }
+
+    // Botón Siguiente
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<button class="page-link" aria-label="Siguiente" type="button"><i class="fas fa-chevron-right"></i></button>`;
+    if (currentPage < totalPages) {
+        nextLi.querySelector('button').addEventListener('click', () => cargarClientes(currentPage + 1));
+    }
+    paginationList.appendChild(nextLi);
 }
 
 /**
@@ -290,7 +368,7 @@ async function eliminarCliente(id) {
         const respuesta = await clientesService.delete(id);
         console.log('Respuesta de eliminación:', respuesta);
         showToast('Cliente eliminado exitosamente');
-        await cargarClientes(); // Recargar la tabla
+        await cargarClientes(currentPage); // Recargar la tabla en la página actual
     } catch (error) {
         console.error('Error completo:', error);
         showToast('Hubo un error al eliminar el cliente.', 'error');
@@ -332,7 +410,7 @@ async function guardarCliente() {
         showToast('Cliente creado exitosamente');
         formAgregarCliente.reset();
         modalAgregarCliente.hide();
-        await cargarClientes(); // Recargar la tabla
+        await cargarClientes(1); // Recargar la tabla en la primera página para ver el cliente recién creado
     } catch (error) {
         console.error('Error al crear cliente:', error);
         showToast('Hubo un error al registrar el cliente.', 'error');
@@ -374,7 +452,7 @@ async function actualizarCliente() {
 
         showToast('Cliente actualizado exitosamente');
         modalEditarCliente.hide();
-        await cargarClientes(); // Recargar la tabla
+        await cargarClientes(currentPage); // Recargar la tabla en la página actual
     } catch (error) {
         console.error('Error al actualizar cliente:', error);
         showToast('Hubo un error al actualizar el cliente.', 'error');

@@ -160,7 +160,7 @@ async function cargarDatosAuxiliares() {
     try {
         console.log('Cargando datos auxiliares...');
         const [respClientes, respEmpleados, respProductos, respMarcas, respConfig] = await Promise.all([
-            apiClient.get('/clientes'),
+            apiClient.get('/clientes?limit=1000'),
             apiClient.get('/empleados'),
             apiClient.get('/products/all'),
             apiClient.get('/marcas/all'),
@@ -279,7 +279,7 @@ async function cargarDatosAuxiliares() {
  */
 async function recargarClientes() {
     try {
-        const respClientes = await apiClient.get('/clientes');
+        const respClientes = await apiClient.get('/clientes?limit=1000');
         clientes = respClientes?.data || [];
         // Actualizar las opciones del combobox de clientes
         const pedidoClienteInput = document.getElementById('pedidoCliente');
