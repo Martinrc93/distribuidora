@@ -4,6 +4,7 @@ const Product = require('../models/product.js');
 const Price = require('../models/price.js');
 const Detalle = require('../models/detalle.js');
 const Marca = require('../models/marca.js');
+const Venta = require('../models/venta.js');
 
 /**
  * Obtiene todos los productos con soporte para paginación.
@@ -147,19 +148,42 @@ exports.deleteProduct = async (id) => {
             return false;
         }
 
+        // 0. Obtener IDs de ventas asociadas al producto
+        const ventaRows = await Detalle.findAll({
+            where: { productoId: id },
+            attributes: ['ventaId'],
+            transaction: t,
+            raw: true
+        });
+        const ventaIds = [...new Set(ventaRows.map(row => row.ventaId))];
+
         // 1. Eliminar los detalles de venta que pertenecen a este producto
         await Detalle.destroy({
             where: { productoId: id },
             transaction: t
         });
 
-        // 2. Eliminar todos los precios del producto
+        // 2. Actualizar ventas que ahora no tienen detalles (pasar a cancelado)
+        for (const ventaId of ventaIds) {
+            const remaining = await Detalle.count({
+                where: { ventaId },
+                transaction: t
+            });
+            if (remaining === 0) {
+                await Venta.update({ activo: false }, {
+                    where: { id: ventaId },
+                    transaction: t
+                });
+            }
+        }
+
+        // 3. Eliminar todos los precios del producto
         await Price.destroy({
             where: { productoId: id },
             transaction: t
         });
 
-        // 3. Finalmente, eliminar el producto
+        // 4. Finalmente, eliminar el producto
         await product.destroy({ transaction: t });
         await t.commit();
         return true;
