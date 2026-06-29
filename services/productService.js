@@ -148,22 +148,36 @@ exports.deleteProduct = async (id) => {
             return false;
         }
 
-        // 0. Obtener IDs de ventas asociadas al producto
-        const ventaRows = await Detalle.findAll({
+        // 0. Obtener los detalles que serán eliminados (para ajustar totales)
+        const detallesAEliminar = await Detalle.findAll({
             where: { productoId: id },
-            attributes: ['ventaId'],
+            attributes: ['ventaId', 'precio', 'cantidad'],
             transaction: t,
             raw: true
         });
-        const ventaIds = [...new Set(ventaRows.map(row => row.ventaId))];
+        // Agrupar la suma a restar por venta
+        const restaPorVenta = {};
+        for (const d of detallesAEliminar) {
+            const subtotal = Number.parseFloat(d.precio) * Number.parseInt(d.cantidad, 10);
+            restaPorVenta[d.ventaId] = (restaPorVenta[d.ventaId] || 0) + subtotal;
+        }
 
-        // 1. Eliminar los detalles de venta que pertenecen a este producto
+        // 1. Obtener IDs de ventas asociadas al producto (únicos)
+        const ventaIds = [...new Set(detallesAEliminar.map(d => d.ventaId))];
+
+        // 2. Eliminar los detalles de venta que pertenecen a este producto
         await Detalle.destroy({
             where: { productoId: id },
             transaction: t
         });
 
-        // 2. Actualizar ventas que ahora no tienen detalles (pasar a cancelado)
+        // 3. Ajustar el total de cada venta restando el subtotal de los productos eliminados
+        for (const ventaId of Object.keys(restaPorVenta)) {
+            const resta = restaPorVenta[ventaId];
+            await Venta.increment({ total: -resta }, { where: { id: ventaId }, transaction: t });
+        }
+
+        // 4. Actualizar ventas que ahora no tienen detalles (pasar a cancelado)
         for (const ventaId of ventaIds) {
             const remaining = await Detalle.count({
                 where: { ventaId },
@@ -177,13 +191,13 @@ exports.deleteProduct = async (id) => {
             }
         }
 
-        // 3. Eliminar todos los precios del producto
+        // 5. Eliminar todos los precios del producto
         await Price.destroy({
             where: { productoId: id },
             transaction: t
         });
 
-        // 4. Finalmente, eliminar el producto
+        // 6. Finalmente, eliminar el producto
         await product.destroy({ transaction: t });
         await t.commit();
         return true;
