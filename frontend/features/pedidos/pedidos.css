@@ -2,11 +2,9 @@
 
 /* Estilos de Impresión Consolidado para Depósito */
 @media print {
-    body * {
-        visibility: hidden;
-    }
-    #printSection, #printSection * {
-        visibility: visible;
+    /* Ocultar el resto de los elementos del body para evitar hojas en blanco adicionales */
+    body > *:not(#printSection) {
+        display: none !important;
     }
     #printSection {
         display: block !important;
@@ -17,51 +15,61 @@
         padding: 1.6cm !important;
         margin: 0 !important;
     }
+    /* Salto de página para todos los tickets excepto el último, para evitar hoja en blanco al final */
+    .ticket-pedido-print:not(:last-child) {
+        page-break-after: always !important;
+        break-after: page !important;
+    }
+    .ticket-pedido-print {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
 }
 
 /* Estilos de Maquetación del Ticket (se aplican tanto en Impresión como en PDF en pantalla) */
-#printSection {
+#printSection, .preview-printable-content {
     background-color: white !important;
     color: black !important;
     padding: 20px;
     box-sizing: border-box;
     font-family: 'Inter', sans-serif;
 }
-#printSection .header-container {
+#printSection .header-container, .preview-printable-content .header-container {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 30px;
 }
-#printSection .header-left {
+#printSection .header-left, .preview-printable-content .header-left {
     flex: 1;
 }
-#printSection .header-left .recibo-label {
+#printSection .header-left .recibo-label, .preview-printable-content .header-left .recibo-label {
     font-size: 14px;
     text-transform: uppercase;
     margin: 0;
     color: #333;
 }
-#printSection .header-left h1 {
+#printSection .header-left h1, .preview-printable-content .header-left h1 {
     font-size: 28px;
     margin: 5px 0 15px 0;
     font-weight: bold;
     color: black !important;
     letter-spacing: 1px;
 }
-#printSection .header-left .info-line {
+#printSection .header-left .info-line, .preview-printable-content .header-left .info-line {
     font-size: 14px;
     margin: 3px 0;
     color: #111 !important;
 }
-#printSection .header-right {
+#printSection .header-right, .preview-printable-content .header-right {
     margin-left: 20px;
 }
-#printSection .header-right img {
+#printSection .header-right img, .preview-printable-content .header-right img {
     height: 140px;
     width: auto;
 }
-#printSection .meta-section {
+#printSection .meta-section, .preview-printable-content .meta-section {
     font-size: 14px;
     margin-bottom: 20px;
     font-weight: bold;
@@ -69,37 +77,37 @@
     padding-bottom: 10px;
     color: black !important;
 }
-#printSection table {
+#printSection table, .preview-printable-content table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
 }
-#printSection th, #printSection td {
+#printSection th, #printSection td, .preview-printable-content th, .preview-printable-content td {
     border: 1px solid #000 !important;
     padding: 8px 12px;
     text-align: left;
     font-size: 13px;
     color: black !important;
 }
-#printSection th {
+#printSection th, .preview-printable-content th {
     background-color: #f2f2f2 !important;
     font-weight: bold;
 }
-#printSection .col-producto {
+#printSection .col-producto, .preview-printable-content .col-producto {
     width: 70%;
 }
-#printSection .col-cantidad {
+#printSection .col-cantidad, .preview-printable-content .col-cantidad {
     width: 30%;
     text-align: center;
 }
-#printSection .cant-cell {
+#printSection .cant-cell, .preview-printable-content .cant-cell {
     text-align: center;
     font-weight: bold;
 }
-#printSection .text-center {
+#printSection .text-center, .preview-printable-content .text-center {
     text-align: center !important;
 }
-#printSection .text-right {
+#printSection .text-right, .preview-printable-content .text-right {
     text-align: right !important;
 }
 
@@ -191,5 +199,17 @@
 }
 .search-container:focus-within .search-icon {
     color: var(--accent-glow) !important;
+}
+
+/* Estilos para separar múltiples pedidos en pantalla */
+.ticket-pedido-print {
+    border-bottom: 2px dashed #cbd5e1;
+    padding-bottom: 30px;
+    margin-bottom: 30px;
+}
+.ticket-pedido-print:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
 }
 

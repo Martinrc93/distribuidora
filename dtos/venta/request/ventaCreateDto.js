@@ -17,10 +17,23 @@ class VentaCreateDto {
                 } else {
                     parsedCantidad = Number.parseFloat(d.cantidad);
                 }
+
+                let parsedPrecio = undefined;
+                if (d.precio !== undefined && d.precio !== null) {
+                    if (typeof d.precio === 'number') {
+                        parsedPrecio = d.precio;
+                    } else if (typeof d.precio === 'string') {
+                        parsedPrecio = Number.parseFloat(d.precio.replace(',', '.'));
+                    } else {
+                        parsedPrecio = Number.parseFloat(d.precio);
+                    }
+                }
+
                 return {
                     productoId: typeof d.productoId === 'number' ? d.productoId : Number.parseInt(d.productoId, 10),
                     precioId: typeof d.precioId === 'number' ? d.precioId : Number.parseInt(d.precioId, 10),
-                    cantidad: parsedCantidad
+                    cantidad: parsedCantidad,
+                    precio: parsedPrecio
                 };
               })
             : null;
@@ -75,6 +88,9 @@ class VentaCreateDto {
                     errors.push(`Detalle #${itemNum}: la "cantidad" de producto debe ser de al menos 1.`);
                 } else if (!Number.isInteger(d.cantidad)) {
                     errors.push(`Detalle #${itemNum}: la "cantidad" debe ser un número entero (ej. 1, 2, 3).`);
+                }
+                if (d.precio !== undefined && d.precio !== null && (Number.isNaN(d.precio) || d.precio < 0)) {
+                    errors.push(`Detalle #${itemNum}: el campo "precio" (personalizado) debe ser un número positivo.`);
                 }
             });
         }

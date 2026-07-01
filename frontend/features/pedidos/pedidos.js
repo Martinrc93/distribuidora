@@ -524,7 +524,11 @@ function renderDetallesTemporales() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${escapeHtml(d.nombre)}</td>
-            <td>$${d.precio.toFixed(2)}</td>
+            <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                    $<input type="number" min="0" step="0.01" class="form-control text-center new-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}">
+                </div>
+            </td>
             <td>${d.cantidad}</td>
             <td>$${d.subtotal.toFixed(2)}</td>
             <td>
@@ -544,6 +548,24 @@ function renderDetallesTemporales() {
             const index = parseInt(btn.getAttribute('data-index'), 10);
             detallesTemporales.splice(index, 1);
             renderDetallesTemporales();
+        });
+    });
+
+    // Agregar manejadores de eventos para cambiar el precio personalizado
+    document.querySelectorAll('.new-item-price').forEach(input => {
+        input.addEventListener('change', () => {
+            const index = parseInt(input.getAttribute('data-index'), 10);
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val >= 0) {
+                detallesTemporales[index].precio = val;
+                detallesTemporales[index].subtotal = parseFloat((val * detallesTemporales[index].cantidad).toFixed(2));
+                renderDetallesTemporales();
+            } else {
+                if (!isNaN(val) && val < 0) {
+                    showToast('El precio unitario no puede ser negativo.', 'error');
+                }
+                input.value = detallesTemporales[index].precio.toFixed(2);
+            }
         });
     });
 }
@@ -578,7 +600,8 @@ async function guardarPedido() {
         detalles: detallesTemporales.map(d => ({
             productoId: d.productoId,
             precioId: d.precioId,
-            cantidad: d.cantidad
+            cantidad: d.cantidad,
+            precio: d.precio
         }))
     };
 
@@ -689,7 +712,11 @@ function renderDetallesEdicion() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${escapeHtml(d.nombre)}</td>
-            <td>$${d.precio.toFixed(2)}</td>
+            <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                    $<input type="number" min="0" step="0.01" class="form-control text-center edit-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}">
+                </div>
+            </td>
             <td>
                 <input type="number" min="1" step="1" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}">
             </td>
@@ -711,6 +738,24 @@ function renderDetallesEdicion() {
             const index = parseInt(btn.getAttribute('data-index'), 10);
             detallesEdicion.splice(index, 1);
             renderDetallesEdicion();
+        });
+    });
+
+    // Manejador para cambiar el precio personalizado en edición
+    document.querySelectorAll('.edit-item-price').forEach(input => {
+        input.addEventListener('change', () => {
+            const index = parseInt(input.getAttribute('data-index'), 10);
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val >= 0) {
+                detallesEdicion[index].precio = val;
+                detallesEdicion[index].subtotal = parseFloat((val * detallesEdicion[index].cantidad).toFixed(2));
+                renderDetallesEdicion();
+            } else {
+                if (!isNaN(val) && val < 0) {
+                    showToast('El precio unitario no puede ser negativo.', 'error');
+                }
+                input.value = detallesEdicion[index].precio.toFixed(2);
+            }
         });
     });
 
@@ -852,9 +897,47 @@ function waitImagesAndPrint(elementId = 'printSection') {
     });
 }
 
+// New function to show preview before printing
+function previewAndPrint(elementId = 'printSection') {
+    const source = document.getElementById(elementId);
+    if (!source) {
+        console.warn('Preview source not found');
+        return;
+    }
+    const previewBody = document.getElementById('previewPrintBody');
+    if (!previewBody) {
+        console.warn('Preview modal body not found');
+        return;
+    }
+    previewBody.innerHTML = source.innerHTML;
+    const previewModalEl = document.getElementById('previewPrintModal');
+    if (previewModalEl) {
+        const previewModal = bootstrap.Modal.getOrCreateInstance(previewModalEl);
+        previewModal.show();
+    }
+}
+
+// Attach click handler for the print button inside preview modal
+document.addEventListener('DOMContentLoaded', () => {
+    const btnPrintFromPreview = document.getElementById('btnPrintFromPreview');
+    if (btnPrintFromPreview) {
+        btnPrintFromPreview.addEventListener('click', () => {
+            // Copy preview content to the dedicated print section
+            const previewSection = document.getElementById('previewPrintBody');
+            const printSection = document.getElementById('printSection');
+            if (previewSection && printSection) {
+                printSection.innerHTML = previewSection.innerHTML;
+                
+                // Trigger printing using waitImagesAndPrint on the printSection
+                waitImagesAndPrint('printSection');
+            }
+        });
+    }
+});
+
 function imprimirConsolidado() {
     if (generarConsolidadoHtml()) {
-        waitImagesAndPrint();
+        previewAndPrint();
     }
 }
 
@@ -944,7 +1027,7 @@ function generarResumenDiarioHtml() {
 
 function imprimirResumenDiario() {
     if (generarResumenDiarioHtml()) {
-        waitImagesAndPrint();
+        previewAndPrint();
     }
 }
 
@@ -986,10 +1069,8 @@ function generarTodosLosPedidosHtml() {
         }).join('');
 
         const totalStr = Number(venta.total).toFixed(2);
-        const pageBreakStyle = index < activeVentas.length - 1 ? 'page-break-after: always; break-after: page;' : '';
-
         combinedHtml += `
-            <div class="ticket-pedido-print" style="${pageBreakStyle} padding-bottom: 20px;">
+            <div class="ticket-pedido-print" style="padding-bottom: 20px;">
                 <div class="header-container">
                     <div class="header-left">
                         <p class="recibo-label">Comprobante de Pedido</p>
@@ -1034,7 +1115,7 @@ function generarTodosLosPedidosHtml() {
 
 function imprimirTodosLosPedidos() {
     if (generarTodosLosPedidosHtml()) {
-        waitImagesAndPrint();
+        previewAndPrint();
     }
 }
 
@@ -1139,7 +1220,7 @@ function generarEmpleadoHtml(empleadoId) {
 
 function imprimirEmpleado(empleadoId) {
     if (generarEmpleadoHtml(empleadoId)) {
-        waitImagesAndPrint();
+        previewAndPrint();
     }
 }
 
@@ -1228,7 +1309,7 @@ function generarClienteHtml(ventaId) {
 
 function imprimirCliente(ventaId) {
     if (generarClienteHtml(ventaId)) {
-        waitImagesAndPrint();
+        previewAndPrint();
     }
 }
 
@@ -1774,7 +1855,8 @@ function inicializarEventos() {
                 detalles: detallesEdicion.map(d => ({
                     productoId: d.productoId,
                     precioId: d.precioId,
-                    cantidad: d.cantidad
+                    cantidad: d.cantidad,
+                    precio: d.precio
                 }))
             };
 

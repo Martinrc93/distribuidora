@@ -73,6 +73,21 @@ exports.updateStatus = async (req, res) => {
                 }
                 item.cantidad = parsedCantidad;
 
+                if (item.precio !== undefined && item.precio !== null) {
+                    let parsedPrecio;
+                    if (typeof item.precio === 'number') {
+                        parsedPrecio = item.precio;
+                    } else if (typeof item.precio === 'string') {
+                        parsedPrecio = Number.parseFloat(item.precio.replace(',', '.'));
+                    } else {
+                        parsedPrecio = Number.parseFloat(item.precio);
+                    }
+                    if (isNaN(parsedPrecio) || parsedPrecio < 0) {
+                        return res.status(400).json({ error: `Detalle #${i + 1} inválido. El precio debe ser un número positivo.` });
+                    }
+                    item.precio = parsedPrecio;
+                }
+
                 if (!item.productoId || !item.precioId || isNaN(item.cantidad) || item.cantidad < 1) {
                     return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productoId, precioId y cantidad mayor o igual a 1.` });
                 }
