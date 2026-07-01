@@ -17,8 +17,8 @@ Price.init({
                 msg: 'El precio es obligatorio.' // Error amigable si es null
             },
             min: {
-                args: [0],
-                msg: 'El precio no puede ser negativo.' // Error amigable si es negativo
+                args: [0.01],
+                msg: 'El precio debe ser superior a 0.'
             }
         }
     },

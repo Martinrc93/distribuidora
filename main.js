@@ -1,7 +1,26 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
-
 const fs = require('fs');
+
+// Bloqueo de instancia única (Single Instance Lock)
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  console.log('Ya hay una instancia ejecutándose. Cerrando esta instancia...');
+  app.quit();
+  // Se requiere process.exit(0) para matar rápido el proceso en caso de que app.quit se encole
+  process.exit(0);
+}
+
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  // Alguien intentó ejecutar una segunda instancia, enfocamos nuestra ventana
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+// Configurar idioma de Electron en español para que los calendarios (input type="date") se muestren en formato DD/MM/YYYY
+app.commandLine.appendSwitch('lang', 'es');
 
 // Configurar rutas escribibles en AppData antes de cargar Express
 const userDataPath = app.getPath('userData');
@@ -129,11 +148,12 @@ app.on('before-quit', (event) => {
     
     console.log('Cerrando sesión de WhatsApp antes de salir de la aplicación...');
     
-    // Temporizador de seguridad de 3 segundos para evitar que la app quede en segundo plano (modo fantasma)
+    // Temporizador de seguridad de 10 segundos para dar tiempo a Puppeteer/Chromium
+    // a cerrar limpiamente y persistir la sesión de WhatsApp
     const forceQuitTimer = setTimeout(() => {
       console.warn('El cierre de sesión de WhatsApp excedió el tiempo límite. Forzando salida...');
       app.exit(0);
-    }, 3000);
+    }, 10000);
 
     const whatsappService = require('./services/whatsappService.js');
     whatsappService.logoutAndDestroy().catch(err => {

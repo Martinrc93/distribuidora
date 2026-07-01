@@ -40,17 +40,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     };
 
-    // --- INICIALIZAR FECHAS POR DEFECTO ---
+    // --- INICIALIZAR FECHAS POR DEFECTO CON FLATPICKR ---
     const today = new Date();
     const fourteenDaysAgo = new Date();
     fourteenDaysAgo.setDate(today.getDate() - 14);
 
-    inputFechaMax.value = getLocalDateString(today);
-    inputFechaMin.value = getLocalDateString(fourteenDaysAgo);
+    const todayStr = getLocalDateString(today);
+    const fourteenDaysAgoStr = getLocalDateString(fourteenDaysAgo);
 
-    // Configurar límites iniciales
-    inputFechaMin.max = inputFechaMax.value;
-    inputFechaMax.min = inputFechaMin.value;
+    let fpMin = null;
+    let fpMax = null;
+
+    fpMin = flatpickr("#globalFechaMin", {
+        locale: "es",
+        altInput: true,
+        altFormat: "d/m/Y",
+        dateFormat: "Y-m-d",
+        defaultDate: todayStr,
+        maxDate: todayStr,
+        onChange: function(selectedDates, dateStr, instance) {
+            if (fpMax) fpMax.set("minDate", dateStr);
+            handleDateChange();
+        }
+    });
+
+    fpMax = flatpickr("#globalFechaMax", {
+        locale: "es",
+        altInput: true,
+        altFormat: "d/m/Y",
+        dateFormat: "Y-m-d",
+        defaultDate: todayStr,
+        minDate: todayStr,
+        onChange: function(selectedDates, dateStr, instance) {
+            if (fpMin) fpMin.set("maxDate", dateStr);
+            handleDateChange();
+        }
+    });
 
     // --- NAVEGACIÓN DE PESTAÑAS ---
     tabs.forEach(tab => {
@@ -76,31 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- FILTRADO AUTOMÁTICO AL CAMBIAR FECHAS ---
-    const handleDateChange = (e) => {
-        // Validar y ajustar si Desde > Hasta
-        if (inputFechaMin.value && inputFechaMax.value && inputFechaMin.value > inputFechaMax.value) {
-            if (e.target === inputFechaMin) {
-                // Si cambió Desde, ajustamos Hasta
-                inputFechaMax.value = inputFechaMin.value;
-            } else if (e.target === inputFechaMax) {
-                // Si cambió Hasta, ajustamos Desde
-                inputFechaMin.value = inputFechaMax.value;
-            }
-        }
-
-        // Actualizar límites dinámicos
-        inputFechaMin.max = inputFechaMax.value;
-        inputFechaMax.min = inputFechaMin.value;
-
+    const handleDateChange = () => {
         const activeTabButton = document.querySelector('.dashboard-tab.active');
         if (activeTabButton) {
             const targetTab = activeTabButton.getAttribute('data-tab');
             loadTabData(targetTab);
         }
     };
-
-    inputFechaMin.addEventListener('change', handleDateChange);
-    inputFechaMax.addEventListener('change', handleDateChange);
 
     if (selectProductsLimit) {
         selectProductsLimit.addEventListener('change', () => {
@@ -143,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Rellenar KPIs
             document.getElementById('fin-facturacion').textContent = currencyFormatter.format(kpis.totalFacturado);
+            document.getElementById('fin-costos').textContent = currencyFormatter.format(kpis.totalCostos);
             document.getElementById('fin-ganancia').textContent = currencyFormatter.format(kpis.totalGanancia);
             document.getElementById('fin-ventas').textContent = kpis.totalVentas;
 
@@ -174,9 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const labels = history.map(item => {
-            // Formatear fecha de YYYY-MM-DD a DD/MM
+            // Formatear fecha de YYYY-MM-DD a DD/MM/YYYY
             const parts = item.fecha.split('-');
-            return `${parts[2]}/${parts[1]}`;
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
         });
         const ventasData = history.map(item => item.totalVentas);
         const gananciasData = history.map(item => item.totalGanancia);

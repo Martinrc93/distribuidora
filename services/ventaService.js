@@ -3,6 +3,7 @@ const sequelize = require('../config/db/dataBase');
 const Venta = require('../models/venta.js');
 const Detalle = require('../models/detalle.js');
 const Price = require('../models/price.js');
+const Product = require('../models/product.js');
 const Empleado = require('../models/empleado.js');
 const Cliente = require('../models/cliente.js');
 const detalleService = require('./detalleService.js');
@@ -111,12 +112,26 @@ exports.createVenta = async (ventaData) => {
                 throw new Error(`El precio con ID ${item.precioId} no pertenece al producto con ID ${item.productoId}.`);
             }
 
-            const unitPrice = Number.parseFloat(priceRecord.precio);
+            // Obtener el costo del producto para el cálculo de la ganancia
+            const product = await Product.findByPk(item.productoId, { transaction: t });
+            if (!product) {
+                throw new Error(`El producto con ID ${item.productoId} no existe.`);
+            }
+            const productCost = Number.parseFloat(product.costo);
+
+            // Si se envió un precio personalizado, usarlo; de lo contrario, usar el precio de lista
+            let unitPrice;
+            if (item.precio !== undefined && item.precio !== null && !isNaN(Number(item.precio))) {
+                unitPrice = Number.parseFloat(item.precio);
+            } else {
+                unitPrice = Number.parseFloat(priceRecord.precio);
+            }
+
             const subtotal = item.cantidad * unitPrice;
             totalVenta += subtotal;
 
-            // Calcular ganancia unitaria para acumular
-            const gananciaUnidad = await productService.getGanancia(item.productoId, item.precioId, { transaction: t });
+            // Calcular ganancia unitaria acumulada
+            const gananciaUnidad = Number.parseFloat((unitPrice - productCost).toFixed(2));
             totalGanancia += gananciaUnidad * item.cantidad;
 
             // Guardamos el detalle en la base de datos a través de detalleService
@@ -194,12 +209,26 @@ exports.updateVenta = async (id, activo, detalles = null) => {
                     throw new Error(`El precio con ID ${item.precioId} no pertenece al producto con ID ${item.productoId}.`);
                 }
 
-                const unitPrice = Number.parseFloat(priceRecord.precio);
+                // Obtener el costo del producto para el cálculo de la ganancia
+                const product = await Product.findByPk(item.productoId, { transaction: t });
+                if (!product) {
+                    throw new Error(`El producto con ID ${item.productoId} no existe.`);
+                }
+                const productCost = Number.parseFloat(product.costo);
+
+                // Si se envió un precio personalizado, usarlo; de lo contrario, usar el precio de lista
+                let unitPrice;
+                if (item.precio !== undefined && item.precio !== null && !isNaN(Number(item.precio))) {
+                    unitPrice = Number.parseFloat(item.precio);
+                } else {
+                    unitPrice = Number.parseFloat(priceRecord.precio);
+                }
+
                 const subtotal = item.cantidad * unitPrice;
                 totalVenta += subtotal;
 
                 // Calcular ganancia acumulada
-                const gananciaUnidad = await productService.getGanancia(item.productoId, item.precioId, { transaction: t });
+                const gananciaUnidad = Number.parseFloat((unitPrice - productCost).toFixed(2));
                 totalGanancia += gananciaUnidad * item.cantidad;
 
                 // Crear el detalle en la DB

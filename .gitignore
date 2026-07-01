@@ -31,3 +31,8 @@ dist/
 # Archivos Markdown
 *.md
 .mds/
+
+# Archivos comprimidos y de distribución
+dist.zip
+*.zip
+database.sqlite

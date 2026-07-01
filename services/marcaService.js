@@ -48,10 +48,26 @@ exports.getById = async (id) => {
 };
 
 /**
- * Crea una nueva marca.
+ * Crea una nueva marca. Si ya existe una eliminada lógicamente (soft-delete), la restaura.
  * @param {{nombre: string}} marcaData Datos de la marca.
  */
 exports.create = async (marcaData) => {
+    const nombreTrimmed = marcaData.nombre ? marcaData.nombre.trim() : '';
+
+    // Buscar si ya existe la marca (incluyendo registros con soft-delete)
+    const marcaExistente = await Marca.findOne({
+        where: { nombre: nombreTrimmed },
+        paranoid: false
+    });
+
+    if (marcaExistente) {
+        if (marcaExistente.deletedAt) {
+            // Si estaba eliminada por soft-delete, la restauramos
+            await marcaExistente.restore();
+            return marcaExistente;
+        }
+    }
+
     return await Marca.create({
         nombre: marcaData.nombre
     });

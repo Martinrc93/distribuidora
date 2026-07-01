@@ -10,6 +10,54 @@ function getLocalDateStr() {
     return `${year}-${month}-${day}`;
 }
 
+function getRangoFechasFormateado() {
+    const fechaMinEl = document.getElementById('fechaMinInput');
+    const fechaMaxEl = document.getElementById('fechaMaxInput');
+    
+    if (fechaMinEl && fechaMinEl.value && fechaMaxEl && fechaMaxEl.value) {
+        const minVal = fechaMinEl.value; // YYYY-MM-DD
+        const maxVal = fechaMaxEl.value; // YYYY-MM-DD
+        
+        const formatFecha = (fStr) => {
+            const parts = fStr.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        };
+        
+        if (minVal === maxVal) {
+            return formatFecha(minVal);
+        } else {
+            return `${formatFecha(minVal)} - ${formatFecha(maxVal)}`;
+        }
+    }
+    
+    const today = new Date();
+    return `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+}
+
+let fpMin = null;
+let fpMax = null;
+
+function inicializarFiltroFechas() {
+    const todayStr = getLocalDateStr();
+    
+    // Inicializar Flatpickr con idioma español y formato d/m/Y
+    fpMin = flatpickr("#fechaMinInput", {
+        locale: "es",
+        altInput: true,
+        altFormat: "d/m/Y",
+        dateFormat: "Y-m-d",
+        defaultDate: todayStr
+    });
+    
+    fpMax = flatpickr("#fechaMaxInput", {
+        locale: "es",
+        altInput: true,
+        altFormat: "d/m/Y",
+        dateFormat: "Y-m-d",
+        defaultDate: todayStr
+    });
+}
+
 // Elementos del DOM
 let tablaPedidos = null;
 let formAgregarPedido = null;
@@ -112,7 +160,7 @@ async function cargarDatosAuxiliares() {
     try {
         console.log('Cargando datos auxiliares...');
         const [respClientes, respEmpleados, respProductos, respMarcas, respConfig] = await Promise.all([
-            apiClient.get('/clientes'),
+            apiClient.get('/clientes?limit=1000'),
             apiClient.get('/empleados'),
             apiClient.get('/products/all'),
             apiClient.get('/marcas/all'),
@@ -231,7 +279,7 @@ async function cargarDatosAuxiliares() {
  */
 async function recargarClientes() {
     try {
-        const respClientes = await apiClient.get('/clientes');
+        const respClientes = await apiClient.get('/clientes?limit=1000');
         clientes = respClientes?.data || [];
         // Actualizar las opciones del combobox de clientes
         const pedidoClienteInput = document.getElementById('pedidoCliente');
@@ -248,18 +296,27 @@ async function recargarClientes() {
  */
 async function cargarVentas() {
     try {
-        console.log('Cargando pedidos/ventas del día...');
+        console.log('Cargando pedidos/ventas...');
         tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin"></i> Cargando pedidos...</td></tr>';
         
-        // Obtener la fecha local de hoy en formato YYYY-MM-DD
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
+        const fechaMinEl = document.getElementById('fechaMinInput');
+        const fechaMaxEl = document.getElementById('fechaMaxInput');
+        
+        let url = '/ventas?limit=100';
+        if (fechaMinEl && fechaMinEl.value) {
+            url += `&fechaMin=${fechaMinEl.value}`;
+        }
+        if (fechaMaxEl && fechaMaxEl.value) {
+            url += `&fechaMax=${fechaMaxEl.value}`;
+        }
+        
+        // Si no existen los inputs de rango de fechas aún, caemos al día de hoy por defecto
+        if ((!fechaMinEl || !fechaMinEl.value) && (!fechaMaxEl || !fechaMaxEl.value)) {
+            const todayStr = getLocalDateStr();
+            url += `&dia=${todayStr}`;
+        }
 
-        // Hacemos el fetch mandando el filtro de día
-        const respuesta = await apiClient.get(`/ventas?limit=100&dia=${todayStr}`);
+        const respuesta = await apiClient.get(url);
         
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta inválida:', respuesta);
@@ -268,7 +325,7 @@ async function cargarVentas() {
         }
         
         ventas = respuesta.data;
-        console.log('Pedidos cargados hoy:', ventas);
+        console.log('Pedidos cargados:', ventas);
 
         // Obtener el valor actual del buscador si existe y renderizar
         const searchInput = document.getElementById('pedidoSearchInput');
@@ -312,7 +369,15 @@ function renderVentasTable(filterQuery = '') {
         if (query) {
             tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No se encontraron pedidos que coincidan con la búsqueda</td></tr>';
         } else {
-            tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados el día de hoy</td></tr>';
+            const fechaMinEl = document.getElementById('fechaMinInput');
+            const fechaMaxEl = document.getElementById('fechaMaxInput');
+            const todayStr = getLocalDateStr();
+            
+            if (fechaMinEl && fechaMaxEl && (fechaMinEl.value !== todayStr || fechaMaxEl.value !== todayStr)) {
+                tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados en el rango de fechas seleccionado</td></tr>';
+            } else {
+                tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No hay pedidos registrados el día de hoy</td></tr>';
+            }
         }
         return;
     }
@@ -459,7 +524,11 @@ function renderDetallesTemporales() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${escapeHtml(d.nombre)}</td>
-            <td>$${d.precio.toFixed(2)}</td>
+            <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                    $<input type="number" min="0" step="0.01" class="form-control text-center new-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}">
+                </div>
+            </td>
             <td>${d.cantidad}</td>
             <td>$${d.subtotal.toFixed(2)}</td>
             <td>
@@ -479,6 +548,24 @@ function renderDetallesTemporales() {
             const index = parseInt(btn.getAttribute('data-index'), 10);
             detallesTemporales.splice(index, 1);
             renderDetallesTemporales();
+        });
+    });
+
+    // Agregar manejadores de eventos para cambiar el precio personalizado
+    document.querySelectorAll('.new-item-price').forEach(input => {
+        input.addEventListener('change', () => {
+            const index = parseInt(input.getAttribute('data-index'), 10);
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val >= 0) {
+                detallesTemporales[index].precio = val;
+                detallesTemporales[index].subtotal = parseFloat((val * detallesTemporales[index].cantidad).toFixed(2));
+                renderDetallesTemporales();
+            } else {
+                if (!isNaN(val) && val < 0) {
+                    showToast('El precio unitario no puede ser negativo.', 'error');
+                }
+                input.value = detallesTemporales[index].precio.toFixed(2);
+            }
         });
     });
 }
@@ -513,7 +600,8 @@ async function guardarPedido() {
         detalles: detallesTemporales.map(d => ({
             productoId: d.productoId,
             precioId: d.precioId,
-            cantidad: d.cantidad
+            cantidad: d.cantidad,
+            precio: d.precio
         }))
     };
 
@@ -624,7 +712,11 @@ function renderDetallesEdicion() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${escapeHtml(d.nombre)}</td>
-            <td>$${d.precio.toFixed(2)}</td>
+            <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                    $<input type="number" min="0" step="0.01" class="form-control text-center edit-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}">
+                </div>
+            </td>
             <td>
                 <input type="number" min="1" step="1" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}">
             </td>
@@ -646,6 +738,24 @@ function renderDetallesEdicion() {
             const index = parseInt(btn.getAttribute('data-index'), 10);
             detallesEdicion.splice(index, 1);
             renderDetallesEdicion();
+        });
+    });
+
+    // Manejador para cambiar el precio personalizado en edición
+    document.querySelectorAll('.edit-item-price').forEach(input => {
+        input.addEventListener('change', () => {
+            const index = parseInt(input.getAttribute('data-index'), 10);
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val >= 0) {
+                detallesEdicion[index].precio = val;
+                detallesEdicion[index].subtotal = parseFloat((val * detallesEdicion[index].cantidad).toFixed(2));
+                renderDetallesEdicion();
+            } else {
+                if (!isNaN(val) && val < 0) {
+                    showToast('El precio unitario no puede ser negativo.', 'error');
+                }
+                input.value = detallesEdicion[index].precio.toFixed(2);
+            }
         });
     });
 
@@ -710,12 +820,12 @@ function generarConsolidadoHtml() {
     });
 
     if (items.length === 0) {
-        showToast('No hay pedidos activos registrados el día de hoy para enviar al depósito.', 'error');
+        showToast('No hay pedidos activos registrados en el rango seleccionado para enviar al depósito.', 'error');
         return false;
     }
 
+    const formattedDate = getRangoFechasFormateado();
     const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
     const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
 
     const printSection = document.getElementById('printSection');
@@ -760,9 +870,74 @@ function generarConsolidadoHtml() {
     return false;
 }
 
+function waitImagesAndPrint(elementId = 'printSection') {
+    const printSection = document.getElementById(elementId);
+    if (!printSection) {
+        window.print();
+        return;
+    }
+    const images = printSection.querySelectorAll('img');
+    if (images.length === 0) {
+        window.print();
+        return;
+    }
+    const promises = Array.from(images).map(img => {
+        if (img.complete) {
+            return Promise.resolve();
+        }
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+        });
+    });
+    Promise.all(promises).then(() => {
+        setTimeout(() => {
+            window.print();
+        }, 50);
+    });
+}
+
+// New function to show preview before printing
+function previewAndPrint(elementId = 'printSection') {
+    const source = document.getElementById(elementId);
+    if (!source) {
+        console.warn('Preview source not found');
+        return;
+    }
+    const previewBody = document.getElementById('previewPrintBody');
+    if (!previewBody) {
+        console.warn('Preview modal body not found');
+        return;
+    }
+    previewBody.innerHTML = source.innerHTML;
+    const previewModalEl = document.getElementById('previewPrintModal');
+    if (previewModalEl) {
+        const previewModal = bootstrap.Modal.getOrCreateInstance(previewModalEl);
+        previewModal.show();
+    }
+}
+
+// Attach click handler for the print button inside preview modal
+document.addEventListener('DOMContentLoaded', () => {
+    const btnPrintFromPreview = document.getElementById('btnPrintFromPreview');
+    if (btnPrintFromPreview) {
+        btnPrintFromPreview.addEventListener('click', () => {
+            // Copy preview content to the dedicated print section
+            const previewSection = document.getElementById('previewPrintBody');
+            const printSection = document.getElementById('printSection');
+            if (previewSection && printSection) {
+                printSection.innerHTML = previewSection.innerHTML;
+                
+                // Trigger printing using waitImagesAndPrint on the printSection
+                waitImagesAndPrint('printSection');
+            }
+        });
+    }
+});
+
 function imprimirConsolidado() {
     if (generarConsolidadoHtml()) {
-        window.print();
+        previewAndPrint();
     }
 }
 
@@ -799,12 +974,11 @@ function generarResumenDiarioHtml() {
     items.sort((a, b) => a.cliente.localeCompare(b.cliente));
 
     if (items.length === 0) {
-        showToast('No hay pedidos activos registrados el día de hoy.', 'error');
+        showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');
         return false;
     }
 
-    const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    const formattedDate = getRangoFechasFormateado();
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
@@ -853,7 +1027,7 @@ function generarResumenDiarioHtml() {
 
 function imprimirResumenDiario() {
     if (generarResumenDiarioHtml()) {
-        window.print();
+        previewAndPrint();
     }
 }
 
@@ -863,7 +1037,7 @@ function imprimirResumenDiario() {
 function generarTodosLosPedidosHtml() {
     const activeVentas = ventas.filter(v => v.activo);
     if (activeVentas.length === 0) {
-        showToast('No hay pedidos activos registrados el día de hoy.', 'error');
+        showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');
         return false;
     }
 
@@ -874,6 +1048,8 @@ function generarTodosLosPedidosHtml() {
 
     activeVentas.forEach((venta, index) => {
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+        const clientObj = clientes.find(c => c.id === venta.clienteId);
+        const clienteDireccion = clientObj && clientObj.direccion ? clientObj.direccion : '';
         const empleadoName = venta.empleadoNombre && venta.empleadoApellido
             ? `${venta.empleadoNombre} ${venta.empleadoApellido}`
             : (venta.empleadoNombre || 'N/A');
@@ -895,16 +1071,15 @@ function generarTodosLosPedidosHtml() {
         }).join('');
 
         const totalStr = Number(venta.total).toFixed(2);
-        const pageBreakStyle = index < activeVentas.length - 1 ? 'page-break-after: always; break-after: page;' : '';
-
         combinedHtml += `
-            <div class="ticket-pedido-print" style="${pageBreakStyle} padding-bottom: 20px;">
+            <div class="ticket-pedido-print" style="padding-bottom: 20px;">
                 <div class="header-container">
                     <div class="header-left">
                         <p class="recibo-label">Comprobante de Pedido</p>
                         <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
                         <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                         <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
+                        ${clienteDireccion ? `<p class="info-line">Dirección: ${clienteDireccion.toUpperCase()}</p>` : ''}
                         <p class="info-line">Vendedor: ${empleadoName}</p>
                     </div>
                     <div class="header-right">
@@ -943,7 +1118,7 @@ function generarTodosLosPedidosHtml() {
 
 function imprimirTodosLosPedidos() {
     if (generarTodosLosPedidosHtml()) {
-        window.print();
+        previewAndPrint();
     }
 }
 
@@ -996,12 +1171,12 @@ function generarEmpleadoHtml(empleadoId) {
     });
 
     if (items.length === 0) {
-        showToast(`No hay pedidos activos asignados a ${employeeName} el día de hoy.`, 'error');
+        showToast(`No hay pedidos activos asignados a ${employeeName} en el rango seleccionado.`, 'error');
         return false;
     }
 
+    const formattedDate = getRangoFechasFormateado();
     const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
     const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}-EMP${empleadoId}`;
 
     const printSection = document.getElementById('printSection');
@@ -1048,7 +1223,7 @@ function generarEmpleadoHtml(empleadoId) {
 
 function imprimirEmpleado(empleadoId) {
     if (generarEmpleadoHtml(empleadoId)) {
-        window.print();
+        previewAndPrint();
     }
 }
 
@@ -1070,6 +1245,8 @@ function generarClienteHtml(ventaId) {
     }
 
     const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+    const clientObj = clientes.find(c => c.id === venta.clienteId);
+    const clienteDireccion = clientObj && clientObj.direccion ? clientObj.direccion : '';
     const empleadoName = venta.empleadoNombre && venta.empleadoApellido
         ? `${venta.empleadoNombre} ${venta.empleadoApellido}`
         : (venta.empleadoNombre || 'N/A');
@@ -1101,6 +1278,7 @@ function generarClienteHtml(ventaId) {
                     <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
                     <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
+                    ${clienteDireccion ? `<p class="info-line">Dirección: ${clienteDireccion.toUpperCase()}</p>` : ''}
                     <p class="info-line">Vendedor: ${empleadoName}</p>
                 </div>
                 <div class="header-right">
@@ -1137,7 +1315,7 @@ function generarClienteHtml(ventaId) {
 
 function imprimirCliente(ventaId) {
     if (generarClienteHtml(ventaId)) {
-        window.print();
+        previewAndPrint();
     }
 }
 
@@ -1683,7 +1861,8 @@ function inicializarEventos() {
                 detalles: detallesEdicion.map(d => ({
                     productoId: d.productoId,
                     precioId: d.precioId,
-                    cantidad: d.cantidad
+                    cantidad: d.cantidad,
+                    precio: d.precio
                 }))
             };
 
@@ -1757,6 +1936,30 @@ function inicializarEventos() {
             debounceTimer = setTimeout(() => {
                 renderVentasTable(searchInput.value);
             }, 300);
+        });
+    }
+
+    // Filtro de Fechas
+    const fechaMinEl = document.getElementById('fechaMinInput');
+    const fechaMaxEl = document.getElementById('fechaMaxInput');
+    const btnFechaHoy = document.getElementById('btnFechaHoy');
+
+    if (fechaMinEl) {
+        fechaMinEl.addEventListener('change', () => {
+            cargarVentas();
+        });
+    }
+    if (fechaMaxEl) {
+        fechaMaxEl.addEventListener('change', () => {
+            cargarVentas();
+        });
+    }
+    if (btnFechaHoy) {
+        btnFechaHoy.addEventListener('click', () => {
+            const todayStr = getLocalDateStr();
+            if (fpMin) fpMin.setDate(todayStr);
+            if (fpMax) fpMax.setDate(todayStr);
+            cargarVentas();
         });
     }
 }
@@ -1875,6 +2078,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Página de pedidos cargada. Inicializando...');
     if (inicializarElementos()) {
         await cargarDatosAuxiliares();
+        inicializarFiltroFechas();
         await cargarVentas();
         inicializarEventos();
     }

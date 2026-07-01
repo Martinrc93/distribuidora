@@ -46,8 +46,8 @@ Product.init({
                 msg: 'El costo es obligatorio.'
             },
             min: {
-                args: [0],
-                msg: 'El costo no puede ser negativo.'
+                args: [0.01],
+                msg: 'El costo debe ser superior a 0.'
             }
         }
     }

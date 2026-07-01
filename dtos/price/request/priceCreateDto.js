@@ -19,8 +19,8 @@ class PriceCreateDto {
 
         if (this.precio === undefined || this.precio === null || isNaN(this.precio)) {
             errors.push('El campo "precio" es obligatorio y debe ser un número decimal.');
-        } else if (this.precio < 0) {
-            errors.push('El campo "precio" no puede ser negativo.');
+        } else if (this.precio <= 0) {
+            errors.push('El campo "precio" debe ser superior a 0.');
         }
 
         if (!this.productoId || isNaN(this.productoId)) {

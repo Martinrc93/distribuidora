@@ -36,8 +36,8 @@ class ProductUpdateDto {
         if (this.costo !== undefined) {
             if (this.costo === null || this.costo === undefined || Number.isNaN(this.costo)) {
                 errors.push('El campo "costo" debe ser un número decimal si se proporciona.');
-            } else if (this.costo < 0) {
-                errors.push('El campo "costo" no puede ser negativo.');
+            } else if (this.costo <= 0) {
+                errors.push('El campo "costo" debe ser superior a 0.');
             }
         }
 

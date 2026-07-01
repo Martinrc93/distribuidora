@@ -3,6 +3,7 @@ import { showToast } from '../../utils/ui.js';
 
 let lastQrString = null;
 let pollingInterval = null;
+let isDisconnecting = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Inicializar el estado de WhatsApp y comenzar polling
@@ -77,9 +78,9 @@ function updateUI(status, qrCodeData) {
     connectedSection.classList.add('d-none');
     initializingSection.classList.add('d-none');
 
-    // Habilitar el botón siempre (excepto en estado ERROR) para poder restablecer la sesión si se traba la inicialización
+    // Habilitar el botón siempre (excepto en estado ERROR o si está en pleno cierre)
     if (btnDisconnect) {
-        btnDisconnect.disabled = (status === 'ERROR');
+        btnDisconnect.disabled = (status === 'ERROR' || isDisconnecting);
     }
 
     switch (status) {
@@ -139,8 +140,9 @@ function updateUI(status, qrCodeData) {
  */
 async function handleDisconnect() {
     const btnDisconnect = document.getElementById('btnDisconnect');
-    if (!btnDisconnect || btnDisconnect.disabled) return;
+    if (!btnDisconnect || btnDisconnect.disabled || isDisconnecting) return;
 
+    isDisconnecting = true;
     btnDisconnect.disabled = true;
     btnDisconnect.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cerrando sesión...';
 
@@ -148,15 +150,15 @@ async function handleDisconnect() {
         await apiClient.post('/whatsapp/logout');
         showToast('Sesión de WhatsApp cerrada correctamente.', 'success');
         lastQrString = null;
-        await checkWhatsAppStatus();
     } catch (error) {
         showToast('Error al cerrar la sesión de WhatsApp: ' + error.message, 'error');
-        // Si falla, volver a consultar el estado para actualizar el botón
-        await checkWhatsAppStatus();
     } finally {
+        isDisconnecting = false;
         if (btnDisconnect) {
             btnDisconnect.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión / Restablecer';
+            btnDisconnect.disabled = false;
         }
+        await checkWhatsAppStatus();
     }
 }
 
