@@ -2,6 +2,23 @@ const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Bloqueo de instancia única (Single Instance Lock)
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  console.log('Ya hay una instancia ejecutándose. Cerrando esta instancia...');
+  app.quit();
+  // Se requiere process.exit(0) para matar rápido el proceso en caso de que app.quit se encole
+  process.exit(0);
+}
+
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  // Alguien intentó ejecutar una segunda instancia, enfocamos nuestra ventana
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
 // Configurar idioma de Electron en español para que los calendarios (input type="date") se muestren en formato DD/MM/YYYY
 app.commandLine.appendSwitch('lang', 'es');
 

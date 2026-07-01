@@ -3,7 +3,7 @@ const qrcodeTerminal = require('qrcode-terminal');
 const fs = require('fs');
 const path = require('path');
 const { createWhatsAppClient } = require('../config/whatsappClient');
-
+const { exec } = require('child_process');
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -28,6 +28,19 @@ let status = STATES.DISCONNECTED;
 let qrCodeData = null;
 let isExplicitLogout = false;
 let connectionRetries = 0;
+let browserPid = null;
+
+function forceKillChromium(pid) {
+    if (!pid) return;
+    logInfo(`Forzando cierre del proceso Chromium (PID: ${pid})...`);
+    exec(`taskkill /F /T /PID ${pid}`, (error) => {
+        if (error) {
+            logInfo(`El PID ${pid} ya no existe o no se pudo matar.`);
+        } else {
+            logInfo(`Proceso Chromium ${pid} destruido correctamente.`);
+        }
+    });
+}
 
 // ---------------------------------------------------------------------------
 // Structured logging  (doc Section 12.6)
@@ -78,6 +91,10 @@ function registerClientEvents(whatsappClient) {
         qrCodeData = qr;
         logInfo('QR code generated. Scan it with WhatsApp to connect.');
         qrcodeTerminal.generate(qr, { small: true });
+
+        if (whatsappClient.pupBrowser && whatsappClient.pupBrowser.process()) {
+            browserPid = whatsappClient.pupBrowser.process().pid;
+        }
     });
 
     whatsappClient.on('ready', () => {
@@ -150,8 +167,10 @@ async function initWhatsApp(isAutoReconnect = false) {
             ]);
         } catch (e) {
             logError('Error destroying previous client (continuing):', e);
+            if (browserPid) forceKillChromium(browserPid);
         }
         client = null;
+        browserPid = null;
     }
 
     logInfo('Initializing client...');
@@ -162,7 +181,19 @@ async function initWhatsApp(isAutoReconnect = false) {
 
     registerClientEvents(client);
 
-    client.initialize().catch(err => {
+    client.initialize().then(() => {
+        if (client && client.pupBrowser && client.pupBrowser.process()) {
+            browserPid = client.pupBrowser.process().pid;
+            
+            client.pupBrowser.on('disconnected', () => {
+                logError('Navegador Chromium desconectado internamente (Crash silencioso).');
+                // Emitir evento para forzar ciclo de reconexión
+                if (client) {
+                    client.emit('disconnected', 'Browser process crashed');
+                }
+            });
+        }
+    }).catch(err => {
         logError('Initialization failed:', err);
         status = STATES.DISCONNECTED;
     });
@@ -295,8 +326,10 @@ async function logout() {
             ]);
         } catch (e) {
             logInfo(`Error destroying client during logout: ${e.message}`);
+            if (browserPid) forceKillChromium(browserPid);
         }
 
+        browserPid = null;
         isExplicitLogout = false;
         // Re-initialize with a fresh client
         initWhatsApp();
@@ -321,11 +354,16 @@ async function logoutAndDestroy() {
         logInfo('Shutting down client and releasing resources...');
         status = STATES.DISCONNECTED;
         qrCodeData = null;
-        await client.destroy();
+        await Promise.race([
+            client.destroy(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Exit destroy timeout')), 10000))
+        ]);
         logInfo('Client destroyed successfully.');
     } catch (error) {
         logError('Error destroying client on exit:', error);
+        if (browserPid) forceKillChromium(browserPid);
     }
+    browserPid = null;
 }
 
 module.exports = {
