@@ -214,72 +214,77 @@ function getStatus() {
  * @param {string} filename  — Display name for the file
  */
 async function sendPDF(number, pdfBase64, filename) {
-    if (status !== STATES.CONNECTED || !client) {
-        throw new Error('WhatsApp no está conectado. Por favor, iniciá sesión primero.');
-    }
+    // Timeout para toda la operación de envío
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('El envío excedió el tiempo de espera (15s). WhatsApp puede estar sin respuesta.')), 15000);
+    });
 
-    // Strip all non-numeric characters
-    let cleanedNumber = number.replace(/\D/g, '');
+    const sendLogic = async () => {
+        if (status !== STATES.CONNECTED || !client) {
+            throw new Error('WhatsApp no está conectado. Esperá a que se vincule la sesión.');
+        }
 
-    // Smart formatting for Argentine mobile numbers
-    if (cleanedNumber.length === 10) {
-        // 10 digits (e.g. 1150222520) → prepend country code + mobile prefix
-        cleanedNumber = '549' + cleanedNumber;
-    } else if (cleanedNumber.length === 12 && cleanedNumber.startsWith('54')) {
-        // 12 digits starting with 54 (e.g. 541150222520) → insert mobile "9"
-        cleanedNumber = '549' + cleanedNumber.slice(2);
-    }
+        let cleanedNumber = number.replace(/[^\d]/g, '');
 
-    // Ensure WhatsApp chat ID suffix
-    if (!cleanedNumber.endsWith('@c.us')) {
-        cleanedNumber = `${cleanedNumber}@c.us`;
-    }
+        if (cleanedNumber.length === 10 && !cleanedNumber.startsWith('549')) {
+            cleanedNumber = '549' + cleanedNumber;
+        } else if (cleanedNumber.startsWith('54') && !cleanedNumber.startsWith('549')) {
+            cleanedNumber = '549' + cleanedNumber.slice(2);
+        }
 
-    // Resolve the registered WhatsApp ID
-    let resolvedJid = cleanedNumber;
-    try {
-        logInfo(`Looking up registered WhatsApp ID for: ${cleanedNumber}`);
-        const numberId = await client.getNumberId(cleanedNumber);
+        if (!cleanedNumber.endsWith('@c.us')) {
+            cleanedNumber = `${cleanedNumber}@c.us`;
+        }
 
-        if (numberId) {
-            resolvedJid = numberId._serialized;
-            logInfo(`WhatsApp ID resolved: ${resolvedJid}`);
-        } else if (cleanedNumber.startsWith('549')) {
-            // Fallback: try without the mobile "9" (some numbers are registered that way)
-            const altLookup = '54' + cleanedNumber.slice(3);
-            logInfo(`Not found with 549 prefix. Trying alternative: ${altLookup}`);
-            const altNumberId = await client.getNumberId(altLookup);
+        let resolvedJid = cleanedNumber;
+        try {
+            logInfo(`Looking up registered WhatsApp ID for: ${cleanedNumber}`);
+            const numberId = await client.getNumberId(cleanedNumber);
 
-            if (altNumberId) {
-                resolvedJid = altNumberId._serialized;
-                logInfo(`WhatsApp ID resolved (alternative): ${resolvedJid}`);
+            if (numberId) {
+                resolvedJid = numberId._serialized;
+                logInfo(`WhatsApp ID resolved: ${resolvedJid}`);
+            } else if (cleanedNumber.startsWith('549')) {
+                const altLookup = '54' + cleanedNumber.slice(3);
+                logInfo(`Not found with 549 prefix. Trying alternative: ${altLookup}`);
+                const altNumberId = await client.getNumberId(altLookup);
+
+                if (altNumberId) {
+                    resolvedJid = altNumberId._serialized;
+                    logInfo(`WhatsApp ID resolved (alternative): ${resolvedJid}`);
+                } else {
+                    throw new Error('El número no está registrado en WhatsApp.');
+                }
             } else {
                 throw new Error('El número no está registrado en WhatsApp.');
             }
-        } else {
-            throw new Error('El número no está registrado en WhatsApp.');
+        } catch (err) {
+            logError('Number verification failed:', err);
+            if (err.message && err.message.includes('Execution context was destroyed')) {
+                if (client) client.emit('disconnected', 'Execution context destroyed during numberId lookup');
+                throw new Error('WhatsApp Web está experimentando inconvenientes, intentá nuevamente en unos segundos.');
+            }
+            throw new Error(err.message || 'El número no está registrado en WhatsApp o no se pudo verificar.');
         }
-    } catch (err) {
-        logError('Number verification failed:', err);
-        throw new Error(err.message || 'El número no está registrado en WhatsApp o no se pudo verificar.');
-    }
 
-    logInfo(`Sending PDF to: ${resolvedJid}`);
+        logInfo(`Sending PDF to: ${resolvedJid}`);
 
-    try {
-        const media = new MessageMedia('application/pdf', pdfBase64, filename);
-        await client.sendMessage(resolvedJid, media);
-        logInfo(`PDF sent successfully to ${resolvedJid}`);
-        return { success: true };
-    } catch (error) {
-        logError('Failed to send WhatsApp message:', error);
-        if (error.message && error.message.includes('Execution context was destroyed')) {
-            // Forzamos un reinicio de sesión porque el navegador quedó en estado inconsistente
-            if (client) client.emit('disconnected', 'Execution context destroyed during send');
-            throw new Error('WhatsApp Web está experimentando inconvenientes, intentá nuevamente en unos segundos.');
+        try {
+            const media = new MessageMedia('application/pdf', pdfBase64, filename);
+            await client.sendMessage(resolvedJid, media);
+            logInfo(`PDF sent successfully to ${resolvedJid}`);
+            return { success: true };
+        } catch (error) {
+            logError('Failed to send WhatsApp message:', error);
+            if (error.message && error.message.includes('Execution context was destroyed')) {
+                if (client) client.emit('disconnected', 'Execution context destroyed during send');
+                throw new Error('WhatsApp Web está experimentando inconvenientes, intentá nuevamente en unos segundos.');
+            }
+            throw new Error('Fallo al enviar el PDF: ' + error.message);
         }
-        throw new Error('Fallo al enviar el PDF: ' + error.message);
-    }
+    };
+
+    return Promise.race([sendLogic(), timeoutPromise]);
 }
 
 /**
