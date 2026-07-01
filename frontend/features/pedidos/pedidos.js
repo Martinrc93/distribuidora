@@ -852,50 +852,9 @@ function waitImagesAndPrint(elementId = 'printSection') {
     });
 }
 
-// New function to show preview before printing
-function previewAndPrint(elementId = 'printSection') {
-    const source = document.getElementById(elementId);
-    if (!source) {
-        console.warn('Preview source not found');
-        return;
-    }
-    const previewBody = document.getElementById('previewPrintBody');
-    if (!previewBody) {
-        console.warn('Preview modal body not found');
-        return;
-    }
-    previewBody.innerHTML = source.innerHTML;
-    const previewModal = new bootstrap.Modal(document.getElementById('previewPrintModal'));
-    previewModal.show();
-}
-
-// Attach click handler for the print button inside preview modal
-document.addEventListener('DOMContentLoaded', () => {
-    const btnPrintFromPreview = document.getElementById('btnPrintFromPreview');
-    if (btnPrintFromPreview) {
-        btnPrintFromPreview.addEventListener('click', () => {
-            // Use the same element used for preview (previewPrintBody) as the printable area
-            const previewSection = document.getElementById('previewPrintBody');
-            if (previewSection) {
-                // Temporarily copy preview content to a hidden print section for printing
-                const tempDiv = document.createElement('div');
-                tempDiv.style.position = 'absolute';
-                tempDiv.style.left = '-9999px';
-                tempDiv.innerHTML = previewSection.innerHTML;
-                document.body.appendChild(tempDiv);
-                waitImagesAndPrint(tempDiv.id = 'tempPrintSection');
-                // Cleanup after printing (delay to ensure print dialog is opened)
-                setTimeout(() => {
-                    document.body.removeChild(tempDiv);
-                }, 2000);
-            }
-        });
-    }
-});
-
 function imprimirConsolidado() {
     if (generarConsolidadoHtml()) {
-        previewAndPrint();
+        waitImagesAndPrint();
     }
 }
 
@@ -985,7 +944,7 @@ function generarResumenDiarioHtml() {
 
 function imprimirResumenDiario() {
     if (generarResumenDiarioHtml()) {
-        previewAndPrint();
+        waitImagesAndPrint();
     }
 }
 
@@ -1075,7 +1034,7 @@ function generarTodosLosPedidosHtml() {
 
 function imprimirTodosLosPedidos() {
     if (generarTodosLosPedidosHtml()) {
-        previewAndPrint();
+        waitImagesAndPrint();
     }
 }
 
@@ -1180,7 +1139,7 @@ function generarEmpleadoHtml(empleadoId) {
 
 function imprimirEmpleado(empleadoId) {
     if (generarEmpleadoHtml(empleadoId)) {
-        previewAndPrint();
+        waitImagesAndPrint();
     }
 }
 
@@ -1269,7 +1228,7 @@ function generarClienteHtml(ventaId) {
 
 function imprimirCliente(ventaId) {
     if (generarClienteHtml(ventaId)) {
-        previewAndPrint();
+        waitImagesAndPrint();
     }
 }
 
@@ -1578,7 +1537,7 @@ function inicializarEventos() {
     if (btnOptImprimirDeposito) {
         btnOptImprimirDeposito.addEventListener('click', (e) => {
             e.preventDefault();
-            previewAndPrint();
+            imprimirConsolidado();
         });
     }
 
@@ -1594,7 +1553,7 @@ function inicializarEventos() {
     if (btnOptImprimirResumenDiario) {
         btnOptImprimirResumenDiario.addEventListener('click', (e) => {
             e.preventDefault();
-            previewAndPrint();
+            imprimirResumenDiario();
         });
     }
 
@@ -1602,7 +1561,7 @@ function inicializarEventos() {
     if (btnOptImprimirTodosLosPedidos) {
         btnOptImprimirTodosLosPedidos.addEventListener('click', (e) => {
             e.preventDefault();
-            previewAndPrint();
+            imprimirTodosLosPedidos();
         });
     }
 
@@ -1623,7 +1582,6 @@ function inicializarEventos() {
             }
             const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalImprimirEmpleado'));
             if (modalInstance) modalInstance.hide();
-            previewAndPrint(); // imprimirEmpleado will generate HTML inside printSection
             imprimirEmpleado(parseInt(empVal, 10));
         });
     }
@@ -1639,7 +1597,6 @@ function inicializarEventos() {
             }
             const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalImprimirEmpleado'));
             if (modalInstance) modalInstance.hide();
-            previewAndPrint(); // preview before sending
             enviarEmpleadoWSP(parseInt(empVal, 10));
         });
     }
