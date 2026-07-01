@@ -273,7 +273,12 @@ async function sendPDF(number, pdfBase64, filename) {
         return { success: true };
     } catch (error) {
         logError('Failed to send WhatsApp message:', error);
-        throw error;
+        if (error.message && error.message.includes('Execution context was destroyed')) {
+            // Forzamos un reinicio de sesión porque el navegador quedó en estado inconsistente
+            if (client) client.emit('disconnected', 'Execution context destroyed during send');
+            throw new Error('La página interna de WhatsApp Web se recargó o interrumpió. Intentá nuevamente en unos segundos.');
+        }
+        throw new Error('Fallo al enviar el PDF: ' + error.message);
     }
 }
 
