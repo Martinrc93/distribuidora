@@ -1048,6 +1048,8 @@ function generarTodosLosPedidosHtml() {
 
     activeVentas.forEach((venta, index) => {
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+        const clientObj = clientes.find(c => c.id === venta.clienteId);
+        const clienteDireccion = clientObj && clientObj.direccion ? clientObj.direccion : '';
         const empleadoName = venta.empleadoNombre && venta.empleadoApellido
             ? `${venta.empleadoNombre} ${venta.empleadoApellido}`
             : (venta.empleadoNombre || 'N/A');
@@ -1077,6 +1079,7 @@ function generarTodosLosPedidosHtml() {
                         <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
                         <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                         <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
+                        ${clienteDireccion ? `<p class="info-line">Dirección: ${clienteDireccion.toUpperCase()}</p>` : ''}
                         <p class="info-line">Vendedor: ${empleadoName}</p>
                     </div>
                     <div class="header-right">
@@ -1242,6 +1245,8 @@ function generarClienteHtml(ventaId) {
     }
 
     const clienteName = venta.clienteNombre || 'Cliente Desconocido';
+    const clientObj = clientes.find(c => c.id === venta.clienteId);
+    const clienteDireccion = clientObj && clientObj.direccion ? clientObj.direccion : '';
     const empleadoName = venta.empleadoNombre && venta.empleadoApellido
         ? `${venta.empleadoNombre} ${venta.empleadoApellido}`
         : (venta.empleadoNombre || 'N/A');
@@ -1273,6 +1278,7 @@ function generarClienteHtml(ventaId) {
                     <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
                     <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
                     <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
+                    ${clienteDireccion ? `<p class="info-line">Dirección: ${clienteDireccion.toUpperCase()}</p>` : ''}
                     <p class="info-line">Vendedor: ${empleadoName}</p>
                 </div>
                 <div class="header-right">
