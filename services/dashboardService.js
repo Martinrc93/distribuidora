@@ -9,14 +9,25 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
         fechaMax: `${fechaMax} 23:59:59.999`
     };
 
-    // 1. Obtener KPIs generales
+    // 1. Obtener KPIs generales en una sola consulta evitando duplicación y excluyendo registros eliminados (paranoid)
     const kpiQuery = `
         SELECT 
-            COALESCE(SUM(total), 0) as totalFacturado,
-            COALESCE(SUM(ganancia), 0) as totalGanancia,
-            COUNT(id) as totalVentas
-        FROM Ventas
-        WHERE activo = 1 AND fecha_emision BETWEEN :fechaMin AND :fechaMax;
+            COALESCE(SUM(v.total), 0) as totalFacturado,
+            COALESCE(SUM(v.ganancia), 0) as totalGanancia,
+            COUNT(v.id) as totalVentas,
+            (
+                SELECT COALESCE(SUM(d.cantidad * p.costo), 0)
+                FROM Detalles d
+                INNER JOIN Ventas v2 ON d.ventaId = v2.id
+                INNER JOIN Products p ON d.productoId = p.id
+                WHERE v2.activo = 1 
+                  AND v2.deletedAt IS NULL 
+                  AND d.deletedAt IS NULL 
+                  AND p.deletedAt IS NULL
+                  AND v2.fecha_emision BETWEEN :fechaMin AND :fechaMax
+            ) as totalCostos
+        FROM Ventas v
+        WHERE v.activo = 1 AND v.deletedAt IS NULL AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax;
     `;
     const kpis = await sequelize.query(kpiQuery, { 
         replacements,
@@ -31,7 +42,7 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
             COALESCE(SUM(ganancia), 0) as totalGanancia,
             COUNT(id) as cantidadVentas
         FROM Ventas
-        WHERE activo = 1 AND fecha_emision BETWEEN :fechaMin AND :fechaMax
+        WHERE activo = 1 AND deletedAt IS NULL AND fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY date(fecha_emision)
         ORDER BY fecha ASC;
     `;
@@ -41,7 +52,7 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
     });
 
     return {
-        kpis: kpis[0] || { totalFacturado: 0, totalGanancia: 0, totalVentas: 0 },
+        kpis: kpis[0] || { totalFacturado: 0, totalGanancia: 0, totalVentas: 0, totalCostos: 0 },
         history
     };
 };
@@ -61,7 +72,7 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
         limitClause = 'LIMIT :queryLimit';
     }
 
-    // 1. Top productos más vendidos (usando LEFT JOIN para incluir todos los productos si es necesario)
+    // 1. Top productos más vendidos
     const topProductsQuery = `
         SELECT 
             p.id as productoId,
@@ -76,9 +87,13 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
                 SUM(d.cantidad * d.precio) as totalRecaudado
             FROM Detalles d
             INNER JOIN Ventas v ON d.ventaId = v.id
-            WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+            WHERE v.activo = 1 
+              AND v.deletedAt IS NULL 
+              AND d.deletedAt IS NULL
+              AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
             GROUP BY d.productoId
         ) sv ON p.id = sv.productoId
+        WHERE p.deletedAt IS NULL
         ORDER BY cantidadVendida DESC, p.nombre ASC
         ${limitClause};
     `;
@@ -99,7 +114,12 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
         INNER JOIN Products p ON d.productoId = p.id
         INNER JOIN Marcas m ON p.marcaId = m.id
         INNER JOIN Ventas v ON d.ventaId = v.id
-        WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+        WHERE v.activo = 1 
+          AND v.deletedAt IS NULL 
+          AND d.deletedAt IS NULL
+          AND p.deletedAt IS NULL
+          AND m.deletedAt IS NULL
+          AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY m.id, m.nombre
         ORDER BY totalRecaudado DESC;
     `;
@@ -110,7 +130,7 @@ exports.getPortfolioStats = async (fechaMin, fechaMax, limit = 10) => {
 
     // 3. Cantidad total de productos en el sistema
     const totalProductsResult = await sequelize.query(`
-        SELECT COUNT(id) as count FROM Products;
+        SELECT COUNT(id) as count FROM Products WHERE deletedAt IS NULL;
     `, { type: sequelize.QueryTypes.SELECT });
     const totalProductsCount = totalProductsResult[0]?.count || 0;
 
@@ -148,7 +168,11 @@ exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
         FROM Ventas v
         INNER JOIN Clientes c ON v.clienteId = c.id
         INNER JOIN ListaPrecios lp ON c.listaPreciosId = lp.id
-        WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+        WHERE v.activo = 1 
+          AND v.deletedAt IS NULL
+          AND c.deletedAt IS NULL
+          AND lp.deletedAt IS NULL
+          AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY c.id, c.nombre, lp.nombre
         ORDER BY totalComprado DESC
         ${limitClause};
@@ -168,7 +192,10 @@ exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
             COUNT(v.id) as cantidadVentas
         FROM Ventas v
         INNER JOIN Empleados e ON v.empleadoId = e.id
-        WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
+        WHERE v.activo = 1 
+          AND v.deletedAt IS NULL
+          AND e.deletedAt IS NULL
+          AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY e.id, e.nombre, e.apellido
         ORDER BY totalVendido DESC;
     `;
@@ -179,7 +206,7 @@ exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
 
     // 3. Cantidad total de clientes en el sistema
     const totalClientsResult = await sequelize.query(`
-        SELECT COUNT(id) as count FROM Clientes;
+        SELECT COUNT(id) as count FROM Clientes WHERE deletedAt IS NULL;
     `, { type: sequelize.QueryTypes.SELECT });
     const totalClientsCount = totalClientsResult[0]?.count || 0;
 

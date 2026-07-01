@@ -1,24 +1,23 @@
 // Alinear base de datos, aplicación y sistema en la misma zona horaria local
 require('./config/timezone.js');
 
-
-const fs = require('node:fs');
-const path = require('node:path');
 const sequelize = require('./config/db/dataBase.js');
-const User = require('./models/user.js'); // Importar el modelo para registrarlo en Sequelize
-const Product = require('./models/product.js'); // Importar el modelo de Producto
-const Empleado = require('./models/empleado.js'); // Importar el modelo de Empleado
-const Price = require('./models/price.js'); // Importar el modelo de Price
-const Venta = require('./models/venta.js'); // Importar el modelo de Venta
-const Detalle = require('./models/detalle.js'); // Importar el modelo de Detalle
-const Cliente = require('./models/cliente.js'); // Importar el modelo de Cliente
-const ListaPrecios = require('./models/listaPrecios.js'); // Importar el modelo de ListaPrecios
-const Marca = require('./models/marca.js'); // Importar el modelo de Marca
-const Configuracion = require('./models/configuracion.js'); // Importar el modelo de Configuracion
+const User = require('./models/user.js');
+const Product = require('./models/product.js');
+const Empleado = require('./models/empleado.js');
+const Price = require('./models/price.js');
+const Venta = require('./models/venta.js');
+const Detalle = require('./models/detalle.js');
+const Cliente = require('./models/cliente.js');
+const ListaPrecios = require('./models/listaPrecios.js');
+const Marca = require('./models/marca.js');
+const Configuracion = require('./models/configuracion.js');
 
 async function ejecutarSembrado() {
   try {
-    // Desactivar llaves foráneas y eliminar tablas antiguas (incluyendo la huérfana 'Venta' singular) para evitar conflictos de restricciones
+    console.log('Iniciando sembrado de base de datos...');
+
+    // Desactivar llaves foráneas y eliminar tablas antiguas
     await sequelize.query('PRAGMA foreign_keys = OFF;');
     await sequelize.query('DROP TABLE IF EXISTS `Detalles`;');
     await sequelize.query('DROP TABLE IF EXISTS `Venta`;');
@@ -33,61 +32,196 @@ async function ejecutarSembrado() {
     await sequelize.query('DROP TABLE IF EXISTS `Configuraciones`;');
     await sequelize.query('PRAGMA foreign_keys = ON;');
 
-    // Sincronizar la base de datos recreando las tablas (force: true) para aplicar cambios de esquema automáticamente
+    // Sincronizar las tablas vacías
     await sequelize.sync({ force: true });
+    console.log('Tablas recreadas con éxito.');
 
-    // Leer el archivo seed.sql
-    const rutaSql = path.join(__dirname, 'seed.sql');
-    let sql = fs.readFileSync(rutaSql, 'utf8');
+    // 1. Crear 5 Usuarios por defecto para compatibilidad del sistema
+    await User.bulkCreate([
+      { nombre: 'Juan Pérez' },
+      { nombre: 'María Rodríguez' },
+      { nombre: 'Carlos Gómez' },
+      { nombre: 'Ana Martínez' },
+      { nombre: 'Lucía Fernández' }
+    ]);
+    console.log('Usuarios creados.');
 
-    // Reemplazar funciones de fecha SQLite con fechas locales del sistema formateadas en YYYY-MM-DD HH:mm:ss.SSS
-    function formatSqlDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        const ms = String(date.getMilliseconds()).padStart(3, '0');
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`;
+    // 2. Crear Configuraciones básicas
+    await Configuracion.bulkCreate([
+      { clave: 'nombre_negocio', valor: 'Distri-Pipipuch' },
+      { clave: 'info_contacto', valor: 'LORENA 1150222520 - DANIEL 1150222413' }
+    ]);
+    console.log('Configuraciones creadas.');
+
+    // 3. Crear las 8 listas de precios requeridas por el sistema
+    const listasData = [];
+    for (let i = 1; i <= 8; i++) {
+      listasData.push({ id: i, nombre: `Lista ${i}` });
+    }
+    const listasPrecios = await ListaPrecios.bulkCreate(listasData);
+    console.log('8 listas de precios base creadas (Lista 1 a Lista 8).');
+
+    // 4. Crear exactamente 10 Marcas
+    const nombresMarcas = [
+      'Marlboro', 'Lucky Strike', 'Philip Morris', 'Chesterfield', 'Camel',
+      'Red Point', 'Milenio / Mill', 'Melbourne', 'Kiel', 'Master'
+    ];
+    const marcasData = nombresMarcas.map(nombre => ({ nombre }));
+    const marcas = await Marca.bulkCreate(marcasData);
+    console.log('10 marcas creadas.');
+
+    // 5. Para cada marca, crear entre 5 y 10 productos
+    const productosCreados = [];
+    const preciosData = [];
+
+    for (let i = 0; i < marcas.length; i++) {
+      const marca = marcas[i];
+      const cantProductos = Math.floor(Math.random() * 6) + 5; // 5 a 10 productos
+
+      for (let j = 1; j <= cantProductos; j++) {
+        const costo = parseFloat((Math.random() * 400 + 100).toFixed(2));
+
+        const producto = await Product.create({
+          nombre: `${marca.nombre.toUpperCase()} - Producto ${j}`,
+          marcaId: marca.id,
+          costo: costo
+        });
+
+        productosCreados.push(producto);
+
+        // Cada producto tiene precios en entre 1 y 5 listas de precios elegidas al azar
+        const cantPrecios = Math.floor(Math.random() * 5) + 1; // 1 a 5 listas
+        const listasElegidas = [...listasPrecios]
+          .sort(() => 0.5 - Math.random())
+          .slice(0, cantPrecios);
+
+        for (const lista of listasElegidas) {
+          const margen = 1.1 + (Math.random() * 0.4); // Margen entre 10% y 50%
+          const precioVenta = parseFloat((costo * margen).toFixed(2));
+
+          preciosData.push({
+            precio: precioVenta,
+            productoId: producto.id,
+            listaPreciosId: lista.id
+          });
+        }
+      }
     }
 
+    // Insertar precios en lote
+    const precios = await Price.bulkCreate(preciosData);
+    console.log(`Productos creados. Cada uno con precio en un subconjunto aleatorio de 1 a 5 listas.`);
+
+    // Organizar precios en un mapa para búsqueda rápida
+    const mapaPrecios = {};
+    precios.forEach(p => {
+      if (!mapaPrecios[p.productoId]) {
+        mapaPrecios[p.productoId] = {};
+      }
+      mapaPrecios[p.productoId][p.listaPreciosId] = p;
+    });
+
+    // 6. Crear 10 clientes (cada uno con una lista de precios asignada al azar)
+    const clientesData = [];
+    for (let i = 1; i <= 10; i++) {
+      const listaAleatoria = listasPrecios[Math.floor(Math.random() * listasPrecios.length)];
+      clientesData.push({
+        id: i,
+        nombre: `Cliente Especial ${i}`,
+        direccion: `Calle Falsa ${100 * i}`,
+        contacto: `11-${1000 + i}-${2000 + i}`,
+        listaPreciosId: listaAleatoria.id
+      });
+    }
+    const clientes = await Cliente.bulkCreate(clientesData);
+    console.log('10 clientes creados.');
+
+    // 7. Crear 3 empleados
+    const empleadosData = [
+      { id: 1, nombre: 'Martín', apellido: 'Gómez', activo: true },
+      { id: 2, nombre: 'Florencia', apellido: 'Díaz', activo: true },
+      { id: 3, nombre: 'Roberto', apellido: 'Sánchez', activo: true }
+    ];
+    const empleados = await Empleado.bulkCreate(empleadosData);
+    console.log('3 empleados creados.');
+
+    // 8. Crear 20 pedidos (Ventas y Detalles) con la fecha y hora actual de ejecución
     const ahora = new Date();
-    const sqlAhora = formatSqlDate(ahora);
-    const sqlAyer = formatSqlDate(new Date(ahora.getTime() - 24 * 60 * 60 * 1000));
-    const sqlHaceDosDias = formatSqlDate(new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000));
+    console.log(`Generando 20 pedidos con fecha de emisión: ${ahora.toISOString()}...`);
 
-    sql = sql
-      .replace(/datetime\('now',\s*'-2 days'\)/g, `'${sqlHaceDosDias}'`)
-      .replace(/datetime\('now',\s*'-1 days'\)/g, `'${sqlAyer}'`)
-      .replace(/datetime\('now'\)/g, `'${sqlAhora}'`);
+    for (let i = 1; i <= 20; i++) {
+      const cliente = clientes[Math.floor(Math.random() * clientes.length)];
+      const empleado = empleados[Math.floor(Math.random() * empleados.length)];
 
-    // Limpiar comentarios de SQL (líneas que empiezan con --) y espacios vacíos
-    sql = sql
-      .split('\n')
-      .filter(line => !line.trim().startsWith('--'))
-      .join('\n')
-      .trim();
+      const venta = await Venta.create({
+        id: i,
+        empleadoId: empleado.id,
+        clienteId: cliente.id,
+        fechaEmision: ahora,
+        total: 0,
+        ganancia: 0,
+        activo: true
+      });
 
-    if (!sql) {
-      console.log('El archivo seed.sql está vacío o solo contiene comentarios.');
-      return;
+      // Elegir entre 1 y 4 productos aleatorios distintos para este pedido
+      const cantItems = Math.floor(Math.random() * 4) + 1;
+      const productosElegidos = [];
+      while (productosElegidos.length < cantItems) {
+        const prod = productosCreados[Math.floor(Math.random() * productosCreados.length)];
+        if (!productosElegidos.some(p => p.id === prod.id)) {
+          productosElegidos.push(prod);
+        }
+      }
+
+      let totalVenta = 0;
+      let totalGanancia = 0;
+
+      for (const prod of productosElegidos) {
+        const listaId = cliente.listaPreciosId;
+        let priceRecord = mapaPrecios[prod.id][listaId];
+
+        // Fallback si no tiene precio asignado para la lista del cliente (toma cualquier lista disponible)
+        if (!priceRecord) {
+          const listasDisponibles = Object.keys(mapaPrecios[prod.id]);
+          if (listasDisponibles.length > 0) {
+            priceRecord = mapaPrecios[prod.id][listasDisponibles[0]];
+          }
+        }
+
+        if (!priceRecord) continue;
+
+        const cantidad = Math.floor(Math.random() * 5) + 1; // Entre 1 y 5 unidades
+        const unitPrice = parseFloat(priceRecord.precio);
+        const costo = parseFloat(prod.costo) || 0;
+        const gananciaUnidad = Math.max(0, unitPrice - costo);
+
+        const subtotal = cantidad * unitPrice;
+        const gananciaSubtotal = cantidad * gananciaUnidad;
+
+        totalVenta += subtotal;
+        totalGanancia += gananciaSubtotal;
+
+        await Detalle.create({
+          ventaId: venta.id,
+          productoId: prod.id,
+          precioId: priceRecord.id,
+          cantidad: cantidad,
+          precio: unitPrice
+        });
+      }
+
+      // Actualizar totales y ganancias de la venta
+      await venta.update({
+        total: parseFloat(totalVenta.toFixed(2)),
+        ganancia: parseFloat(totalGanancia.toFixed(2))
+      });
     }
 
-    console.log('Ejecutando consultas de seed.sql...');
-    
-    // Dividir por punto y coma para ejecutar cada sentencia por separado
-    const sentencias = sql.split(';').map(s => s.trim()).filter(s => s.length > 0);
-    
-    for (const sentencia of sentencias) {
-      await sequelize.query(sentencia);
-    }
-    
-    console.log('🌱 ¡Base de datos poblada con éxito desde seed.sql!');
+    console.log('🌱 ¡20 pedidos creados exitosamente!');
+    console.log('🌱 ¡Sembrado completado con éxito!');
   } catch (error) {
-    console.error('❌ Error al ejecutar el archivo de semillas:', error);
+    console.error('❌ Error al ejecutar el sembrado:', error);
   } finally {
-    // Cerrar la conexión
     await sequelize.close();
   }
 }

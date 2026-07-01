@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         altInput: true,
         altFormat: "d/m/Y",
         dateFormat: "Y-m-d",
-        defaultDate: fourteenDaysAgoStr,
+        defaultDate: todayStr,
         maxDate: todayStr,
         onChange: function(selectedDates, dateStr, instance) {
             if (fpMax) fpMax.set("minDate", dateStr);
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         altFormat: "d/m/Y",
         dateFormat: "Y-m-d",
         defaultDate: todayStr,
-        minDate: fourteenDaysAgoStr,
+        minDate: todayStr,
         onChange: function(selectedDates, dateStr, instance) {
             if (fpMin) fpMin.set("maxDate", dateStr);
             handleDateChange();
@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Rellenar KPIs
             document.getElementById('fin-facturacion').textContent = currencyFormatter.format(kpis.totalFacturado);
+            document.getElementById('fin-costos').textContent = currencyFormatter.format(kpis.totalCostos);
             document.getElementById('fin-ganancia').textContent = currencyFormatter.format(kpis.totalGanancia);
             document.getElementById('fin-ventas').textContent = kpis.totalVentas;
 
