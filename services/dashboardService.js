@@ -12,11 +12,14 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
     // 1. Obtener KPIs generales
     const kpiQuery = `
         SELECT 
-            COALESCE(SUM(total), 0) as totalFacturado,
-            COALESCE(SUM(ganancia), 0) as totalGanancia,
-            COUNT(id) as totalVentas
-        FROM Ventas
-        WHERE activo = 1 AND fecha_emision BETWEEN :fechaMin AND :fechaMax;
+            COALESCE(SUM(v.total), 0) as totalFacturado,
+            COALESCE(SUM(d.cantidad * p.costo), 0) as totalCostos,
+            COALESCE(SUM(v.ganancia), 0) as totalGanancia,
+            COUNT(v.id) as totalVentas
+        FROM Ventas v
+        LEFT JOIN Detalles d ON d.ventaId = v.id
+        LEFT JOIN Products p ON d.productoId = p.id
+        WHERE v.activo = 1 AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax;
     `;
     const kpis = await sequelize.query(kpiQuery, { 
         replacements,

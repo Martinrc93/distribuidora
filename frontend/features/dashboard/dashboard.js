@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Rellenar KPIs
             document.getElementById('fin-facturacion').textContent = currencyFormatter.format(kpis.totalFacturado);
+            document.getElementById('fin-costos').textContent = currencyFormatter.format(kpis.totalCostos);
             document.getElementById('fin-ganancia').textContent = currencyFormatter.format(kpis.totalGanancia);
             document.getElementById('fin-ventas').textContent = kpis.totalVentas;
 
