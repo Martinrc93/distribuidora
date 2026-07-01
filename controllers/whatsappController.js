@@ -7,7 +7,8 @@ const whatsappService = require('../services/whatsappService');
 const KNOWN_USER_MESSAGES = [
     'WhatsApp no está conectado',
     'no está registrado en WhatsApp',
-    'no se pudo verificar'
+    'no se pudo verificar',
+    'experimentando inconvenientes'
 ];
 
 /**
