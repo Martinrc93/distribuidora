@@ -2,6 +2,10 @@ import { apiClient } from '../../api/apiClient.js';
 import { escapeHtml } from '../../utils/sanitize.js';
 import { showToast } from '../../utils/ui.js';
 
+function formatCurrency(value) {
+    return Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function getLocalDateStr() {
     const today = new Date();
     const year = today.getFullYear();
@@ -399,7 +403,7 @@ function renderVentasTable(filterQuery = '') {
         fila.innerHTML = `
             <td>${escapeHtml(clienteName)}</td>
             <td>${escapeHtml(venta.fechaEmision) || 'N/A'}</td>
-            <td>$${Number(venta.total).toFixed(2)}</td>
+            <td>$${formatCurrency(venta.total)}</td>
             <td>${estadoBadge}</td>
             <td>
                 <button class="btn btn-sm action-btn border-0 btn-ver" data-id="${venta.id}" data-bs-toggle="modal" data-bs-target="#verPedidoModal" title="Ver Detalle">
@@ -530,7 +534,7 @@ function renderDetallesTemporales() {
                 </div>
             </td>
             <td>${d.cantidad}</td>
-            <td>$${d.subtotal.toFixed(2)}</td>
+            <td>$${formatCurrency(d.subtotal)}</td>
             <td>
                 <button type="button" class="btn btn-sm action-btn delete border-0 btn-eliminar-item" data-index="${idx}">
                     <i class="fas fa-trash"></i>
@@ -540,7 +544,7 @@ function renderDetallesTemporales() {
         tablaPedidoDetallesBody.appendChild(tr);
     });
 
-    pedidoTotalLabel.textContent = `$${total.toFixed(2)}`;
+    pedidoTotalLabel.textContent = `$${formatCurrency(total)}`;
 
     // Agregar manejadores de eventos para eliminar ítems
     document.querySelectorAll('.btn-eliminar-item').forEach(btn => {
@@ -720,7 +724,7 @@ function renderDetallesEdicion() {
             <td>
                 <input type="number" min="1" step="1" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}">
             </td>
-            <td>$${d.subtotal.toFixed(2)}</td>
+            <td>$${formatCurrency(d.subtotal)}</td>
             <td>
                 <button type="button" class="btn btn-sm action-btn delete border-0 btn-eliminar-item-edicion" data-index="${idx}">
                     <i class="fas fa-trash"></i>
@@ -730,7 +734,7 @@ function renderDetallesEdicion() {
         editPedidoDetallesBody.appendChild(tr);
     });
 
-    editPedidoTotalLabel.textContent = `$${total.toFixed(2)}`;
+    editPedidoTotalLabel.textContent = `$${formatCurrency(total)}`;
 
     // Manejador para eliminar ítems en edición
     document.querySelectorAll('.btn-eliminar-item-edicion').forEach(btn => {
@@ -1010,12 +1014,12 @@ function generarResumenDiarioHtml() {
                     ${items.map(item => `
                         <tr>
                             <td>${item.cliente.toUpperCase()}</td>
-                            <td class="text-right">$${item.total.toFixed(2)}</td>
+                            <td class="text-right">$${formatCurrency(item.total)}</td>
                         </tr>
                     `).join('')}
                     <tr style="border-top: 2px solid #000; font-weight: bold;">
                         <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL GENERAL:</td>
-                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${totalGeneral.toFixed(2)}</td>
+                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${formatCurrency(totalGeneral)}</td>
                     </tr>
                 </tbody>
             </table>
@@ -1064,13 +1068,13 @@ function generarTodosLosPedidosHtml() {
                 <tr>
                     <td>${productName.toUpperCase()}</td>
                     <td class="text-center">${d.cantidad}</td>
-                    <td class="text-right">$${Number(d.precio).toFixed(2)}</td>
-                    <td class="text-right">$${Number(d.subtotal).toFixed(2)}</td>
+                    <td class="text-right">$${formatCurrency(d.precio)}</td>
+                    <td class="text-right">$${formatCurrency(d.subtotal)}</td>
                 </tr>
             `;
         }).join('');
 
-        const totalStr = Number(venta.total).toFixed(2);
+        const totalStr = formatCurrency(venta.total);
         combinedHtml += `
             <div class="ticket-pedido-print" style="padding-bottom: 20px;">
                 <div class="header-container">
@@ -1261,13 +1265,13 @@ function generarClienteHtml(ventaId) {
             <tr>
                 <td>${productName.toUpperCase()}</td>
                 <td class="text-center">${d.cantidad}</td>
-                <td class="text-right">$${Number(d.precio).toFixed(2)}</td>
-                <td class="text-right">$${Number(d.subtotal).toFixed(2)}</td>
+                <td class="text-right">$${formatCurrency(d.precio)}</td>
+                <td class="text-right">$${formatCurrency(d.subtotal)}</td>
             </tr>
         `;
     }).join('');
 
-    const totalStr = Number(venta.total).toFixed(2);
+    const totalStr = formatCurrency(venta.total);
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
@@ -1786,15 +1790,15 @@ function inicializarEventos() {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="text-white text-start">${productName}</td>
-                        <td class="text-white">$${Number(d.precio).toFixed(2)}</td>
+                        <td class="text-white">$${formatCurrency(d.precio)}</td>
                         <td class="text-white">${d.cantidad}</td>
-                        <td class="text-white">$${Number(d.subtotal).toFixed(2)}</td>
+                        <td class="text-white">$${formatCurrency(d.subtotal)}</td>
                     `;
                     verPedidoDetallesBody.appendChild(tr);
                 });
             }
 
-            verPedidoTotal.textContent = `$${Number(venta.total).toFixed(2)}`;
+            verPedidoTotal.textContent = `$${formatCurrency(venta.total)}`;
         });
     }
 
