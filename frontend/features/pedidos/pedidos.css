@@ -155,7 +155,8 @@
     text-align: left;
 }
 
-.combobox-item:hover {
+.combobox-item:hover,
+.combobox-item.active-item {
     background-color: rgba(37, 99, 235, 0.15);
     color: #60a5fa;
 }

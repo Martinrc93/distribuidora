@@ -21,6 +21,7 @@ class VentaResponseDto {
         }
         this.total = Number.parseFloat(Number.parseFloat(venta.total).toFixed(2));
         this.activo = venta.activo;
+        this.ordenImpresion = venta.ordenImpresion;
         this.empleadoId = venta.empleadoId;
         this.empleadoNombre = venta.empleado ? venta.empleado.nombre : null;
         this.empleadoApellido = venta.empleado ? venta.empleado.apellido : null;

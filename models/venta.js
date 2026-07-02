@@ -34,6 +34,11 @@ Venta.init({
         defaultValue: true,
         field: 'activo'
     },
+    ordenImpresion: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: 'orden_impresion'
+    },
     empleadoId: {
         type: DataTypes.INTEGER,
         allowNull: false,

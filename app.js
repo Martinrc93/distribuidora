@@ -112,6 +112,13 @@ if (process.env.NODE_ENV !== 'test') {
             console.log(`Migración: Agregando columna deletedAt a la tabla ${table}`);
             await sequelize.query(`ALTER TABLE \`${table}\` ADD COLUMN deletedAt DATETIME;`);
           }
+          if (table === 'Ventas') {
+            const hasOrdenImpresion = columns.some(col => col.name === 'orden_impresion');
+            if (!hasOrdenImpresion) {
+              console.log(`Migración: Agregando columna orden_impresion a la tabla Ventas`);
+              await sequelize.query(`ALTER TABLE \`Ventas\` ADD COLUMN orden_impresion INTEGER;`);
+            }
+          }
         }
       } catch (err) {
         console.error(`Error al verificar/migrar la tabla ${table}:`, err);

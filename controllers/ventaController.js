@@ -9,7 +9,7 @@ const { VentaResponseDto } = require('../dtos/venta/response');
 exports.getByEmpleado = async (req, res) => {
     try {
         const { empleadoId } = req.params;
-        const { page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '' } = req.query;
+        const { page = 1, limit = 100, dia = '', fechaMin = '', fechaMax = '' } = req.query;
 
         const result = await ventaService.getByEmpleado(empleadoId, page, limit, dia, fechaMin, fechaMax);
         
@@ -134,7 +134,7 @@ exports.getUltimaVentaByCliente = async (req, res) => {
 exports.getVentasByCliente = async (req, res) => {
     try {
         const { clienteId } = req.params;
-        const { page = 1, limit = 10, fechaMin = '', fechaMax = '' } = req.query;
+        const { page = 1, limit = 100, fechaMin = '', fechaMax = '' } = req.query;
 
         const result = await ventaService.getByCliente(clienteId, page, limit, fechaMin, fechaMax);
         
@@ -153,11 +153,38 @@ exports.getVentasByCliente = async (req, res) => {
  */
 exports.getAll = async (req, res) => {
     try {
-        const { page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '' } = req.query;
+        const { page = 1, limit = 100, dia = '', fechaMin = '', fechaMax = '' } = req.query;
         const result = await ventaService.getAll(page, limit, dia, fechaMin, fechaMax);
         result.data = VentaResponseDto.fromModel(result.data);
         res.json(result);
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * Actualizar el orden de impresión de una venta.
+ * Ruta: PATCH /ventas/:id/orden-impresion
+ */
+exports.updateOrdenImpresion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { ordenImpresion } = req.body;
+
+        if (ordenImpresion !== null && (!Number.isInteger(ordenImpresion) || ordenImpresion < 1)) {
+            return res.status(400).json({ error: 'El ordenImpresion debe ser un número entero positivo o null.' });
+        }
+
+        const ventaActualizada = await ventaService.updateOrdenImpresion(id, ordenImpresion);
+        if (!ventaActualizada) {
+            return res.status(404).json({ mensaje: 'Venta no encontrada' });
+        }
+
+        res.json(VentaResponseDto.fromModel(ventaActualizada));
+    } catch (err) {
+        if (err.message.includes('Duplicate ordenImpresion')) {
+            return res.status(400).json({ error: err.message });
+        }
         res.status(500).json({ error: err.message });
     }
 };

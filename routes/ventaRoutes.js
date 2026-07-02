@@ -21,4 +21,7 @@ router.post('/', ventaController.create);
 // Actualizar el estado activo/inactivo (active) de una venta
 router.put('/:id', validateParams(['id']), ventaController.updateStatus);
 
+// Actualizar el orden de impresión de una venta
+router.patch('/:id/orden-impresion', validateParams(['id']), ventaController.updateOrdenImpresion);
+
 module.exports = router;

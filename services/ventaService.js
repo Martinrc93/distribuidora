@@ -16,9 +16,9 @@ const productService = require('./productService.js');
  * @param {number} limit Límite de elementos por página.
  * @param {string} dia Fecha en formato YYYY-MM-DD para filtrar por ese día específico.
  */
-exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '') => {
+exports.getByEmpleado = async (empleadoId, page = 1, limit = 100, dia = '', fechaMin = '', fechaMax = '') => {
     const pageNum = Number.parseInt(page, 10) || 1;
-    const limitNum = Number.parseInt(limit, 10) || 10;
+    const limitNum = Number.parseInt(limit, 10) || 100;
     const offsetNum = (pageNum - 1) * limitNum;
 
     // Solo obtenemos las ventas que estén activas para este empleado
@@ -62,9 +62,12 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 10, dia = '', fecha
         include: [
             { model: Detalle, as: 'detalles' },
             { model: Empleado, as: 'empleado' },
-            { model: Cliente, as: 'cliente' }
         ],
-        order: [['fechaEmision', 'DESC']]
+        order: [
+            [sequelize.literal('ordenImpresion IS NULL'), 'ASC'],
+            ['ordenImpresion', 'ASC'],
+            ['fechaEmision', 'DESC']
+        ]
     });
 
     const totalPages = Math.ceil(count / limitNum);
@@ -300,14 +303,14 @@ exports.getUltimaVenta = async (clienteId) => {
  * @param {string} fechaMin Fecha mínima (YYYY-MM-DD).
  * @param {string} fechaMax Fecha máxima (YYYY-MM-DD).
  */
-exports.getByCliente = async (clienteId, page = 1, limit = 10, fechaMin = '', fechaMax = '') => {
+exports.getByCliente = async (clienteId, page = 1, limit = 100, fechaMin = '', fechaMax = '') => {
     const clId = Number.parseInt(clienteId, 10);
     if (Number.isNaN(clId)) {
         throw new TypeError('El ID de cliente debe ser un número válido.');
     }
 
     const pageNum = Number.parseInt(page, 10) || 1;
-    const limitNum = Number.parseInt(limit, 10) || 10;
+    const limitNum = Number.parseInt(limit, 10) || 100;
     const offsetNum = (pageNum - 1) * limitNum;
 
     const where = {
@@ -339,9 +342,12 @@ exports.getByCliente = async (clienteId, page = 1, limit = 10, fechaMin = '', fe
         include: [
             { model: Detalle, as: 'detalles' },
             { model: Empleado, as: 'empleado' },
-            { model: Cliente, as: 'cliente' }
         ],
-        order: [['fechaEmision', 'DESC']]
+        order: [
+            [sequelize.literal('ordenImpresion IS NULL'), 'ASC'],
+            ['ordenImpresion', 'ASC'],
+            ['fechaEmision', 'DESC']
+        ]
     });
 
     const totalPages = Math.ceil(count / limitNum);
@@ -363,9 +369,9 @@ exports.getByCliente = async (clienteId, page = 1, limit = 10, fechaMin = '', fe
  * @param {string} fechaMin Fecha mínima (YYYY-MM-DD).
  * @param {string} fechaMax Fecha máxima (YYYY-MM-DD).
  */
-exports.getAll = async (page = 1, limit = 10, dia = '', fechaMin = '', fechaMax = '') => {
+exports.getAll = async (page = 1, limit = 100, dia = '', fechaMin = '', fechaMax = '') => {
     const pageNum = Number.parseInt(page, 10) || 1;
-    const limitNum = Number.parseInt(limit, 10) || 10;
+    const limitNum = Number.parseInt(limit, 10) || 100;
     const offsetNum = (pageNum - 1) * limitNum;
 
     const where = {};
@@ -394,9 +400,12 @@ exports.getAll = async (page = 1, limit = 10, dia = '', fechaMin = '', fechaMax 
         include: [
             { model: Detalle, as: 'detalles' },
             { model: Empleado, as: 'empleado' },
-            { model: Cliente, as: 'cliente' }
         ],
-        order: [['fechaEmision', 'DESC']]
+        order: [
+            [sequelize.literal('ordenImpresion IS NULL'), 'ASC'],
+            ['ordenImpresion', 'ASC'],
+            ['fechaEmision', 'DESC']
+        ]
     });
 
     const totalPages = Math.ceil(count / limitNum);
@@ -408,4 +417,38 @@ exports.getAll = async (page = 1, limit = 10, dia = '', fechaMin = '', fechaMax 
         limite: limitNum,
         data: rows
     };
+};
+
+/**
+ * Actualiza el número de orden de impresión de una venta.
+ * Valida que el número sea único entre las ventas activas.
+ * @param {number} id ID de la venta.
+ * @param {number|null} numero Número de orden de impresión o null para quitarlo.
+ */
+exports.updateOrdenImpresion = async (id, numero) => {
+    const venta = await Venta.findByPk(id);
+    if (!venta) return null;
+
+    if (numero !== null) {
+        const existing = await Venta.findOne({
+            where: {
+                ordenImpresion: numero,
+                activo: true,
+                id: { [Op.ne]: id }
+            }
+        });
+        if (existing) {
+            throw new Error(`Duplicate ordenImpresion: El número de orden ${numero} ya está asignado a otra venta activa.`);
+        }
+    }
+
+    await venta.update({ ordenImpresion: numero });
+    
+    return await Venta.findByPk(id, {
+        include: [
+            { model: Detalle, as: 'detalles' },
+            { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' }
+        ]
+    });
 };

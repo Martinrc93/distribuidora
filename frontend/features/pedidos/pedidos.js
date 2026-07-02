@@ -186,13 +186,7 @@ async function cargarDatosAuxiliares() {
         // Inicializar comboboxes de búsqueda interactivos
         inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.activo).map(e => `${e.nombre} ${e.apellido}`));
         inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre), (selectedClientName) => {
-            const client = clientes.find(c => c.nombre === selectedClientName);
-            const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
-            if (client && btnRepetir) {
-                btnRepetir.classList.remove('d-none');
-            } else if (btnRepetir) {
-                btnRepetir.classList.add('d-none');
-            }
+            // La visibilidad del boton de ultimo pedido ahora es constante
         });
         inicializarCombobox('editProductoSelect', productos.map(p => p.nombre));
 
@@ -390,6 +384,16 @@ function renderVentasTable(filterQuery = '') {
     ventasFiltradas.sort((a, b) => {
         if (a.activo && !b.activo) return -1;
         if (!a.activo && b.activo) return 1;
+        
+        if (a.activo && b.activo) {
+            const aOrden = a.ordenImpresion !== null && a.ordenImpresion !== undefined ? a.ordenImpresion : Infinity;
+            const bOrden = b.ordenImpresion !== null && b.ordenImpresion !== undefined ? b.ordenImpresion : Infinity;
+            
+            if (aOrden !== bOrden) return aOrden - bOrden;
+            // Si son iguales o ambos null, por fecha (más nuevo primero)
+            return new Date(b.fechaEmision) - new Date(a.fechaEmision);
+        }
+        
         return 0;
     });
 
@@ -399,12 +403,17 @@ function renderVentasTable(filterQuery = '') {
             ? '<span class="badge bg-success">Activo</span>'
             : '<span class="badge bg-danger">Cancelado</span>';
             
+        const inputOrden = venta.activo 
+            ? `<input type="number" min="1" class="form-control text-center mx-auto input-orden-impresion" style="width: 70px; height: 32px; padding: 0.2rem; font-size: 0.95rem; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-id="${venta.id}" value="${venta.ordenImpresion || ''}" placeholder="-">`
+            : '-';
+
         const fila = document.createElement('tr');
         fila.innerHTML = `
             <td>${escapeHtml(clienteName)}</td>
             <td>${escapeHtml(venta.fechaEmision) || 'N/A'}</td>
             <td>$${formatCurrency(venta.total)}</td>
             <td>${estadoBadge}</td>
+            <td>${inputOrden}</td>
             <td>
                 <button class="btn btn-sm action-btn border-0 btn-ver" data-id="${venta.id}" data-bs-toggle="modal" data-bs-target="#verPedidoModal" title="Ver Detalle">
                     <i class="fas fa-eye"></i>
@@ -421,6 +430,24 @@ function renderVentasTable(filterQuery = '') {
             </td>
         `;
         tablaPedidos.appendChild(fila);
+    });
+
+    // Agregar event listeners para ordenImpresion
+    document.querySelectorAll('.input-orden-impresion').forEach(input => {
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value.trim();
+            const ordenImpresion = val === '' ? null : parseInt(val, 10);
+            
+            try {
+                await apiClient.patch(`/ventas/${id}/orden-impresion`, { ordenImpresion });
+                showToast('Orden de impresión actualizada.');
+                await cargarVentas(); // Recargar para aplicar ordenamiento
+            } catch (err) {
+                showToast(err.message || 'Error al actualizar orden.', 'error');
+                renderVentasTable(filterQuery); // Revertir a la vista original
+            }
+        });
     });
 }
 
@@ -1474,7 +1501,10 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
  */
 async function repetirUltimoPedido() {
     const clientName = document.getElementById('pedidoCliente').value.trim();
-    if (!clientName) return;
+    if (!clientName) {
+        showToast('Debe seleccionar un cliente primero.', 'error');
+        return;
+    }
 
     const client = clientes.find(c => c.nombre === clientName);
     if (!client) {
@@ -1492,7 +1522,7 @@ async function repetirUltimoPedido() {
         // Obtener el último pedido del cliente
         const respuesta = await apiClient.get(`/ventas/ultimo/${client.id}`);
         if (!respuesta || !respuesta.id) {
-            showToast('No se encontró un pedido anterior para este cliente.', 'error');
+            showToast('El cliente no tiene ultimo pedido', 'error');
             return;
         }
 
@@ -1548,7 +1578,7 @@ async function repetirUltimoPedido() {
         console.error('Error al repetir último pedido:', error);
         const status = error.status || error.response?.status;
         if (status === 404) {
-            showToast('Este cliente no posee pedidos anteriores registrados.', 'error');
+            showToast('El cliente no tiene ultimo pedido', 'error');
         } else {
             showToast('Error al intentar cargar el último pedido del cliente.', 'error');
         }
@@ -1608,12 +1638,7 @@ function inicializarEventos() {
         inputCliente.addEventListener('input', () => {
             const val = inputCliente.value.trim();
             const client = clientes.find(c => c.nombre === val);
-            const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
-            if (client && btnRepetir) {
-                btnRepetir.classList.remove('d-none');
-            } else if (btnRepetir) {
-                btnRepetir.classList.add('d-none');
-            }
+            // La visibilidad del boton de ultimo pedido ahora es constante
         });
     }
 
