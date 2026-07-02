@@ -3,13 +3,13 @@ const { ClienteCreateDto, ClienteUpdateDto } = require('../dtos/cliente/request'
 const { ClienteResponseDto } = require('../dtos/cliente/response');
 
 /**
- * Obtener todos los clientes con paginación opcional.
- * Ruta: GET /clientes?page=1&limit=10
+ * Obtener todos los clientes con paginación y búsqueda opcional.
+ * Ruta: GET /clientes?page=1&limit=10&q=
  */
 exports.getAll = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
-        const result = await clienteService.getAll(page, limit);
+        const { page = 1, limit = 10, q = '' } = req.query;
+        const result = await clienteService.getAll(page, limit, q);
         
         // Mapear los datos de los clientes utilizando el Response DTO
         result.data = ClienteResponseDto.fromModel(result.data);

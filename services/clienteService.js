@@ -1,19 +1,32 @@
 const sequelize = require('../config/db/dataBase.js');
+const { Op } = require('sequelize');
 const Cliente = require('../models/cliente.js');
 const Venta = require('../models/venta.js');
 const Detalle = require('../models/detalle.js');
 
 /**
- * Obtiene todos los clientes con soporte para paginación.
+ * Obtiene todos los clientes con soporte para paginación y búsqueda.
  * @param {number} page Número de página (1-based).
  * @param {number} limit Cantidad de elementos por página.
+ * @param {string} q Consulta de búsqueda opcional.
  */
-exports.getAll = async (page = 1, limit = 10) => {
+exports.getAll = async (page = 1, limit = 10, q = '') => {
     const pageNum = Number.parseInt(page, 10) || 1;
     const limitNum = Number.parseInt(limit, 10) || 10;
     const offsetNum = (pageNum - 1) * limitNum;
 
+    const where = {};
+    if (q && q.trim() !== '') {
+        const queryStr = `%${q.trim()}%`;
+        where[Op.or] = [
+            { nombre: { [Op.like]: queryStr } },
+            { direccion: { [Op.like]: queryStr } },
+            { contacto: { [Op.like]: queryStr } }
+        ];
+    }
+
     const { count, rows } = await Cliente.findAndCountAll({
+        where,
         limit: limitNum,
         offset: offsetNum,
         order: [['createdAt', 'DESC']]

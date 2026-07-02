@@ -41,7 +41,7 @@ const itemsPerPage = 10;
 
 // Service local para clientes
 const clientesService = {
-    getAll: (page = 1, limit = 10) => apiClient.get(`/clientes?page=${page}&limit=${limit}`),
+    getAll: (page = 1, limit = 10, q = '') => apiClient.get(`/clientes?page=${page}&limit=${limit}&q=${encodeURIComponent(q)}`),
     getById: (id) => apiClient.get(`/clientes/${id}`),
     create: (clienteData) => apiClient.post('/clientes', clienteData),
     update: (id, clienteData) => apiClient.put(`/clientes/${id}`, clienteData),
@@ -210,8 +210,11 @@ function mostrarDetallePedidoCliente(pedidoId) {
  */
 async function cargarClientes(page = 1) {
     try {
-        console.log('Cargando clientes, página:', page);
-        const respuesta = await clientesService.getAll(page, itemsPerPage);
+        const searchInput = document.getElementById('clienteSearchInput');
+        const q = searchInput ? searchInput.value.trim() : '';
+
+        console.log('Cargando clientes, página:', page, 'búsqueda:', q);
+        const respuesta = await clientesService.getAll(page, itemsPerPage, q);
         
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta inválida:', respuesta);
@@ -567,6 +570,18 @@ function inicializarEventos() {
     if (addModalEl) {
         addModalEl.addEventListener('hidden.bs.modal', () => {
             formAgregarCliente.reset();
+        });
+    }
+
+    // Buscador con Debounce
+    const searchInput = document.getElementById('clienteSearchInput');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                cargarClientes(1);
+            }, 300);
         });
     }
 }

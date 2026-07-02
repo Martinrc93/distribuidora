@@ -1,1 +1,30 @@
 /* Estilos específicos de clientes (los estilos comunes de tablas se movieron a global.css) */
+
+.search-container {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+}
+.search-container .form-control {
+    background-color: #0f1623 !important;
+    color: #ffffff !important;
+    border: 1px solid var(--border-color) !important;
+    height: 42px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+.search-container .form-control::placeholder {
+    color: #94a3b8 !important;
+    opacity: 0.85 !important;
+}
+.search-container .form-control:focus {
+    border-color: var(--accent-glow) !important;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.4) !important;
+}
+.search-container .search-icon {
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+.search-container:focus-within .search-icon {
+    color: var(--accent-glow) !important;
+}
