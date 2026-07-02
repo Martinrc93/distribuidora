@@ -23,6 +23,10 @@ let btnActualizarEmpleado = null;
 
 let currentEmpleadoId = null;
 let currentEmpleadoNombre = '';
+let currentPage = 1;
+const pageSize = 10;
+let totalPages = 1;
+let totalRecords = 0;
 const getLocalDateStr = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -37,7 +41,7 @@ let pedidosEmpleadoCurrent = [];
 
 // Service local para empleados
 const empleadosService = {
-    getAll: () => apiClient.get('/empleados'),
+    getAll: (page = 1, limit = 10) => apiClient.get(`/empleados?page=${page}&limit=${limit}`),
     getById: (id) => apiClient.get(`/empleados/${id}`),
     create: (empleadoData) => apiClient.post('/empleados', empleadoData),
     update: (id, empleadoData) => apiClient.put(`/empleados/${id}`, empleadoData),
@@ -200,7 +204,7 @@ function mostrarDetallePedidoEmpleado(pedidoId) {
 async function cargarEmpleados() {
     try {
         console.log('Cargando empleados...');
-        const respuesta = await empleadosService.getAll();
+        const respuesta = await empleadosService.getAll(currentPage, pageSize);
         
         if (!respuesta || !respuesta.data) {
             console.error('Respuesta inválida:', respuesta);
@@ -209,6 +213,8 @@ async function cargarEmpleados() {
         }
         
         const empleados = respuesta.data;
+        totalPages = respuesta.paginas || 1;
+        totalRecords = respuesta.total || 0;
         console.log('Empleados cargados:', empleados);
 
         // Limpiar la tabla
@@ -216,6 +222,7 @@ async function cargarEmpleados() {
 
         if (empleados.length === 0) {
             tablaEmpleados.innerHTML = '<tr><td colspan="4" class="text-center">No hay empleados</td></tr>';
+            renderPagination();
             return;
         }
 
@@ -248,6 +255,8 @@ async function cargarEmpleados() {
 
         // Agregar eventos a los botones
         agregarEventosTabla();
+        
+        renderPagination();
     } catch (error) {
         console.error('Error al cargar empleados:', error);
         tablaEmpleados.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error: ${escapeHtml(error.message)}</td></tr>`;
@@ -273,7 +282,7 @@ function agregarEventosTabla() {
  */
 async function eliminarEmpleado(id) {
     // Confirmar eliminación
-    const confirmado = await showCustomConfirm('¿Estás seguro de que deseas eliminar este empleado? Se eliminarán también sus ventas asociadas.');
+    const confirmado = await showCustomConfirm('¿Estás seguro de que deseas eliminar este empleado? Las ventas que ya haya registrado se mantendrán en el historial.');
     if (!confirmado) {
         return;
     }
@@ -448,6 +457,72 @@ function inicializarEventos() {
 }
 
 
+
+/**
+ * Renderiza los controles de paginación
+ */
+function renderPagination() {
+    const paginationList = document.getElementById('paginationList');
+    const paginationInfo = document.getElementById('paginationInfo');
+    
+    if (!paginationList || !paginationInfo) return;
+
+    paginationList.innerHTML = '';
+
+    if (totalRecords === 0) {
+        paginationInfo.textContent = 'Mostrando 0-0 de 0 empleados';
+        return;
+    }
+
+    const startRecord = (currentPage - 1) * pageSize + 1;
+    const endRecord = Math.min(currentPage * pageSize, totalRecords);
+    paginationInfo.textContent = `Mostrando ${startRecord}-${endRecord} de ${totalRecords} empleados`;
+
+    // Botón Anterior
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'tabindex="-1" aria-disabled="true"' : ''}>Anterior</button>`;
+    if (currentPage > 1) {
+        prevLi.querySelector('button').addEventListener('click', () => cambiarPagina(currentPage - 1));
+    }
+    paginationList.appendChild(prevLi);
+
+    // Botones de Páginas
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<button class="page-link">${i}</button>`;
+        if (i !== currentPage) {
+            li.querySelector('button').addEventListener('click', () => cambiarPagina(i));
+        }
+        paginationList.appendChild(li);
+    }
+
+    // Botón Siguiente
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<button class="page-link" ${currentPage === totalPages ? 'tabindex="-1" aria-disabled="true"' : ''}>Siguiente</button>`;
+    if (currentPage < totalPages) {
+        nextLi.querySelector('button').addEventListener('click', () => cambiarPagina(currentPage + 1));
+    }
+    paginationList.appendChild(nextLi);
+}
+
+/**
+ * Cambia la página actual y recarga los datos
+ */
+function cambiarPagina(page) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    currentPage = page;
+    cargarEmpleados();
+}
 
 /**
  * Inicializa la página

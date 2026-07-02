@@ -78,49 +78,19 @@ exports.update = async (id, empleadoData) => {
 };
 
 /**
- * Elimina un empleado (con eliminación en cascada manual).
+ * Elimina un empleado de forma lógica (soft delete).
+ * No se eliminan sus ventas para preservar el historial.
  * @param {number} id ID del empleado a eliminar.
  * @returns {Promise<boolean>} true si fue eliminado, false si no existía.
  */
 exports.deleteEmpleado = async (id) => {
-    const t = await sequelize.transaction({ type: 'IMMEDIATE' });
-    try {
-        const empleado = await Empleado.findByPk(id, { transaction: t });
-        if (!empleado) {
-            await t.rollback();
-            return false;
-        }
-
-        // Obtener todas las ventas del empleado
-        const ventas = await Venta.findAll({
-            where: { empleadoId: id },
-            transaction: t
-        });
-
-        const ventaIds = ventas.map(v => v.id);
-
-        // Si hay ventas, eliminar los detalles primero
-        if (ventaIds.length > 0) {
-            await Detalle.destroy({
-                where: {
-                    ventaId: ventaIds
-                },
-                transaction: t
-            });
-
-            // Luego eliminar las ventas
-            await Venta.destroy({
-                where: { empleadoId: id },
-                transaction: t
-            });
-        }
-
-        // Finalmente, eliminar el empleado
-        await empleado.destroy({ transaction: t });
-        await t.commit();
-        return true;
-    } catch (error) {
-        await t.rollback();
-        throw error;
+    const empleado = await Empleado.findByPk(id);
+    if (!empleado) {
+        return false;
     }
+
+    // Al tener paranoid: true, destroy() hará un soft delete (asigna deletedAt)
+    // No eliminamos sus ventas ni detalles para preservar el historial.
+    await empleado.destroy();
+    return true;
 };

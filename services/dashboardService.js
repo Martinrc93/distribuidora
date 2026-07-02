@@ -171,7 +171,6 @@ exports.getCommercialStats = async (fechaMin, fechaMax, limit = 10) => {
         WHERE v.activo = 1 
           AND v.deletedAt IS NULL
           AND c.deletedAt IS NULL
-          AND lp.deletedAt IS NULL
           AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax
         GROUP BY c.id, c.nombre, lp.nombre
         ORDER BY totalComprado DESC
