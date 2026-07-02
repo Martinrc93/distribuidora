@@ -395,15 +395,15 @@
     </div>
 
     <!-- Modal de Vista Previa de Impresión -->
-    <div class="modal fade" id="previewPrintModal" tabindex="-1" aria-labelledby="previewPrintModalLabel" aria-hidden="true" data-bs-theme="dark">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+    <div class="modal fade" id="previewPrintModal" tabindex="-1" aria-labelledby="previewPrintModalLabel" aria-hidden="true" data-bs-theme="dark" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; min-width: 100vw !important; min-height: 100vh !important; z-index: 999999 !important; margin: 0 !important; padding: 0 !important;">
+        <div class="modal-dialog modal-fullscreen" style="width: 100vw !important; height: 100vh !important; min-width: 100vw !important; min-height: 100vh !important; max-width: none !important; margin: 0 !important; padding: 0 !important;">
+            <div class="modal-content" style="background-color: var(--bg-card); border: none; border-radius: 0; width: 100% !important; height: 100% !important; min-width: 100vw !important; min-height: 100vh !important;">
                 <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
                     <h5 class="modal-title text-white" id="previewPrintModalLabel">Vista Previa de Impresión</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body" style="background-color: #f1f5f9; padding: 20px; max-height: 70vh; overflow-y: auto;">
-                    <div id="previewPrintBody" class="preview-printable-content" style="width: 100%; max-width: 800px; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border-radius: 8px;">
+                <div class="modal-body d-flex justify-content-center align-items-center" style="background-color: #f1f5f9; padding: 20px; overflow-y: auto;">
+                    <div id="previewPrintBody" class="preview-printable-content" style="width: 100%; max-width: 800px; margin: auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border-radius: 8px;">
                         <!-- Contenido dinámico -->
                     </div>
                 </div>
