@@ -188,3 +188,25 @@ exports.updateOrdenImpresion = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+/**
+ * Intercambiar el orden de impresión entre dos ventas.
+ * Ruta: PATCH /ventas/orden-impresion/swap
+ */
+exports.swapOrdenImpresion = async (req, res) => {
+    try {
+        const { id1, id2 } = req.body;
+
+        if (!id1 || !id2 || isNaN(id1) || isNaN(id2)) {
+            return res.status(400).json({ error: 'Se requieren id1 e id2 y deben ser numéricos.' });
+        }
+
+        await ventaService.swapOrdenImpresion(id1, id2);
+        res.json({ mensaje: 'Orden de impresión intercambiado con éxito' });
+    } catch (err) {
+        if (err.message.includes('no existen')) {
+            return res.status(404).json({ error: err.message });
+        }
+        res.status(500).json({ error: err.message });
+    }
+};

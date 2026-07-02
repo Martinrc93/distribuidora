@@ -24,4 +24,7 @@ router.put('/:id', validateParams(['id']), ventaController.updateStatus);
 // Actualizar el orden de impresión de una venta
 router.patch('/:id/orden-impresion', validateParams(['id']), ventaController.updateOrdenImpresion);
 
+// Intercambiar orden de impresión entre dos ventas
+router.patch('/orden-impresion/swap', ventaController.swapOrdenImpresion);
+
 module.exports = router;

@@ -98,4 +98,49 @@ describe('Venta ordenImpresion Integration Tests', () => {
         const updatedVenta = await Venta.findByPk(venta1.id);
         expect(updatedVenta.ordenImpresion).toBeNull();
     });
+
+    describe('swapOrdenImpresion', () => {
+        test('should successfully swap ordenImpresion between two orders', async () => {
+            await Venta.update({ ordenImpresion: 10 }, { where: { id: venta1.id } });
+            await Venta.update({ ordenImpresion: 20 }, { where: { id: venta2.id } });
+
+            const response = await request(app)
+                .patch('/ventas/orden-impresion/swap')
+                .send({ id1: venta1.id, id2: venta2.id });
+
+            expect(response.status).toBe(200);
+
+            const updated1 = await Venta.findByPk(venta1.id);
+            const updated2 = await Venta.findByPk(venta2.id);
+
+            expect(updated1.ordenImpresion).toBe(20);
+            expect(updated2.ordenImpresion).toBe(10);
+        });
+
+        test('should swap successfully when one of the values is null', async () => {
+            await Venta.update({ ordenImpresion: 10 }, { where: { id: venta1.id } });
+            await Venta.update({ ordenImpresion: null }, { where: { id: venta2.id } });
+
+            const response = await request(app)
+                .patch('/ventas/orden-impresion/swap')
+                .send({ id1: venta1.id, id2: venta2.id });
+
+            expect(response.status).toBe(200);
+
+            const updated1 = await Venta.findByPk(venta1.id);
+            const updated2 = await Venta.findByPk(venta2.id);
+
+            expect(updated1.ordenImpresion).toBeNull();
+            expect(updated2.ordenImpresion).toBe(10);
+        });
+
+        test('should return 404 if one of the orders does not exist', async () => {
+            const response = await request(app)
+                .patch('/ventas/orden-impresion/swap')
+                .send({ id1: venta1.id, id2: 999999 });
+
+            expect(response.status).toBe(404);
+            expect(response.body.error).toMatch(/no existen/i);
+        });
+    });
 });

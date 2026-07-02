@@ -62,6 +62,9 @@ function inicializarFiltroFechas() {
     });
 }
 
+let sortableInstance = null;
+let currentRenderedVentas = [];
+
 // Elementos del DOM
 let tablaPedidos = null;
 let formAgregarPedido = null;
@@ -292,10 +295,12 @@ async function recargarClientes() {
 /**
  * Carga las ventas/pedidos del backend filtrando por la fecha de hoy
  */
-async function cargarVentas() {
+async function cargarVentas(silent = false) {
     try {
         console.log('Cargando pedidos/ventas...');
-        tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin"></i> Cargando pedidos...</td></tr>';
+        if (!silent) {
+            tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3"><i class="fas fa-spinner fa-spin"></i> Cargando pedidos...</td></tr>';
+        }
         
         const fechaMinEl = document.getElementById('fechaMinInput');
         const fechaMaxEl = document.getElementById('fechaMaxInput');
@@ -342,6 +347,9 @@ async function cargarVentas() {
 function renderVentasTable(filterQuery = '') {
     if (!tablaPedidos) return;
 
+    // Guardar el scroll actual para evitar que la pantalla salte hacia arriba
+    const currentScrollY = window.scrollY;
+
     tablaPedidos.innerHTML = '';
     const query = filterQuery.toLowerCase().trim();
 
@@ -362,6 +370,8 @@ function renderVentasTable(filterQuery = '') {
                total.includes(query) ||
                id.includes(query);
     });
+
+    currentRenderedVentas = ventasFiltradas;
 
     if (ventasFiltradas.length === 0) {
         if (query) {
@@ -403,8 +413,9 @@ function renderVentasTable(filterQuery = '') {
             ? '<span class="badge bg-success">Activo</span>'
             : '<span class="badge bg-danger">Cancelado</span>';
             
+        const valorVisible = (venta.ordenImpresion !== null && venta.ordenImpresion < 1000000) ? venta.ordenImpresion : '';
         const inputOrden = venta.activo 
-            ? `<input type="number" min="1" class="form-control text-center mx-auto input-orden-impresion" style="width: 70px; height: 32px; padding: 0.2rem; font-size: 0.95rem; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-id="${venta.id}" value="${venta.ordenImpresion || ''}" placeholder="-">`
+            ? `<input type="number" min="1" class="form-control text-center mx-auto input-orden-impresion" style="width: 70px; height: 32px; padding: 0.2rem; font-size: 0.95rem; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-id="${venta.id}" value="${valorVisible}" placeholder="-">`
             : '-';
 
         const fila = document.createElement('tr');
@@ -428,12 +439,18 @@ function renderVentasTable(filterQuery = '') {
                     <i class="fab fa-whatsapp"></i>
                 </button>
             </td>
+            <td><i class="fas fa-grip-vertical drag-handle" style="cursor: grab; color: #6c757d; padding: 0.5rem;"></i></td>
         `;
+        fila.dataset.id = venta.id;
         tablaPedidos.appendChild(fila);
     });
 
     // Agregar event listeners para ordenImpresion
     document.querySelectorAll('.input-orden-impresion').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.select();
+        });
+        
         input.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value.trim();
@@ -442,13 +459,74 @@ function renderVentasTable(filterQuery = '') {
             try {
                 await apiClient.patch(`/ventas/${id}/orden-impresion`, { ordenImpresion });
                 showToast('Orden de impresión actualizada.');
-                await cargarVentas(); // Recargar para aplicar ordenamiento
+                await cargarVentas(true); // Recargar para aplicar ordenamiento (silencioso)
             } catch (err) {
                 showToast(err.message || 'Error al actualizar orden.', 'error');
                 renderVentasTable(filterQuery); // Revertir a la vista original
             }
         });
     });
+
+    const fechaMinEl = document.getElementById('fechaMinInput');
+    const fechaMaxEl = document.getElementById('fechaMaxInput');
+    const todayStr = getLocalDateStr();
+    const hasActiveFilters = query !== '' || 
+        (fechaMinEl && fechaMinEl.value !== '' && fechaMinEl.value !== todayStr) ||
+        (fechaMaxEl && fechaMaxEl.value !== '' && fechaMaxEl.value !== todayStr);
+
+    if (!sortableInstance && typeof Sortable !== 'undefined') {
+        sortableInstance = new Sortable(tablaPedidos, {
+            handle: '.drag-handle',
+            animation: 150,
+            swap: true,
+            swapClass: 'highlight',
+            forceFallback: true, // Requerido para que el plugin Swap detecte bien el elemento y permita opacidad
+            onEnd: async function (e) {
+                if (e.oldIndex === e.newIndex) return;
+                
+                const id1 = parseInt(e.item.dataset.id, 10);
+                let id2 = null;
+                if (e.swapItem) {
+                    id2 = parseInt(e.swapItem.dataset.id, 10);
+                } else {
+                    // Fallback to shifting logic if swap plugin is missing
+                    id2 = currentRenderedVentas[e.newIndex]?.id;
+                }
+
+                if (!id1 || !id2 || id1 === id2) return;
+
+                try {
+                    await apiClient.patch('/ventas/orden-impresion/swap', { id1, id2 });
+                    showToast('Orden de impresión intercambiada exitosamente.');
+                } catch (err) {
+                    showToast(err.message || 'Error al intercambiar orden.', 'error');
+                } finally {
+                    await cargarVentas(true);
+                }
+            }
+        });
+    }
+
+    if (sortableInstance) {
+        sortableInstance.option('disabled', hasActiveFilters);
+        const dragHandles = document.querySelectorAll('.drag-handle');
+        if (hasActiveFilters) {
+            dragHandles.forEach(el => {
+                el.style.opacity = '0.3';
+                el.style.cursor = 'not-allowed';
+                el.title = 'Reordenamiento deshabilitado por filtros activos';
+            });
+        } else {
+            dragHandles.forEach(el => {
+                el.style.opacity = '1';
+                el.style.cursor = 'grab';
+                el.title = 'Arrastrar para reordenar';
+            });
+        }
+    }
+
+    // Restaurar el scroll original
+    window.scrollTo(0, currentScrollY);
 }
 
 /**

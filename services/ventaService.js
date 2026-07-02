@@ -476,11 +476,14 @@ exports.updateOrdenImpresion = async (id, numero) => {
             }
         });
         if (existing) {
-            throw new Error(`Duplicate ordenImpresion: El número de orden ${numero} ya está asignado a otra venta activa en el mismo día.`);
+            // Si el número ya existe, los intercambiamos automáticamente en lugar de tirar error
+            await exports.swapOrdenImpresion(id, existing.id);
+        } else {
+            await venta.update({ ordenImpresion: numero });
         }
+    } else {
+        await venta.update({ ordenImpresion: numero });
     }
-
-    await venta.update({ ordenImpresion: numero });
     
     return await Venta.findByPk(id, {
         include: [
@@ -489,4 +492,76 @@ exports.updateOrdenImpresion = async (id, numero) => {
             { model: Cliente, as: 'cliente' }
         ]
     });
+};
+
+/**
+ * Intercambia los valores de ordenImpresion entre dos ventas.
+ * @param {number} id1 ID de la primera venta.
+ * @param {number} id2 ID de la segunda venta.
+ */
+exports.swapOrdenImpresion = async (id1, id2) => {
+    const t = await sequelize.transaction();
+
+    try {
+        const venta1 = await Venta.findByPk(id1, { transaction: t });
+        const venta2 = await Venta.findByPk(id2, { transaction: t });
+
+        if (!venta1 || !venta2) {
+            throw new Error('Una o ambas ventas no existen.');
+        }
+
+        // --- INICIO NORMALIZACION INVISIBLES ---
+        // Obtenemos todas las ventas del dia de venta1 (asumimos que ambas son del mismo dia)
+        const year = venta1.fechaEmision.getFullYear();
+        const month = String(venta1.fechaEmision.getMonth() + 1).padStart(2, '0');
+        const day = String(venta1.fechaEmision.getDate()).padStart(2, '0');
+        const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
+        const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
+
+        const ventasDia = await Venta.findAll({
+            where: {
+                activo: true,
+                fechaEmision: { [Op.between]: [startOfDay, endOfDay] }
+            },
+            transaction: t
+        });
+
+        // Ordenamos igual que el frontend
+        ventasDia.sort((a, b) => {
+            const aOrden = a.ordenImpresion !== null ? a.ordenImpresion : Infinity;
+            const bOrden = b.ordenImpresion !== null ? b.ordenImpresion : Infinity;
+            if (aOrden !== bOrden) return aOrden - bOrden;
+            return new Date(b.fechaEmision) - new Date(a.fechaEmision);
+        });
+
+        // Asignamos numeros invisibles (1000000 + index) a los que no tienen numero o ya tienen uno invisible
+        for (let i = 0; i < ventasDia.length; i++) {
+            const v = ventasDia[i];
+            if (v.ordenImpresion === null || v.ordenImpresion >= 1000000) {
+                const nuevoInvisible = 1000000 + i;
+                if (v.ordenImpresion !== nuevoInvisible) {
+                    await v.update({ ordenImpresion: nuevoInvisible }, { transaction: t });
+                }
+            }
+        }
+
+        // Recargamos venta1 y venta2 por si fueron actualizadas en la normalizacion
+        await venta1.reload({ transaction: t });
+        await venta2.reload({ transaction: t });
+        // --- FIN NORMALIZACION INVISIBLES ---
+
+        const orden1 = venta1.ordenImpresion;
+        const orden2 = venta2.ordenImpresion;
+
+        // Se usa un valor temporal negativo para evitar colisiones de unicidad si hubiese constraints
+        await venta1.update({ ordenImpresion: -1 }, { transaction: t });
+        await venta2.update({ ordenImpresion: orden1 }, { transaction: t });
+        await venta1.update({ ordenImpresion: orden2 }, { transaction: t });
+
+        await t.commit();
+        return true;
+    } catch (error) {
+        await t.rollback();
+        throw error;
+    }
 };
