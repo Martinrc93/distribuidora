@@ -108,6 +108,7 @@
             padding: 1rem 1.5rem;
             display: flex;
             align-items: center;
+            justify-content: center;
             height: 110px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             position: relative;
@@ -115,6 +116,7 @@
 
         .stat-card-info {
             width: 100%;
+            text-align: center;
         }
 
         .stat-card-info h3 {
@@ -125,7 +127,9 @@
             letter-spacing: 0.05em;
             position: absolute;
             top: 1rem;
-            left: 1.5rem;
+            left: 0;
+            right: 0;
+            text-align: center;
         }
 
         .stat-card-info .stat-val {
@@ -134,6 +138,8 @@
             color: var(--text-primary);
             line-height: 1.2;
             margin-top: 0.75rem; /* Centrado visual desplazado para no chocar con el título */
+            display: flex;
+            justify-content: center;
         }
 
         .table-card {

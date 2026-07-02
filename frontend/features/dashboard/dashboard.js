@@ -148,10 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const { kpis, history } = data;
 
-            // Rellenar KPIs
-            document.getElementById('fin-facturacion').textContent = currencyFormatter.format(kpis.totalFacturado);
-            document.getElementById('fin-costos').textContent = currencyFormatter.format(kpis.totalCostos);
-            document.getElementById('fin-ganancia').textContent = currencyFormatter.format(kpis.totalGanancia);
+            // Rellenar KPIs (sin mostrar decimales, cortando por la coma sin redondear)
+            document.getElementById('fin-facturacion').textContent = currencyFormatter.format(kpis.totalFacturado).split(',')[0];
+            document.getElementById('fin-costos').textContent = currencyFormatter.format(kpis.totalCostos).split(',')[0];
+            document.getElementById('fin-ganancia').textContent = currencyFormatter.format(kpis.totalGanancia).split(',')[0];
             document.getElementById('fin-ventas').textContent = kpis.totalVentas;
 
             // Calcular Margen
