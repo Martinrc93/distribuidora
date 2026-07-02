@@ -145,19 +145,30 @@ async function ejecutarSembrado() {
     const empleados = await Empleado.bulkCreate(empleadosData);
     console.log('3 empleados creados.');
 
-    // 8. Crear 20 pedidos (Ventas y Detalles) con la fecha y hora actual de ejecución
+    // 8. Crear 25 pedidos (Ventas y Detalles) (20 de hoy y 5 en el futuro)
     const ahora = new Date();
-    console.log(`Generando 20 pedidos con fecha de emisión: ${ahora.toISOString()}...`);
+    console.log(`Generando 25 pedidos...`);
 
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 25; i++) {
       const cliente = clientes[Math.floor(Math.random() * clientes.length)];
       const empleado = empleados[Math.floor(Math.random() * empleados.length)];
+
+      let fechaPedido = ahora;
+      if (i > 20) {
+        // Pedidos del futuro (mañana)
+        fechaPedido = new Date(ahora.getTime());
+        fechaPedido.setDate(fechaPedido.getDate() + 1);
+      } else if (i > 15) {
+        // Pedidos del pasado (ayer)
+        fechaPedido = new Date(ahora.getTime());
+        fechaPedido.setDate(fechaPedido.getDate() - 1);
+      }
 
       const venta = await Venta.create({
         id: i,
         empleadoId: empleado.id,
         clienteId: cliente.id,
-        fechaEmision: ahora,
+        fechaEmision: fechaPedido,
         total: 0,
         ganancia: 0,
         activo: true
@@ -217,7 +228,7 @@ async function ejecutarSembrado() {
       });
     }
 
-    console.log('🌱 ¡20 pedidos creados exitosamente!');
+    console.log('🌱 ¡25 pedidos creados exitosamente!');
     console.log('🌱 ¡Sembrado completado con éxito!');
   } catch (error) {
     console.error('❌ Error al ejecutar el sembrado:', error);

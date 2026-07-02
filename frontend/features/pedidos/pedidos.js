@@ -625,9 +625,13 @@ async function guardarPedido() {
         return;
     }
 
+    const ordenVal = document.getElementById('ordenImpresion')?.value;
+    const ordenImpresion = ordenVal ? parseInt(ordenVal, 10) : null;
+
     const payload = {
         empleadoId: employee.id,
         clienteId: client.id,
+        ordenImpresion: ordenImpresion,
         detalles: detallesTemporales.map(d => ({
             productoId: d.productoId,
             precioId: d.precioId,
@@ -1630,6 +1634,27 @@ function inicializarEventos() {
     // Evento de agregar producto en Edición
     if (btnEditAgregarProducto) {
         btnEditAgregarProducto.addEventListener('click', agregarProductoEdicion);
+    }
+
+    // Permitir usar "Enter" en la cantidad para agregar el producto
+    const inputProductoCantidad = document.getElementById('productoCantidad');
+    if (inputProductoCantidad) {
+        inputProductoCantidad.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (btnAgregarProducto) btnAgregarProducto.click();
+            }
+        });
+    }
+
+    const inputEditProductoCantidad = document.getElementById('editProductoCantidad');
+    if (inputEditProductoCantidad) {
+        inputEditProductoCantidad.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (btnEditAgregarProducto) btnEditAgregarProducto.click();
+            }
+        });
     }
 
     // Evento de input en Selección de Cliente para mostrar/ocultar "Repetir último pedido"

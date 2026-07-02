@@ -62,6 +62,7 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 100, dia = '', fech
         include: [
             { model: Detalle, as: 'detalles' },
             { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' },
         ],
         order: [
             [sequelize.literal('ordenImpresion IS NULL'), 'ASC'],
@@ -89,10 +90,35 @@ exports.createVenta = async (ventaData) => {
     const t = await sequelize.transaction({ type: 'IMMEDIATE' });
 
     try {
+        if (ventaData.ordenImpresion !== null) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            
+            const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
+            const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
+
+            const existing = await Venta.findOne({
+                where: {
+                    ordenImpresion: ventaData.ordenImpresion,
+                    activo: true,
+                    fechaEmision: {
+                        [Op.between]: [startOfDay, endOfDay]
+                    }
+                },
+                transaction: t
+            });
+            if (existing) {
+                throw new Error(`Duplicate ordenImpresion: El número de orden ${ventaData.ordenImpresion} ya está asignado a otra venta activa en este día.`);
+            }
+        }
+
         // 1. Crear la cabecera de la Venta con total y ganancia iniciales en 0
         const nuevaVenta = await Venta.create({
             empleadoId: ventaData.empleadoId,
             clienteId: ventaData.clienteId,
+            ordenImpresion: ventaData.ordenImpresion,
             total: 0,
             ganancia: 0,
             activo: true
@@ -342,6 +368,7 @@ exports.getByCliente = async (clienteId, page = 1, limit = 100, fechaMin = '', f
         include: [
             { model: Detalle, as: 'detalles' },
             { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' },
         ],
         order: [
             [sequelize.literal('ordenImpresion IS NULL'), 'ASC'],
@@ -400,6 +427,7 @@ exports.getAll = async (page = 1, limit = 100, dia = '', fechaMin = '', fechaMax
         include: [
             { model: Detalle, as: 'detalles' },
             { model: Empleado, as: 'empleado' },
+            { model: Cliente, as: 'cliente' },
         ],
         order: [
             [sequelize.literal('ordenImpresion IS NULL'), 'ASC'],
@@ -430,15 +458,25 @@ exports.updateOrdenImpresion = async (id, numero) => {
     if (!venta) return null;
 
     if (numero !== null) {
+        const year = venta.fechaEmision.getFullYear();
+        const month = String(venta.fechaEmision.getMonth() + 1).padStart(2, '0');
+        const day = String(venta.fechaEmision.getDate()).padStart(2, '0');
+        
+        const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
+        const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
+
         const existing = await Venta.findOne({
             where: {
                 ordenImpresion: numero,
                 activo: true,
-                id: { [Op.ne]: id }
+                id: { [Op.ne]: id },
+                fechaEmision: {
+                    [Op.between]: [startOfDay, endOfDay]
+                }
             }
         });
         if (existing) {
-            throw new Error(`Duplicate ordenImpresion: El número de orden ${numero} ya está asignado a otra venta activa.`);
+            throw new Error(`Duplicate ordenImpresion: El número de orden ${numero} ya está asignado a otra venta activa en el mismo día.`);
         }
     }
 

@@ -4,9 +4,10 @@
  * que consiste en el ID del empleado y una lista de detalles con su productoId, precioId y cantidad.
  */
 class VentaCreateDto {
-    constructor({ empleadoId, clienteId, detalles }) {
+    constructor({ empleadoId, clienteId, detalles, ordenImpresion }) {
         this.empleadoId = typeof empleadoId === 'number' ? empleadoId : Number.parseInt(empleadoId, 10);
         this.clienteId = typeof clienteId === 'number' ? clienteId : Number.parseInt(clienteId, 10);
+        this.ordenImpresion = typeof ordenImpresion === 'number' ? ordenImpresion : (ordenImpresion ? Number.parseInt(ordenImpresion, 10) : null);
         this.detalles = Array.isArray(detalles) 
             ? detalles.map(d => {
                 let parsedCantidad;
@@ -60,7 +61,16 @@ class VentaCreateDto {
             errors.push('El campo "clienteId" debe ser un ID de cliente positivo.');
         }
 
-        // 3. Validar la lista de Detalles
+        // 3. Validar ordenImpresion (si viene)
+        if (this.ordenImpresion !== null) {
+            if (Number.isNaN(this.ordenImpresion)) {
+                errors.push('El campo "ordenImpresion" debe ser un número entero o nulo.');
+            } else if (this.ordenImpresion < 1) {
+                errors.push('El campo "ordenImpresion" debe ser un número positivo mayor a 0.');
+            }
+        }
+
+        // 4. Validar la lista de Detalles
         if (!this.detalles) {
             errors.push('El campo "detalles" es obligatorio y debe ser una lista (arreglo) de productos a vender.');
         } else if (this.detalles.length === 0) {
