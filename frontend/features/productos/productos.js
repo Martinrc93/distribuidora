@@ -850,13 +850,13 @@ async function inicializarListasPrecios() {
                 addHtml += `
                     <div class="col-md-3">
                         <label for="precioLista${lista.id}" class="form-label text-secondary">${escapeHtml(lista.nombre)} ($)</label>
-                        <input type="number" step="0.01" class="form-control" id="precioLista${lista.id}" ${isRequired}>
+                        <input type="number" step="0.01" class="form-control" id="precioLista${lista.id}" onfocus="this.select()" ${isRequired}>
                     </div>
                 `;
                 editHtml += `
                     <div class="col-md-3">
                         <label for="editPrecioLista${lista.id}" class="form-label text-secondary">${escapeHtml(lista.nombre)} ($)</label>
-                        <input type="number" step="0.01" class="form-control" id="editPrecioLista${lista.id}" ${isRequired}>
+                        <input type="number" step="0.01" class="form-control" id="editPrecioLista${lista.id}" onfocus="this.select()" ${isRequired}>
                     </div>
                 `;
             });
