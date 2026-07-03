@@ -133,18 +133,18 @@
                             <div class="col-md-4">
                                 <label for="marcaSelect" class="form-label text-secondary">Seleccionar Marca</label>
                                 <div class="position-relative">
-                                    <input type="text" class="form-control" id="marcaSelect" placeholder="Buscar o seleccionar marca..." autocomplete="off">
+                                    <input type="text" class="form-control" id="marcaSelect" placeholder="Buscar o seleccionar marca..." autocomplete="off" onfocus="this.select()">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <label for="productoSelect" class="form-label text-secondary">Seleccionar Producto</label>
                                 <div class="position-relative">
-                                    <input type="text" class="form-control" id="productoSelect" placeholder="Buscar o seleccionar producto..." autocomplete="off">
+                                    <input type="text" class="form-control" id="productoSelect" placeholder="Buscar o seleccionar producto..." autocomplete="off" onfocus="this.select()">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <label for="productoCantidad" class="form-label text-secondary">Cantidad</label>
-                                <input type="number" min="1" step="1" value="" class="form-control" id="productoCantidad">
+                                <input type="number" min="1" step="1" value="" class="form-control" id="productoCantidad" onfocus="this.select()" onclick="this.select()">
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-sm btn-primary w-100" id="btnAgregarProducto" style="background-color: #2563eb; border: none; padding: 0.35rem 0.5rem; height: 42px; font-size: 0.85rem;">
@@ -154,7 +154,7 @@
                         </div>
 
                         <!-- Tabla de Productos Agregados -->
-                        <div class="table-responsive mb-3" style="max-height: 200px; overflow-y: auto;">
+                        <div class="table-responsive mb-3" style="max-height: 350px; overflow-y: auto;">
                             <table class="table table-hover table-borderless text-center align-middle" id="tablaPedidoDetalles" style="font-size: 1rem; color: var(--text-primary);">
                                 <thead>
                                     <tr class="border-bottom" style="border-color: var(--border-color) !important;">
@@ -210,7 +210,7 @@
                     </div>
 
                     <!-- Tabla de Productos -->
-                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                         <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
                             <thead>
                                 <tr class="border-bottom" style="border-color: var(--border-color) !important;">
@@ -272,18 +272,18 @@
                             <div class="col-md-4">
                                 <label for="editMarcaSelect" class="form-label text-secondary">Seleccionar Marca</label>
                                 <div class="position-relative">
-                                    <input type="text" class="form-control" id="editMarcaSelect" placeholder="Buscar o seleccionar marca..." autocomplete="off">
+                                    <input type="text" class="form-control" id="editMarcaSelect" placeholder="Buscar o seleccionar marca..." autocomplete="off" onfocus="this.select()">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <label for="editProductoSelect" class="form-label text-secondary">Seleccionar Producto</label>
                                 <div class="position-relative">
-                                    <input type="text" class="form-control" id="editProductoSelect" placeholder="Buscar o seleccionar producto..." autocomplete="off">
+                                    <input type="text" class="form-control" id="editProductoSelect" placeholder="Buscar o seleccionar producto..." autocomplete="off" onfocus="this.select()">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <label for="editProductoCantidad" class="form-label text-secondary">Cantidad</label>
-                                <input type="number" min="1" step="1" value="1" class="form-control" id="editProductoCantidad">
+                                <input type="number" min="1" step="1" value="1" class="form-control" id="editProductoCantidad" onfocus="this.select()" onclick="this.select()">
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-sm btn-primary w-100" id="btnEditAgregarProducto" style="background-color: #2563eb; border: none; padding: 0.35rem 0.5rem; height: 42px; font-size: 0.85rem;">
@@ -293,7 +293,7 @@
                         </div>
 
                         <!-- Tabla de Productos Agregados -->
-                        <div class="table-responsive mb-3" style="max-height: 200px; overflow-y: auto;">
+                        <div class="table-responsive mb-3" style="max-height: 350px; overflow-y: auto;">
                             <table class="table table-hover table-borderless text-center align-middle" style="font-size: 1rem; color: var(--text-primary);">
                                 <thead>
                                     <tr class="border-bottom" style="border-color: var(--border-color) !important;">
@@ -408,8 +408,15 @@
     <div class="modal fade" id="previewPrintModal" tabindex="-1" aria-labelledby="previewPrintModalLabel" aria-hidden="true" data-bs-theme="dark" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; min-width: 100vw !important; min-height: 100vh !important; z-index: 999999 !important; margin: 0 !important; padding: 0 !important;">
         <div class="modal-dialog modal-fullscreen" style="width: 100vw !important; height: 100vh !important; min-width: 100vw !important; min-height: 100vh !important; max-width: none !important; margin: 0 !important; padding: 0 !important;">
             <div class="modal-content" style="background-color: var(--bg-card); border: none; border-radius: 0; width: 100% !important; height: 100% !important; min-width: 100vw !important; min-height: 100vh !important;">
-                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title text-white" id="previewPrintModalLabel">Vista Previa de Impresión</h5>
+                <div class="modal-header d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--border-color); position: relative;">
+                    <h5 class="modal-title text-white mb-0" id="previewPrintModalLabel">Vista Previa de Impresión</h5>
+                    
+                    <div class="d-flex align-items-center position-absolute start-50 translate-middle-x" style="gap: 10px;">
+                        <button type="button" class="btn btn-sm" id="btnZoomOut" style="background-color: transparent; border: 1px solid var(--border-color); color: var(--text-primary);"><i class="fas fa-minus"></i></button>
+                        <span id="zoomLevelText" style="color: var(--text-primary); font-size: 0.9rem; min-width: 45px; text-align: center;">100%</span>
+                        <button type="button" class="btn btn-sm" id="btnZoomIn" style="background-color: transparent; border: 1px solid var(--border-color); color: var(--text-primary);"><i class="fas fa-plus"></i></button>
+                    </div>
+
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body d-flex justify-content-center align-items-center" style="background-color: #f1f5f9; padding: 20px; overflow-y: auto;">
@@ -417,8 +424,7 @@
                         <!-- Contenido dinámico -->
                     </div>
                 </div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: transparent; border: 1px solid var(--border-color);">Cerrar</button>
+                <div class="modal-footer d-flex justify-content-end" style="border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn btn-primary" id="btnPrintFromPreview" style="background-color: #2563eb; border: none;">
                         <i class="fas fa-print me-1"></i> Imprimir
                     </button>

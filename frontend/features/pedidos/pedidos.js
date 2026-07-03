@@ -594,9 +594,10 @@ async function agregarProductoTemporal() {
 
         renderDetallesTemporales();
         
-        // Limpiar inputs de producto
+        // Limpiar inputs de producto y volver el foco al buscador
         document.getElementById('productoSelect').value = '';
         document.getElementById('productoCantidad').value = '1';
+        document.getElementById('productoSelect').focus();
     } catch (error) {
         console.error('Error al agregar producto al pedido:', error);
         showToast('Hubo un error al consultar el precio del producto.', 'error');
@@ -635,10 +636,12 @@ function renderDetallesTemporales() {
             <td>${escapeHtml(d.nombre)}</td>
             <td>
                 <div class="d-flex align-items-center justify-content-center gap-1">
-                    $<input type="number" min="0" step="0.01" class="form-control text-center new-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}">
+                    $<input type="number" min="0" step="0.01" class="form-control text-center new-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}" onfocus="this.select()" onclick="this.select()">
                 </div>
             </td>
-            <td>${d.cantidad}</td>
+            <td>
+                <input type="number" min="1" step="1" class="form-control text-center mx-auto new-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
+            </td>
             <td>$${formatCurrency(d.subtotal)}</td>
             <td>
                 <button type="button" class="btn btn-sm action-btn delete border-0 btn-eliminar-item" data-index="${idx}">
@@ -674,6 +677,24 @@ function renderDetallesTemporales() {
                     showToast('El precio unitario no puede ser negativo.', 'error');
                 }
                 input.value = detallesTemporales[index].precio.toFixed(2);
+            }
+        });
+    });
+
+    // Agregar manejadores de eventos para cambiar la cantidad personalizada
+    document.querySelectorAll('.new-item-qty').forEach(input => {
+        input.addEventListener('change', () => {
+            const index = parseInt(input.getAttribute('data-index'), 10);
+            const val = parseInt(input.value, 10);
+            if (!isNaN(val) && val >= 1) {
+                detallesTemporales[index].cantidad = val;
+                detallesTemporales[index].subtotal = parseFloat((val * detallesTemporales[index].precio).toFixed(2));
+                renderDetallesTemporales();
+            } else {
+                if (!isNaN(val) && val < 1) {
+                    showToast('La cantidad debe ser al menos 1.', 'error');
+                }
+                input.value = detallesTemporales[index].cantidad;
             }
         });
     });
@@ -795,6 +816,7 @@ async function agregarProductoEdicion() {
         // Limpiar inputs
         document.getElementById('editProductoSelect').value = '';
         document.getElementById('editProductoCantidad').value = '1';
+        document.getElementById('editProductoSelect').focus();
     } catch (error) {
         console.error('Error al agregar producto al pedido en edición:', error);
         showToast('Hubo un error al consultar el precio del producto.', 'error');
@@ -827,11 +849,11 @@ function renderDetallesEdicion() {
             <td>${escapeHtml(d.nombre)}</td>
             <td>
                 <div class="d-flex align-items-center justify-content-center gap-1">
-                    $<input type="number" min="0" step="0.01" class="form-control text-center edit-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}">
+                    $<input type="number" min="0" step="0.01" class="form-control text-center edit-item-price" style="width: 90px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.precio.toFixed(2)}" onfocus="this.select()" onclick="this.select()">
                 </div>
             </td>
             <td>
-                <input type="number" min="1" step="1" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}">
+                <input type="number" min="1" step="1" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
             </td>
             <td>$${formatCurrency(d.subtotal)}</td>
             <td>
@@ -1043,6 +1065,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Trigger printing using waitImagesAndPrint on the printSection
                 waitImagesAndPrint('printSection');
+            }
+        });
+    }
+
+    // Zoom Logic
+    const btnZoomIn = document.getElementById('btnZoomIn');
+    const btnZoomOut = document.getElementById('btnZoomOut');
+    const zoomLevelText = document.getElementById('zoomLevelText');
+    const previewPrintBody = document.getElementById('previewPrintBody');
+    
+    let currentZoom = 1;
+    
+    if (btnZoomIn && btnZoomOut && zoomLevelText && previewPrintBody) {
+        const previewModal = document.getElementById('previewPrintModal');
+        if (previewModal) {
+            previewModal.addEventListener('show.bs.modal', () => {
+                currentZoom = 1;
+                updateZoom();
+            });
+        }
+        
+        const updateZoom = () => {
+            zoomLevelText.textContent = Math.round(currentZoom * 100) + '%';
+            previewPrintBody.style.transform = `scale(${currentZoom})`;
+            previewPrintBody.style.transformOrigin = 'top center';
+            // Adjust container spacing to prevent overlap if scaled heavily
+            previewPrintBody.style.marginBottom = (currentZoom > 1) ? `${(currentZoom - 1) * 100}%` : '0';
+        };
+
+        btnZoomIn.addEventListener('click', () => {
+            if (currentZoom < 3.0) {
+                currentZoom += 0.1;
+                updateZoom();
+            }
+        });
+
+        btnZoomOut.addEventListener('click', () => {
+            if (currentZoom > 0.3) {
+                currentZoom -= 0.1;
+                updateZoom();
             }
         });
     }
