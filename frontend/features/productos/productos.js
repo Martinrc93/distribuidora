@@ -355,10 +355,20 @@ async function actualizarProducto() {
 
     try {
         console.log('Actualizando producto:', { id, nombre, marca, costo });
+
+        // Construir array de precios a enviar (solo los definidos)
+        const preciosAEnviar = listasPrecios.map(lista => {
+            const input = document.getElementById(`editPrecioLista${lista.id}`);
+            const valStr = input ? input.value.trim() : '';
+            const precio = valStr !== '' ? parseFloat(valStr) : null;
+            return precio !== null ? { precio, listaPreciosId: lista.id } : null;
+        }).filter(p => p !== null);
+
         await productosService.update(id, {
             nombre,
             marca,
-            costo
+            costo,
+            precios: preciosAEnviar
         });
 
         // Obtener precios existentes

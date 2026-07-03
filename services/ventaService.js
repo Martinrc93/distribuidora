@@ -129,8 +129,8 @@ exports.createVenta = async (ventaData) => {
 
         // 2. Iterar por cada detalle del DTO, verificar producto y precio, y guardarlo mediante el detalleService
         for (const item of ventaData.detalles) {
-            // Buscamos el registro de precio específico enviado por el cliente
-            const priceRecord = await Price.findByPk(item.precioId, { transaction: t });
+            // Buscamos el registro de precio específico enviado por el cliente (incluyendo precios históricamente eliminados/recreados)
+            const priceRecord = await Price.findByPk(item.precioId, { transaction: t, paranoid: false });
 
             if (!priceRecord) {
                 throw new Error(`El registro de precio con ID ${item.precioId} no existe.`);
@@ -142,7 +142,7 @@ exports.createVenta = async (ventaData) => {
             }
 
             // Obtener el costo del producto para el cálculo de la ganancia
-            const product = await Product.findByPk(item.productoId, { transaction: t });
+            const product = await Product.findByPk(item.productoId, { transaction: t, paranoid: false });
             if (!product) {
                 throw new Error(`El producto con ID ${item.productoId} no existe.`);
             }
@@ -230,7 +230,7 @@ exports.updateVenta = async (id, activo, detalles = null) => {
 
             // Registrar los nuevos detalles
             for (const item of detalles) {
-                const priceRecord = await Price.findByPk(item.precioId, { transaction: t });
+                const priceRecord = await Price.findByPk(item.precioId, { transaction: t, paranoid: false });
                 if (!priceRecord) {
                     throw new Error(`El registro de precio con ID ${item.precioId} no existe.`);
                 }
@@ -239,7 +239,7 @@ exports.updateVenta = async (id, activo, detalles = null) => {
                 }
 
                 // Obtener el costo del producto para el cálculo de la ganancia
-                const product = await Product.findByPk(item.productoId, { transaction: t });
+                const product = await Product.findByPk(item.productoId, { transaction: t, paranoid: false });
                 if (!product) {
                     throw new Error(`El producto con ID ${item.productoId} no existe.`);
                 }

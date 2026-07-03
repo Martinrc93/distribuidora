@@ -100,38 +100,66 @@ exports.create = async (productData) => {
  * @param {{nombre?: string, marca?: string, costo?: number}} productData Datos a modificar.
  */
 exports.update = async (id, productData) => {
-    const product = await Product.findByPk(id);
-    if (!product) return null;
+    const t = await sequelize.transaction();
+    try {
+        const product = await Product.findByPk(id, { transaction: t });
+        if (!product) {
+            await t.rollback();
+            return null;
+        }
 
-    if (productData.costo !== undefined) {
-        const nuevoCosto = Number.parseFloat(productData.costo);
-        const preciosExistentes = await Price.findAll({ where: { productoId: id } });
-        for (const p of preciosExistentes) {
-            if (Number.parseFloat(p.precio) < nuevoCosto) {
-                const error = new Error(`El costo ($${nuevoCosto}) no puede ser mayor que el precio de lista existente ($${p.precio}).`);
-                error.statusCode = 400;
-                throw error;
+        // Update marca if provided
+        let marcaId = product.marcaId;
+        if (productData.marca !== undefined) {
+            const [marcaObj] = await Marca.findOrCreate({
+                where: { nombre: productData.marca },
+                transaction: t
+            });
+            marcaId = marcaObj.id;
+        }
+
+        // Validate that the new cost is not greater than any price in the list
+        if (productData.costo !== undefined) {
+            const nuevoCosto = Number.parseFloat(productData.costo);
+            // Use the new precios if provided; otherwise fetch current DB prices
+            const preciosAComparar = (Array.isArray(productData.precios) && productData.precios.length > 0)
+                ? productData.precios
+                : await Price.findAll({ where: { productoId: id }, transaction: t });
+            for (const p of preciosAComparar) {
+                const precioVal = Number.parseFloat(p.precio);
+                if (precioVal < nuevoCosto) {
+                    const error = new Error(`El precio de lista ($${precioVal}) no puede ser menor que el costo ($${nuevoCosto}).`);
+                    error.statusCode = 400;
+                    throw error;
+                }
             }
         }
-    }
 
-    let marcaId = product.marcaId;
-    if (productData.marca !== undefined) {
-        const [marcaObj] = await Marca.findOrCreate({
-            where: { nombre: productData.marca }
+        // Replace precios if provided
+        if (Array.isArray(productData.precios)) {
+            await Price.destroy({ where: { productoId: id }, transaction: t });
+            const newPrices = productData.precios.map(p => ({
+                precio: p.precio,
+                productoId: id,
+                listaPreciosId: p.listaPreciosId
+            }));
+            await Price.bulkCreate(newPrices, { transaction: t });
+        }
+
+        await product.update({
+            nombre: productData.nombre === undefined ? product.nombre : productData.nombre,
+            marcaId: marcaId,
+            costo: productData.costo === undefined ? product.costo : productData.costo
+        }, { transaction: t });
+
+        await t.commit();
+        return await product.reload({
+            include: [{ model: Marca, as: 'marca' }, { model: Price, as: 'precios' }]
         });
-        marcaId = marcaObj.id;
+    } catch (err) {
+        if (t) await t.rollback();
+        throw err;
     }
-
-    await product.update({
-        nombre: productData.nombre === undefined ? product.nombre : productData.nombre,
-        marcaId: marcaId,
-        costo: productData.costo === undefined ? product.costo : productData.costo
-    });
-
-    return await product.reload({
-        include: [{ model: Marca, as: 'marca' }]
-    });
 };
 
 /**

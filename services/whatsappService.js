@@ -131,6 +131,7 @@ function registerClientEvents(whatsappClient) {
             logInfo(`Reconnection attempt ${connectionRetries}/${MAX_RETRIES} in ${RETRY_DELAY_MS / 1000}s...`);
             setTimeout(() => {
                 if (!isExplicitLogout) {
+                    cleanSessionFolder();
                     initWhatsApp(true);
                 }
             }, RETRY_DELAY_MS);

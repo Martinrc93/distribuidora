@@ -16,6 +16,13 @@ class ProductUpdateDto {
             const parsedCosto = typeof data.costo === 'number' ? data.costo : Number.parseFloat(data.costo);
             this.costo = Number.isNaN(parsedCosto) ? parsedCosto : Number.parseFloat(parsedCosto.toFixed(2));
         }
+        if (Array.isArray(data.precios)) {
+            // Clone and sanitize each price entry (keep raw numeric values)
+            this.precios = data.precios.map(p => ({
+                precio: Number.parseFloat(p.precio),
+                listaPreciosId: p.listaPreciosId
+            }));
+        }
     }
 
     /**
@@ -39,6 +46,16 @@ class ProductUpdateDto {
             } else if (this.costo <= 0) {
                 errors.push('El campo "costo" debe ser superior a 0.');
             }
+        }
+        if (this.precios !== undefined) {
+            this.precios.forEach((p, idx) => {
+                if (p.precio === undefined || Number.isNaN(p.precio) || p.precio <= 0) {
+                    errors.push(`Precio en posición ${idx} debe ser un número positivo.`);
+                }
+                if (!p.listaPreciosId) {
+                    errors.push(`Precio en posición ${idx} debe incluir listaPreciosId.`);
+                }
+            });
         }
 
         return {

@@ -72,10 +72,6 @@ Venta.init({
         validate: {
             notNull: {
                 msg: 'La ganancia es obligatoria.'
-            },
-            min: {
-                args: [0],
-                msg: 'La ganancia de la venta no puede ser negativa.'
             }
         }
     }
