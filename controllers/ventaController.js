@@ -38,6 +38,9 @@ exports.create = async (req, res) => {
         const nuevaVenta = await ventaService.createVenta(ventaDto);
         res.status(201).json(VentaResponseDto.fromModel(nuevaVenta));
     } catch (err) {
+        if (err.isClientError || err.message.includes('ya está en uso') || err.message.includes('Duplicate ordenImpresion')) {
+            return res.status(400).json({ error: err.message });
+        }
         res.status(500).json({ error: err.message });
     }
 };

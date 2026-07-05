@@ -110,7 +110,9 @@ exports.createVenta = async (ventaData) => {
                 transaction: t
             });
             if (existing) {
-                throw new Error(`Duplicate ordenImpresion: El número de orden ${ventaData.ordenImpresion} ya está asignado a otra venta activa en este día.`);
+                const err = new Error(`El número de orden de impresión ${ventaData.ordenImpresion} ya está en uso.`);
+                err.isClientError = true;
+                throw err;
             }
         }
 

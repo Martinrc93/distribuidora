@@ -69,7 +69,7 @@ describe('Venta ordenImpresion Integration Tests', () => {
         expect(updatedVenta.ordenImpresion).toBe(5);
     });
 
-    test('should prevent assigning a duplicate ordenImpresion among active orders', async () => {
+    test('should automatically swap duplicate ordenImpresion among active orders on patch', async () => {
         // assign 5 to venta1
         await request(app)
             .patch(`/ventas/${venta1.id}/orden-impresion`)
@@ -80,8 +80,34 @@ describe('Venta ordenImpresion Integration Tests', () => {
             .patch(`/ventas/${venta2.id}/orden-impresion`)
             .send({ ordenImpresion: 5 });
 
+        expect(response.status).toBe(200);
+
+        const updated1 = await Venta.findByPk(venta1.id);
+        const updated2 = await Venta.findByPk(venta2.id);
+        expect(updated2.ordenImpresion).toBe(5);
+        expect(updated1.ordenImpresion).toBeGreaterThanOrEqual(1000000);
+    });
+
+    test('POST /ventas - should prevent registering a sale/order with a duplicate ordenImpresion', async () => {
+        // assign 5 to venta1
+        await request(app)
+            .patch(`/ventas/${venta1.id}/orden-impresion`)
+            .send({ ordenImpresion: 5 });
+
+        // try creating a new sale with ordenImpresion: 5
+        const response = await request(app)
+            .post('/ventas')
+            .send({
+                empleadoId: empleado.id,
+                clienteId: cliente.id,
+                ordenImpresion: 5,
+                detalles: [
+                    { productoId: 1, precioId: 1, cantidad: 1 }
+                ]
+            });
+
         expect(response.status).toBe(400);
-        expect(response.body.error).toMatch(/duplicate/i); // Expecting some sort of duplicate error message
+        expect(response.body.error).toContain('ya está en uso');
     });
 
     test('should clear ordenImpresion when sending null', async () => {
@@ -130,7 +156,7 @@ describe('Venta ordenImpresion Integration Tests', () => {
             const updated1 = await Venta.findByPk(venta1.id);
             const updated2 = await Venta.findByPk(venta2.id);
 
-            expect(updated1.ordenImpresion).toBeNull();
+            expect(updated1.ordenImpresion).toBeGreaterThanOrEqual(1000000);
             expect(updated2.ordenImpresion).toBe(10);
         });
 

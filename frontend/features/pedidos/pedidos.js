@@ -189,7 +189,7 @@ async function cargarDatosAuxiliares() {
         // Inicializar comboboxes de búsqueda interactivos
         inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.activo).map(e => `${e.nombre} ${e.apellido}`));
         inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre), (selectedClientName) => {
-            // La visibilidad del boton de ultimo pedido ahora es constante
+            actualizarVisibilidadBtnRepetir();
         });
         inicializarCombobox('editProductoSelect', productos.map(p => p.nombre));
 
@@ -749,7 +749,7 @@ async function guardarPedido() {
         await cargarVentas();
     } catch (error) {
         console.error('Error al crear pedido:', error);
-        showToast('Hubo un error al registrar el pedido.', 'error');
+        showToast(error.message || 'Hubo un error al registrar el pedido.', 'error');
     } finally {
         btnConfirmarPedido.disabled = false;
     }
@@ -1641,6 +1641,24 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
 }
 
 /**
+ * Actualiza la visibilidad del botón para repetir el último pedido en base a si el cliente seleccionado es válido.
+ */
+function actualizarVisibilidadBtnRepetir() {
+    const inputCliente = document.getElementById('pedidoCliente');
+    const btnRepetir = document.getElementById('btnRepetirUltimoPedido');
+    if (!inputCliente || !btnRepetir) return;
+
+    const val = inputCliente.value.trim();
+    const client = clientes.find(c => c.nombre === val);
+
+    if (client) {
+        btnRepetir.classList.remove('d-none');
+    } else {
+        btnRepetir.classList.add('d-none');
+    }
+}
+
+/**
  * Obtiene el último pedido del cliente actual y carga sus productos con los precios vigentes.
  */
 async function repetirUltimoPedido() {
@@ -1800,11 +1818,8 @@ function inicializarEventos() {
     // Evento de input en Selección de Cliente para mostrar/ocultar "Repetir último pedido"
     const inputCliente = document.getElementById('pedidoCliente');
     if (inputCliente) {
-        inputCliente.addEventListener('input', () => {
-            const val = inputCliente.value.trim();
-            const client = clientes.find(c => c.nombre === val);
-            // La visibilidad del boton de ultimo pedido ahora es constante
-        });
+        inputCliente.addEventListener('input', actualizarVisibilidadBtnRepetir);
+        inputCliente.addEventListener('change', actualizarVisibilidadBtnRepetir);
     }
 
     // Evento para "Repetir último pedido"
@@ -2070,7 +2085,7 @@ function inicializarEventos() {
                 await cargarVentas();
             } catch (error) {
                 console.error('Error al actualizar pedido:', error);
-                showToast('Hubo un error al actualizar el pedido.', 'error');
+                showToast(error.message || 'Hubo un error al actualizar el pedido.', 'error');
             } finally {
                 btnActualizarPedido.disabled = false;
             }
