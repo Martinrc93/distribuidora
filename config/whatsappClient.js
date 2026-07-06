@@ -115,7 +115,10 @@ function createWhatsAppClient({ clientId = 'distribuidora-session', authPath } =
                 '--no-first-run',
                 '--safebrowsing-disable-auto-update',
                 '--disable-features=TranslateUI',
-                '--disable-component-update'
+                '--disable-component-update',
+                '--window-position=-2400,-2400',
+                '--window-size=1,1',
+                '--no-default-browser-check'
             ]
         },
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
