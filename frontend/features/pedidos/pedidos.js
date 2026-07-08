@@ -6,6 +6,32 @@ function formatCurrency(value) {
     return Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function sortVentasPorOrdenImpresion(ventasParaOrdenar = []) {
+    return [...ventasParaOrdenar].sort((a, b) => {
+        const aActivo = Boolean(a.activo);
+        const bActivo = Boolean(b.activo);
+
+        if (aActivo !== bActivo) {
+            return aActivo ? -1 : 1;
+        }
+
+        const aOrden = Number.isFinite(Number(a.ordenImpresion)) ? Number(a.ordenImpresion) : Infinity;
+        const bOrden = Number.isFinite(Number(b.ordenImpresion)) ? Number(b.ordenImpresion) : Infinity;
+
+        if (aOrden !== bOrden) {
+            return aOrden - bOrden;
+        }
+
+        const aFecha = new Date(a.fechaEmision || 0).getTime();
+        const bFecha = new Date(b.fechaEmision || 0).getTime();
+        if (aFecha !== bFecha) {
+            return bFecha - aFecha;
+        }
+
+        return Number(b.id || 0) - Number(a.id || 0);
+    });
+}
+
 function getLocalDateStr() {
     const today = new Date();
     const year = today.getFullYear();
@@ -371,7 +397,7 @@ function renderVentasTable(filterQuery = '') {
                id.includes(query);
     });
 
-    currentRenderedVentas = ventasFiltradas;
+    currentRenderedVentas = sortVentasPorOrdenImpresion(ventasFiltradas);
 
     if (ventasFiltradas.length === 0) {
         if (query) {
@@ -390,24 +416,9 @@ function renderVentasTable(filterQuery = '') {
         return;
     }
 
-    // Ordenar: Activos (activo = true) primero, Cancelados (activo = false) después
-    ventasFiltradas.sort((a, b) => {
-        if (a.activo && !b.activo) return -1;
-        if (!a.activo && b.activo) return 1;
-        
-        if (a.activo && b.activo) {
-            const aOrden = a.ordenImpresion !== null && a.ordenImpresion !== undefined ? a.ordenImpresion : Infinity;
-            const bOrden = b.ordenImpresion !== null && b.ordenImpresion !== undefined ? b.ordenImpresion : Infinity;
-            
-            if (aOrden !== bOrden) return aOrden - bOrden;
-            // Si son iguales o ambos null, por fecha (más nuevo primero)
-            return new Date(b.fechaEmision) - new Date(a.fechaEmision);
-        }
-        
-        return 0;
-    });
+    const ventasOrdenadas = sortVentasPorOrdenImpresion(ventasFiltradas);
 
-    ventasFiltradas.forEach(venta => {
+    ventasOrdenadas.forEach(venta => {
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
         const estadoBadge = venta.activo 
             ? '<span class="badge bg-success">Activo</span>'
@@ -1210,7 +1221,7 @@ function imprimirResumenDiario() {
  * Agrupa todos los pedidos activos de hoy y genera una sola sección de impresión con saltos de página entre cada uno.
  */
 function generarTodosLosPedidosHtml() {
-    const activeVentas = ventas.filter(v => v.activo);
+    const activeVentas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
     if (activeVentas.length === 0) {
         showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');
         return false;
@@ -1770,7 +1781,7 @@ function updateImprimirEmpleadoSelect() {
 function updateImprimirClienteSelect() {
     const select = document.getElementById('selectImprimirCliente');
     if (!select) return;
-    const activeVentas = ventas.filter(v => v.activo);
+    const activeVentas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
     select.innerHTML = '<option value="">-- Seleccione un Pedido --</option>' + 
         activeVentas.map(v => `<option value="${v.id}">${v.clienteNombre || 'Cliente Desconocido'} - $${Number(v.total).toFixed(2)}</option>`).join('');
 }
