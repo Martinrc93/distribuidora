@@ -94,10 +94,10 @@ class VentaCreateDto {
 
                 if (d.cantidad === undefined || d.cantidad === null || Number.isNaN(d.cantidad)) {
                     errors.push(`Detalle #${itemNum}: el campo "cantidad" es obligatorio y debe ser un número.`);
-                } else if (d.cantidad < 1) {
-                    errors.push(`Detalle #${itemNum}: la "cantidad" de producto debe ser de al menos 1.`);
-                } else if (!Number.isInteger(d.cantidad)) {
-                    errors.push(`Detalle #${itemNum}: la "cantidad" debe ser un número entero (ej. 1, 2, 3).`);
+                } else if (d.cantidad < 0.5) {
+                    errors.push(`Detalle #${itemNum}: la "cantidad" de producto debe ser de al menos 0.5.`);
+                } else if ((d.cantidad * 2) % 1 !== 0) {
+                    errors.push(`Detalle #${itemNum}: la "cantidad" debe ser en incrementos de 0.5 (ej. 0.5, 1, 1.5, 2).`);
                 }
                 if (d.precio !== undefined && d.precio !== null && (Number.isNaN(d.precio) || d.precio < 0)) {
                     errors.push(`Detalle #${itemNum}: el campo "precio" (personalizado) debe ser un número positivo.`);

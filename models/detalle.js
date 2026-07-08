@@ -50,18 +50,20 @@ Detalle.init({
         }
     },
     cantidad: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL(10, 1),
         allowNull: false,
         validate: {
             notNull: {
                 msg: 'La cantidad es obligatoria.'
             },
-            isInt: {
-                msg: 'La cantidad debe ser un número entero.'
-            },
             min: {
-                args: [1],
-                msg: 'La cantidad debe ser al menos 1.'
+                args: [0.5],
+                msg: 'La cantidad debe ser al menos 0.5.'
+            },
+            isHalfIncrement(value) {
+                if ((parseFloat(value) * 2) % 1 !== 0) {
+                    throw new Error('La cantidad debe ser en incrementos de 0.5 (ej. 0.5, 1, 1.5, 2).');
+                }
             }
         }
     },

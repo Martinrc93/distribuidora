@@ -537,8 +537,8 @@ async function agregarProductoTemporal() {
     const productName = document.getElementById('productoSelect').value.trim();
     const cantidad = parseFloat(document.getElementById('productoCantidad').value);
 
-    if (isNaN(cantidad) || cantidad < 1 || !Number.isInteger(cantidad)) {
-        showToast('Por favor, ingrese una cantidad entera mayor o igual a 1.', 'error');
+    if (isNaN(cantidad) || cantidad < 0.5 || (cantidad * 2) % 1 !== 0) {
+        showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5 (ej: 0.5, 1, 1.5, 2...).', 'error');
         return;
     }
 
@@ -640,7 +640,7 @@ function renderDetallesTemporales() {
                 </div>
             </td>
             <td>
-                <input type="number" min="1" step="1" class="form-control text-center mx-auto new-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
+                <input type="number" min="0.5" step="0.5" class="form-control text-center mx-auto new-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
             </td>
             <td>$${formatCurrency(d.subtotal)}</td>
             <td>
@@ -685,14 +685,14 @@ function renderDetallesTemporales() {
     document.querySelectorAll('.new-item-qty').forEach(input => {
         input.addEventListener('change', () => {
             const index = parseInt(input.getAttribute('data-index'), 10);
-            const val = parseInt(input.value, 10);
-            if (!isNaN(val) && val >= 1) {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val >= 0.5 && (val * 2) % 1 === 0) {
                 detallesTemporales[index].cantidad = val;
                 detallesTemporales[index].subtotal = parseFloat((val * detallesTemporales[index].precio).toFixed(2));
                 renderDetallesTemporales();
             } else {
-                if (!isNaN(val) && val < 1) {
-                    showToast('La cantidad debe ser al menos 1.', 'error');
+                if (!isNaN(val)) {
+                    showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5.', 'error');
                 }
                 input.value = detallesTemporales[index].cantidad;
             }
@@ -762,8 +762,8 @@ async function agregarProductoEdicion() {
     const productName = document.getElementById('editProductoSelect').value.trim();
     const cantidad = parseFloat(document.getElementById('editProductoCantidad').value);
 
-    if (isNaN(cantidad) || cantidad < 1 || !Number.isInteger(cantidad)) {
-        showToast('Por favor, ingrese una cantidad entera mayor o igual a 1.', 'error');
+    if (isNaN(cantidad) || cantidad < 0.5 || (cantidad * 2) % 1 !== 0) {
+        showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5 (ej: 0.5, 1, 1.5, 2...).', 'error');
         return;
     }
 
@@ -853,7 +853,7 @@ function renderDetallesEdicion() {
                 </div>
             </td>
             <td>
-                <input type="number" min="1" step="1" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
+                <input type="number" min="0.5" step="0.5" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
             </td>
             <td>$${formatCurrency(d.subtotal)}</td>
             <td>
@@ -899,13 +899,13 @@ function renderDetallesEdicion() {
         input.addEventListener('change', () => {
             const index = parseInt(input.getAttribute('data-index'), 10);
             const val = parseFloat(input.value);
-            if (!isNaN(val) && val >= 1 && Number.isInteger(val)) {
+            if (!isNaN(val) && val >= 0.5 && (val * 2) % 1 === 0) {
                 detallesEdicion[index].cantidad = val;
                 detallesEdicion[index].subtotal = parseFloat((val * detallesEdicion[index].precio).toFixed(2));
                 renderDetallesEdicion();
             } else {
-                if (!isNaN(val) && (!Number.isInteger(val) || val < 1)) {
-                    showToast('La cantidad debe ser un número entero mayor o igual a 1.', 'error');
+                if (!isNaN(val)) {
+                    showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5.', 'error');
                 }
                 input.value = detallesEdicion[index].cantidad;
             }
