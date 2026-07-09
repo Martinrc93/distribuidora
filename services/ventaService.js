@@ -88,35 +88,9 @@ exports.getByEmpleado = async (empleadoId, page = 1, limit = 100, dia = '', fech
  * @param {{empleadoId: number, detalles: {productId: number, priceId: number, cantidad: number}[]}} ventaData Datos validados.
  */
 exports.createVenta = async (ventaData) => {
-    const t = await sequelize.transaction({ type: 'IMMEDIATE' });
+    const t = await sequelize.transaction();
 
     try {
-        if (ventaData.ordenImpresion !== null) {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            
-            const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
-            const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
-
-            const existing = await Venta.findOne({
-                where: {
-                    ordenImpresion: ventaData.ordenImpresion,
-                    activo: true,
-                    fechaEmision: {
-                        [Op.between]: [startOfDay, endOfDay]
-                    }
-                },
-                transaction: t
-            });
-            if (existing) {
-                const err = new Error(`El número de orden de impresión ${ventaData.ordenImpresion} ya está en uso.`);
-                err.isClientError = true;
-                throw err;
-            }
-        }
-
         // Pre-fetch all products with their brands to sort and reuse
         const productIds = ventaData.detalles.map(d => d.productoId);
         const products = await Product.findAll({
@@ -149,10 +123,11 @@ exports.createVenta = async (ventaData) => {
         });
 
         // 1. Crear la cabecera de la Venta con total y ganancia iniciales en 0
+        // Se crea con ordenImpresion: 0 para que al normalizar sea el primer elemento
         const nuevaVenta = await Venta.create({
             empleadoId: ventaData.empleadoId,
             clienteId: ventaData.clienteId,
-            ordenImpresion: ventaData.ordenImpresion,
+            ordenImpresion: 0,
             total: 0,
             ganancia: 0,
             activo: true
@@ -216,6 +191,9 @@ exports.createVenta = async (ventaData) => {
         // 4. Confirmar la transacción
         await t.commit();
 
+        // 5. Normalizar el orden de impresión de todas las ventas del día (fuera de la transacción)
+        await exports.normalizarOrdenesDia(nuevaVenta.fechaEmision);
+
         // 5. Devolver la venta completa con sus detalles y empleado cargados
         return await Venta.findByPk(nuevaVenta.id, {
             include: [
@@ -247,9 +225,17 @@ exports.updateVenta = async (id, activo, detalles = null) => {
             await t.rollback();
             return null;
         }
-
-        // 1. Actualizar el estado activo
-        await venta.update({ activo }, { transaction: t });
+        // 1. Actualizar el estado activo e inicializar o limpiar ordenImpresion
+        const oldActivo = venta.activo;
+        let nextOrdenImpresion = venta.ordenImpresion;
+        if (activo !== oldActivo) {
+            if (!activo) {
+                nextOrdenImpresion = null;
+            } else {
+                nextOrdenImpresion = 0; // reactivado se carga como primero
+            }
+        }
+        await venta.update({ activo, ordenImpresion: nextOrdenImpresion }, { transaction: t });
 
         // 2. Si se envían nuevos detalles, actualizarlos de forma atómica
         if (detalles) {
@@ -343,6 +329,9 @@ exports.updateVenta = async (id, activo, detalles = null) => {
         }
 
         await t.commit();
+
+        // 3. Normalizar el orden de impresión de todas las ventas del día (fuera de la transacción)
+        await exports.normalizarOrdenesDia(venta.fechaEmision);
 
         // Retornar la venta actualizada con todas las relaciones cargadas
         return await Venta.findByPk(id, {
@@ -558,6 +547,8 @@ exports.updateOrdenImpresion = async (id, numero) => {
         
         await t.commit();
 
+        await exports.normalizarOrdenesDia(venta.fechaEmision);
+
         return await Venta.findByPk(id, {
             include: [
                 { model: Detalle, as: 'detalles' },
@@ -593,48 +584,11 @@ exports.swapOrdenImpresion = async (id1, id2, transaction = null) => {
             throw new Error('Una o ambas ventas no existen.');
         }
 
-        // --- INICIO NORMALIZACION INVISIBLES ---
-        // Obtenemos todas las ventas del dia de venta1 (asumimos que ambas son del mismo dia)
-        const year = venta1.fechaEmision.getFullYear();
-        const month = String(venta1.fechaEmision.getMonth() + 1).padStart(2, '0');
-        const day = String(venta1.fechaEmision.getDate()).padStart(2, '0');
-        const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
-        const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
-
-        const ventasDia = await Venta.findAll({
-            where: {
-                activo: true,
-                fechaEmision: { [Op.between]: [startOfDay, endOfDay] }
-            },
-            transaction: t
-        });
-
-        // Ordenamos igual que el frontend
-        ventasDia.sort((a, b) => {
-            const aOrden = a.ordenImpresion !== null ? a.ordenImpresion : Infinity;
-            const bOrden = b.ordenImpresion !== null ? b.ordenImpresion : Infinity;
-            if (aOrden !== bOrden) return aOrden - bOrden;
-            const aFecha = new Date(a.fechaEmision).getTime();
-            const bFecha = new Date(b.fechaEmision).getTime();
-            if (aFecha !== bFecha) return aFecha - bFecha;
-            return a.id - b.id;
-        });
-
-        // Asignamos numeros invisibles (1000000 + index) a los que no tienen numero o ya tienen uno invisible
-        for (let i = 0; i < ventasDia.length; i++) {
-            const v = ventasDia[i];
-            if (v.ordenImpresion === null || v.ordenImpresion >= 1000000) {
-                const nuevoInvisible = 1000000 + i;
-                if (v.ordenImpresion !== nuevoInvisible) {
-                    await v.update({ ordenImpresion: nuevoInvisible }, { transaction: t });
-                }
-            }
+        if (!venta1.activo || !venta2.activo) {
+            const err = new Error('No se puede cambiar el orden de pedidos inactivos o cancelados.');
+            err.isClientError = true;
+            throw err;
         }
-
-        // Recargamos venta1 y venta2 por si fueron actualizadas en la normalizacion
-        await venta1.reload({ transaction: t });
-        await venta2.reload({ transaction: t });
-        // --- FIN NORMALIZACION INVISIBLES ---
 
         const orden1 = venta1.ordenImpresion;
         const orden2 = venta2.ordenImpresion;
@@ -643,6 +597,8 @@ exports.swapOrdenImpresion = async (id1, id2, transaction = null) => {
         await venta1.update({ ordenImpresion: -1 }, { transaction: t });
         await venta2.update({ ordenImpresion: orden1 }, { transaction: t });
         await venta1.update({ ordenImpresion: orden2 }, { transaction: t });
+
+        await exports.normalizarOrdenesDia(venta1.fechaEmision, t);
 
         if (localTransaction) {
             await t.commit();
@@ -655,3 +611,71 @@ exports.swapOrdenImpresion = async (id1, id2, transaction = null) => {
         throw error;
     }
 };
+
+/**
+ * Normaliza los números de ordenImpresion para que sean correlativos a partir de 1.
+ * Limpia también el ordenImpresion de las ventas canceladas.
+ */
+exports.normalizarOrdenesDia = async (fecha, transaction = null) => {
+    let t = transaction;
+    let localTransaction = false;
+    if (!t) {
+        t = await sequelize.transaction();
+        localTransaction = true;
+    }
+
+    try {
+        const year = fecha.getFullYear();
+        const month = String(fecha.getMonth() + 1).padStart(2, '0');
+        const day = String(fecha.getDate()).padStart(2, '0');
+        const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
+        const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
+
+        const ventasDia = await Venta.findAll({
+            where: {
+                fechaEmision: { [Op.between]: [startOfDay, endOfDay] }
+            },
+            transaction: t
+        });
+
+        // 1. Limpiar ordenImpresion de las canceladas
+        for (const v of ventasDia) {
+            if (!v.activo && v.ordenImpresion !== null) {
+                await Venta.update({ ordenImpresion: null }, { where: { id: v.id }, transaction: t });
+            }
+        }
+
+        // 2. Ordenar las activas por su ordenImpresion actual (e id/fecha como desempate)
+        const ventasActivas = ventasDia.filter(v => v.activo);
+        ventasActivas.sort((a, b) => {
+            const aOrden = a.ordenImpresion !== null ? a.ordenImpresion : Infinity;
+            const bOrden = b.ordenImpresion !== null ? b.ordenImpresion : Infinity;
+            if (aOrden !== bOrden) return aOrden - bOrden;
+            
+            const aFecha = new Date(a.fechaEmision).getTime();
+            const bFecha = new Date(b.fechaEmision).getTime();
+            if (aFecha !== bFecha) return aFecha - bFecha;
+            
+            return a.id - b.id;
+        });
+
+        // 3. Re-asignar valores correlativos desde 1
+        for (let i = 0; i < ventasActivas.length; i++) {
+            const v = ventasActivas[i];
+            const nuevoOrden = i + 1;
+            if (v.ordenImpresion !== nuevoOrden) {
+                await Venta.update({ ordenImpresion: nuevoOrden }, { where: { id: v.id }, transaction: t });
+            }
+        }
+
+        if (localTransaction) {
+            await t.commit();
+        }
+    } catch (error) {
+        if (localTransaction) {
+            await t.rollback();
+        }
+        throw error;
+    }
+};
+

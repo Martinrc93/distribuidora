@@ -5,12 +5,19 @@ const Cliente = require('../models/cliente.js');
 const Venta = require('../models/venta.js');
 const Empleado = require('../models/empleado.js');
 const ListaPrecios = require('../models/listaPrecios.js');
+const Product = require('../models/product.js');
+const Price = require('../models/price.js');
+const Marca = require('../models/marca.js');
+const Detalle = require('../models/detalle.js');
 
 describe('Venta ordenImpresion Integration Tests', () => {
     beforeAll(async () => {
         process.env.NODE_ENV = 'test';
         await sequelize.sync({ force: true });
         await ListaPrecios.create({ id: 1, nombre: 'Lista 1' });
+        const m = await Marca.create({ nombre: 'Marca Test' });
+        const p = await Product.create({ id: 1, nombre: 'Yerba Mate', descripcion: 'Yerba 1kg', activo: true, marcaId: m.id, costo: 50.0 });
+        await Price.create({ id: 1, precio: 100.0, productoId: p.id, listaPreciosId: 1 });
     });
 
     afterAll(async () => {
@@ -21,6 +28,7 @@ describe('Venta ordenImpresion Integration Tests', () => {
 
     beforeEach(async () => {
         // Clear table for fresh state each test
+        await Detalle.destroy({ where: {}, force: true });
         await Venta.destroy({ where: {}, force: true });
         await Empleado.destroy({ where: {}, force: true });
         await Cliente.destroy({ where: {}, force: true });
@@ -58,78 +66,80 @@ describe('Venta ordenImpresion Integration Tests', () => {
     });
 
     test('should successfully assign ordenImpresion to an active order', async () => {
+        // Inicialmente venta2 es 1, venta1 es 2 (por orden de creación invertido en createVenta)
         const response = await request(app)
             .patch(`/ventas/${venta1.id}/orden-impresion`)
-            .send({ ordenImpresion: 5 });
+            .send({ ordenImpresion: 1 });
 
         expect(response.status).toBe(200);
-        expect(response.body.ordenImpresion).toBe(5);
-
-        const updatedVenta = await Venta.findByPk(venta1.id);
-        expect(updatedVenta.ordenImpresion).toBe(5);
-    });
-
-    test('should automatically swap duplicate ordenImpresion among active orders on patch', async () => {
-        // assign 5 to venta1
-        await request(app)
-            .patch(`/ventas/${venta1.id}/orden-impresion`)
-            .send({ ordenImpresion: 5 });
-
-        // try assigning 5 to venta2
-        const response = await request(app)
-            .patch(`/ventas/${venta2.id}/orden-impresion`)
-            .send({ ordenImpresion: 5 });
-
-        expect(response.status).toBe(200);
+        expect(response.body.ordenImpresion).toBe(1);
 
         const updated1 = await Venta.findByPk(venta1.id);
         const updated2 = await Venta.findByPk(venta2.id);
-        expect(updated2.ordenImpresion).toBe(5);
-        expect(updated1.ordenImpresion).toBeGreaterThanOrEqual(1000000);
+        expect(updated1.ordenImpresion).toBe(1);
+        expect(updated2.ordenImpresion).toBe(2);
     });
 
-    test('POST /ventas - should prevent registering a sale/order with a duplicate ordenImpresion', async () => {
-        // assign 5 to venta1
+    test('should automatically swap duplicate ordenImpresion among active orders on patch', async () => {
+        // 1. Asignar orden a venta1 para tener un estado inicial conocido (venta1=1, venta2=2)
         await request(app)
             .patch(`/ventas/${venta1.id}/orden-impresion`)
-            .send({ ordenImpresion: 5 });
+            .send({ ordenImpresion: 1 });
 
-        // try creating a new sale with ordenImpresion: 5
+        // 2. Intentar asignar 2 a venta1 (el cual tiene venta2). Deberían intercambiar.
+        const response = await request(app)
+            .patch(`/ventas/${venta1.id}/orden-impresion`)
+            .send({ ordenImpresion: 2 });
+
+        expect(response.status).toBe(200);
+        expect(response.body.ordenImpresion).toBe(2);
+
+        const updated1 = await Venta.findByPk(venta1.id);
+        const updated2 = await Venta.findByPk(venta2.id);
+        expect(updated1.ordenImpresion).toBe(2);
+        expect(updated2.ordenImpresion).toBe(1);
+    });
+
+    test('POST /ventas - should register a new sale/order at first position, pushing others down', async () => {
+        // Inicialmente les asignamos órdenes: venta1 = 1, venta2 = 2
+        await Venta.update({ ordenImpresion: 1 }, { where: { id: venta1.id } });
+        await Venta.update({ ordenImpresion: 2 }, { where: { id: venta2.id } });
+
+        // Creamos una nueva venta/pedido.
         const response = await request(app)
             .post('/ventas')
             .send({
                 empleadoId: empleado.id,
                 clienteId: cliente.id,
-                ordenImpresion: 5,
                 detalles: [
                     { productoId: 1, precioId: 1, cantidad: 1 }
                 ]
             });
 
-        expect(response.status).toBe(400);
-        expect(response.body.error).toContain('ya está en uso');
+        expect(response.status).toBe(201);
+        expect(response.body.ordenImpresion).toBe(1);
+
+        const updatedNueva = await Venta.findByPk(response.body.id);
+        const updated2 = await Venta.findByPk(venta2.id);
+        const updated1 = await Venta.findByPk(venta1.id);
+
+        expect(updatedNueva.ordenImpresion).toBe(1);
+        expect(updated1.ordenImpresion).toBe(2);
+        expect(updated2.ordenImpresion).toBe(3);
     });
 
-    test('should clear ordenImpresion when sending null', async () => {
-        // Assign first
-        await Venta.update({ ordenImpresion: 3 }, { where: { id: venta1.id } });
-
+    test('should reject clearing ordenImpresion when sending null', async () => {
         const response = await request(app)
             .patch(`/ventas/${venta1.id}/orden-impresion`)
             .send({ ordenImpresion: null });
 
-        expect(response.status).toBe(200);
-        expect(response.body.ordenImpresion).toBeNull();
-        
-        const updatedVenta = await Venta.findByPk(venta1.id);
-        expect(updatedVenta.ordenImpresion).toBeNull();
+        expect(response.status).toBe(400);
+        expect(response.body.error).toContain('debe ser un número entero positivo');
     });
 
     describe('swapOrdenImpresion', () => {
         test('should successfully swap ordenImpresion between two orders', async () => {
-            await Venta.update({ ordenImpresion: 10 }, { where: { id: venta1.id } });
-            await Venta.update({ ordenImpresion: 20 }, { where: { id: venta2.id } });
-
+            // Inicialmente venta2 es 1, venta1 es 2.
             const response = await request(app)
                 .patch('/ventas/orden-impresion/swap')
                 .send({ id1: venta1.id, id2: venta2.id });
@@ -139,25 +149,20 @@ describe('Venta ordenImpresion Integration Tests', () => {
             const updated1 = await Venta.findByPk(venta1.id);
             const updated2 = await Venta.findByPk(venta2.id);
 
-            expect(updated1.ordenImpresion).toBe(20);
-            expect(updated2.ordenImpresion).toBe(10);
+            expect(updated1.ordenImpresion).toBe(1);
+            expect(updated2.ordenImpresion).toBe(2);
         });
 
-        test('should swap successfully when one of the values is null', async () => {
-            await Venta.update({ ordenImpresion: 10 }, { where: { id: venta1.id } });
-            await Venta.update({ ordenImpresion: null }, { where: { id: venta2.id } });
+        test('should return 500 when trying to swap an inactive order', async () => {
+            // Desactivamos venta2
+            await Venta.update({ activo: false, ordenImpresion: null }, { where: { id: venta2.id } });
 
             const response = await request(app)
                 .patch('/ventas/orden-impresion/swap')
                 .send({ id1: venta1.id, id2: venta2.id });
 
-            expect(response.status).toBe(200);
-
-            const updated1 = await Venta.findByPk(venta1.id);
-            const updated2 = await Venta.findByPk(venta2.id);
-
-            expect(updated1.ordenImpresion).toBeGreaterThanOrEqual(1000000);
-            expect(updated2.ordenImpresion).toBe(10);
+            expect(response.status).toBe(500);
+            expect(response.body.error).toContain('inactivos o cancelados');
         });
 
         test('should return 404 if one of the orders does not exist', async () => {

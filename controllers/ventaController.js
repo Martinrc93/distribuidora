@@ -174,8 +174,8 @@ exports.updateOrdenImpresion = async (req, res) => {
         const { id } = req.params;
         const { ordenImpresion } = req.body;
 
-        if (ordenImpresion !== null && (!Number.isInteger(ordenImpresion) || ordenImpresion < 1)) {
-            return res.status(400).json({ error: 'El ordenImpresion debe ser un número entero positivo o null.' });
+        if (ordenImpresion === null || !Number.isInteger(ordenImpresion) || ordenImpresion < 1) {
+            return res.status(400).json({ error: 'El orden de impresión debe ser un número entero positivo.' });
         }
 
         const ventaActualizada = await ventaService.updateOrdenImpresion(id, ordenImpresion);
