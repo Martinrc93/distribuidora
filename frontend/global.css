@@ -321,6 +321,19 @@ body {
     font-weight: 500 !important;
 }
 
+.preview-printable-content {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    transform-origin: top center;
+}
+
+#previewPrintBody {
+    width: 100%;
+    display: block;
+    overflow: visible;
+}
+
 /* Print Report Styles */
 @media print {
     @page {
@@ -949,4 +962,4 @@ body {
     color: #4b5563;
     cursor: not-allowed;
 }
-
+

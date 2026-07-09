@@ -1043,6 +1043,36 @@ function waitImagesAndPrint(elementId = 'printSection') {
     });
 }
 
+function getPrintableHtmlFromPreview(container) {
+    if (!container) return '';
+    const printableRoot = container.querySelector('[data-print-root]') || container;
+    return printableRoot.innerHTML;
+}
+
+function renderPreviewContent(html) {
+    const previewBody = document.getElementById('previewPrintBody');
+    if (!previewBody) {
+        return null;
+    }
+
+    previewBody.innerHTML = '';
+    previewBody.style.display = 'block';
+    previewBody.style.overflow = 'visible';
+    previewBody.style.alignItems = 'flex-start';
+    previewBody.style.justifyContent = 'flex-start';
+    previewBody.style.width = '100%';
+    previewBody.style.maxWidth = '800px';
+    previewBody.style.margin = '0 auto';
+    previewBody.style.paddingBottom = '24px';
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'preview-printable-content';
+    contentWrapper.setAttribute('data-print-root', 'true');
+    contentWrapper.innerHTML = html;
+    previewBody.appendChild(contentWrapper);
+    return contentWrapper;
+}
+
 // New function to show preview before printing
 function previewAndPrint(elementId = 'printSection') {
     const source = document.getElementById(elementId);
@@ -1050,12 +1080,14 @@ function previewAndPrint(elementId = 'printSection') {
         console.warn('Preview source not found');
         return;
     }
-    const previewBody = document.getElementById('previewPrintBody');
-    if (!previewBody) {
-        console.warn('Preview modal body not found');
+
+    const sourceHtml = source.innerHTML.trim();
+    if (!sourceHtml) {
+        console.warn('Preview source is empty');
         return;
     }
-    previewBody.innerHTML = source.innerHTML;
+
+    renderPreviewContent(sourceHtml);
     const previewModalEl = document.getElementById('previewPrintModal');
     if (previewModalEl) {
         const previewModal = bootstrap.Modal.getOrCreateInstance(previewModalEl);
@@ -1068,13 +1100,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPrintFromPreview = document.getElementById('btnPrintFromPreview');
     if (btnPrintFromPreview) {
         btnPrintFromPreview.addEventListener('click', () => {
-            // Copy preview content to the dedicated print section
             const previewSection = document.getElementById('previewPrintBody');
             const printSection = document.getElementById('printSection');
             if (previewSection && printSection) {
-                printSection.innerHTML = previewSection.innerHTML;
-                
-                // Trigger printing using waitImagesAndPrint on the printSection
+                printSection.innerHTML = getPrintableHtmlFromPreview(previewSection);
                 waitImagesAndPrint('printSection');
             }
         });
@@ -1098,11 +1127,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const updateZoom = () => {
+            const zoomTarget = previewPrintBody.querySelector('.preview-printable-content');
             zoomLevelText.textContent = Math.round(currentZoom * 100) + '%';
-            previewPrintBody.style.transform = `scale(${currentZoom})`;
-            previewPrintBody.style.transformOrigin = 'top center';
-            // Adjust container spacing to prevent overlap if scaled heavily
-            previewPrintBody.style.marginBottom = (currentZoom > 1) ? `${(currentZoom - 1) * 100}%` : '0';
+            if (zoomTarget) {
+                zoomTarget.style.transform = `scale(${currentZoom})`;
+                zoomTarget.style.transformOrigin = 'top center';
+                zoomTarget.style.marginBottom = (currentZoom > 1) ? `${(currentZoom - 1) * 100}%` : '0';
+            }
         };
 
         btnZoomIn.addEventListener('click', () => {
