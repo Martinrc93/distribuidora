@@ -22,26 +22,26 @@ describe('Venta Quantity Validation Tests', () => {
             expect(dto.detalles[0].cantidad).toBe(2);
         });
 
-        test('should reject half quantities (0.5)', () => {
+        test('should accept half quantities (0.5)', () => {
             const dto = new VentaCreateDto({
                 empleadoId: 1,
                 clienteId: 1,
                 detalles: [{ productoId: 1, precioId: 1, cantidad: 0.5 }]
             });
             const validation = dto.validate();
-            expect(validation.isValid).toBe(false);
-            expect(validation.errors[0]).toContain('debe ser de al menos 1');
+            expect(validation.isValid).toBe(true);
+            expect(dto.detalles[0].cantidad).toBe(0.5);
         });
 
-        test('should reject decimal quantities as string with comma (1,5)', () => {
+        test('should accept decimal quantities as string with comma (1,5)', () => {
             const dto = new VentaCreateDto({
                 empleadoId: 1,
                 clienteId: 1,
                 detalles: [{ productoId: 1, precioId: 1, cantidad: '1,5' }]
             });
             const validation = dto.validate();
-            expect(validation.isValid).toBe(false);
-            expect(validation.errors[0]).toContain('debe ser un número entero');
+            expect(validation.isValid).toBe(true);
+            expect(dto.detalles[0].cantidad).toBe(1.5);
         });
 
         test('should reject other decimal quantities (e.g. 1.75)', () => {
@@ -52,18 +52,18 @@ describe('Venta Quantity Validation Tests', () => {
             });
             const validation = dto.validate();
             expect(validation.isValid).toBe(false);
-            expect(validation.errors[0]).toContain('la "cantidad" debe ser un número entero');
+            expect(validation.errors[0]).toContain('la "cantidad" debe ser en incrementos de 0.5');
         });
 
-        test('should reject quantities less than 1', () => {
+        test('should reject quantities less than 0.5', () => {
             const dto = new VentaCreateDto({
                 empleadoId: 1,
                 clienteId: 1,
-                detalles: [{ productoId: 1, precioId: 1, cantidad: 0 }]
+                detalles: [{ productoId: 1, precioId: 1, cantidad: 0.25 }]
             });
             const validation = dto.validate();
             expect(validation.isValid).toBe(false);
-            expect(validation.errors[0]).toContain('debe ser de al menos 1');
+            expect(validation.errors[0]).toContain('debe ser de al menos 0.5');
         });
     });
 
@@ -108,7 +108,7 @@ describe('Venta Quantity Validation Tests', () => {
             ventaId = res.body.id;
         });
 
-        test('POST /ventas - should fail if creating a sale with decimal quantity 1.5', async () => {
+        test('POST /ventas - should successfully create a sale with decimal quantity 1.5', async () => {
             const res = await request(app)
                 .post('/ventas')
                 .send({
@@ -116,35 +116,35 @@ describe('Venta Quantity Validation Tests', () => {
                     clienteId,
                     detalles: [{ productoId, precioId, cantidad: 1.5 }]
                 })
-                .expect(400);
+                .expect(201);
 
-            expect(res.body).toHaveProperty('errores');
-            expect(res.body.errores[0]).toContain('la "cantidad" debe ser un número entero');
+            expect(res.body).toHaveProperty('id');
+            expect(res.body.detalles[0].cantidad).toBe(1.5);
         });
 
-        test('PUT /ventas/:id - should successfully update sale details with integer quantity', async () => {
-            const res = await request(app)
-                .put(`/ventas/${ventaId}`)
-                .send({
-                    activo: true,
-                    detalles: [{ productoId, precioId, cantidad: 3 }]
-                })
-                .expect(200);
-
-            expect(res.body.detalles[0].cantidad).toBe(3);
-        });
-
-        test('PUT /ventas/:id - should fail update if details contain decimal quantity 1.5', async () => {
+        test('PUT /ventas/:id - should successfully update sale details with decimal quantity 1.5', async () => {
             const res = await request(app)
                 .put(`/ventas/${ventaId}`)
                 .send({
                     activo: true,
                     detalles: [{ productoId, precioId, cantidad: 1.5 }]
                 })
+                .expect(200);
+
+            expect(res.body.detalles[0].cantidad).toBe(1.5);
+        });
+
+        test('PUT /ventas/:id - should fail update if details contain invalid decimal quantity 1.75', async () => {
+            const res = await request(app)
+                .put(`/ventas/${ventaId}`)
+                .send({
+                    activo: true,
+                    detalles: [{ productoId, precioId, cantidad: 1.75 }]
+                })
                 .expect(400);
 
             expect(res.body).toHaveProperty('error');
-            expect(res.body.error).toContain('La cantidad debe ser un número entero');
+            expect(res.body.error).toContain('La cantidad debe ser en incrementos de 0.5');
         });
     });
 });

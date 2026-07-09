@@ -91,11 +91,11 @@ exports.updateStatus = async (req, res) => {
                     item.precio = parsedPrecio;
                 }
 
-                if (!item.productoId || !item.precioId || isNaN(item.cantidad) || item.cantidad < 1) {
-                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productoId, precioId y cantidad mayor o igual a 1.` });
+                if (!item.productoId || !item.precioId || isNaN(item.cantidad) || item.cantidad < 0.5) {
+                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. Debe contener productoId, precioId y cantidad mayor o igual a 0.5.` });
                 }
-                if (!Number.isInteger(item.cantidad)) {
-                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. La cantidad debe ser un número entero (ej. 1, 2, 3).` });
+                if ((item.cantidad * 2) % 1 !== 0) {
+                    return res.status(400).json({ error: `Detalle #${i + 1} inválido. La cantidad debe ser en incrementos de 0.5 (ej. 0.5, 1, 1.5, 2).` });
                 }
             }
         }

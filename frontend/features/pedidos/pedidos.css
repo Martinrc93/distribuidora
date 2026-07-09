@@ -8,11 +8,9 @@
     }
     #printSection {
         display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
+        position: static !important;
         width: 100%;
-        padding: 1.6cm !important;
+        padding: 0 !important;
         margin: 0 !important;
     }
     /* Salto de página para todos los tickets excepto el último, para evitar hoja en blanco al final */

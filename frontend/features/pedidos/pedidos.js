@@ -1017,14 +1017,29 @@ function generarConsolidadoHtml() {
 }
 
 function waitImagesAndPrint(elementId = 'printSection') {
+    // Guardar la posición de scroll actual
+    const scrollX = window.scrollX || window.pageXOffset || 0;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+
+    // Desplazar al inicio para evitar que Chrome/Electron corte el documento al imprimir estando scrolled
+    window.scrollTo(0, 0);
+
+    const ejecutarImpresion = () => {
+        window.print();
+        // Restaurar la posición de scroll después de que se cierre el diálogo de impresión
+        setTimeout(() => {
+            window.scrollTo(scrollX, scrollY);
+        }, 150);
+    };
+
     const printSection = document.getElementById(elementId);
     if (!printSection) {
-        window.print();
+        ejecutarImpresion();
         return;
     }
     const images = printSection.querySelectorAll('img');
     if (images.length === 0) {
-        window.print();
+        ejecutarImpresion();
         return;
     }
     const promises = Array.from(images).map(img => {
@@ -1038,7 +1053,7 @@ function waitImagesAndPrint(elementId = 'printSection') {
     });
     Promise.all(promises).then(() => {
         setTimeout(() => {
-            window.print();
+            ejecutarImpresion();
         }, 50);
     });
 }
@@ -1172,23 +1187,27 @@ function generarResumenDiarioHtml() {
     const resumen = {};
     let totalGeneral = 0;
 
-    ventas.forEach(venta => {
-        if (!venta.activo) return;
+    // Obtener las ventas activas ordenadas según el orden de impresión (igual que en la pestaña pedidos)
+    const ventasOrdenadas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
+    const ordenClientes = [];
+
+    ventasOrdenadas.forEach(venta => {
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
         const total = Number(venta.total) || 0;
         
-        if (resumen[clienteName]) {
+        if (resumen[clienteName] !== undefined) {
             resumen[clienteName] += total;
         } else {
             resumen[clienteName] = total;
+            ordenClientes.push(clienteName);
         }
         totalGeneral += total;
     });
 
-    const items = Object.entries(resumen).map(([cliente, total]) => ({ cliente, total }));
-    
-    // Ordenar alfabéticamente por cliente
-    items.sort((a, b) => a.cliente.localeCompare(b.cliente));
+    const items = ordenClientes.map(cliente => ({
+        cliente,
+        total: resumen[cliente]
+    }));
 
     if (items.length === 0) {
         showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');

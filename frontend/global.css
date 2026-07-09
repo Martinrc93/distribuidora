@@ -337,12 +337,14 @@ body {
 /* Print Report Styles */
 @media print {
     @page {
-        margin: 0;
+        margin: 1.6cm;
     }
     body {
         background: white !important;
         color: black !important;
-        padding: 1.6cm !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
     }
 
     .app-container,
