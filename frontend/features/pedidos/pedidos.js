@@ -15,8 +15,12 @@ function sortVentasPorOrdenImpresion(ventasParaOrdenar = []) {
             return aActivo ? -1 : 1;
         }
 
-        const aOrden = Number.isFinite(Number(a.ordenImpresion)) ? Number(a.ordenImpresion) : Infinity;
-        const bOrden = Number.isFinite(Number(b.ordenImpresion)) ? Number(b.ordenImpresion) : Infinity;
+        const aOrden = (a.ordenImpresion !== null && a.ordenImpresion !== undefined && a.ordenImpresion !== '') 
+            ? Number(a.ordenImpresion) 
+            : Infinity;
+        const bOrden = (b.ordenImpresion !== null && b.ordenImpresion !== undefined && b.ordenImpresion !== '') 
+            ? Number(b.ordenImpresion) 
+            : Infinity;
 
         if (aOrden !== bOrden) {
             return aOrden - bOrden;
@@ -512,7 +516,7 @@ function renderVentasTable(filterQuery = '') {
                 } catch (err) {
                     showToast(err.message || 'Error al intercambiar orden.', 'error');
                 } finally {
-                    await cargarVentas(true);
+                    await cargarVentas();
                 }
             }
         });

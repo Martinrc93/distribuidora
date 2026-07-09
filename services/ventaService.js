@@ -533,7 +533,10 @@ exports.swapOrdenImpresion = async (id1, id2) => {
             const aOrden = a.ordenImpresion !== null ? a.ordenImpresion : Infinity;
             const bOrden = b.ordenImpresion !== null ? b.ordenImpresion : Infinity;
             if (aOrden !== bOrden) return aOrden - bOrden;
-            return new Date(b.fechaEmision) - new Date(a.fechaEmision);
+            const aFecha = new Date(a.fechaEmision).getTime();
+            const bFecha = new Date(b.fechaEmision).getTime();
+            if (aFecha !== bFecha) return bFecha - aFecha;
+            return b.id - a.id;
         });
 
         // Asignamos numeros invisibles (1000000 + index) a los que no tienen numero o ya tienen uno invisible
