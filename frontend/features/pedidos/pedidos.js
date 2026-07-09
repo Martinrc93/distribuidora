@@ -478,7 +478,7 @@ function renderVentasTable(filterQuery = '') {
             const ordenImpresion = val === '' ? null : parseInt(val, 10);
             
             try {
-                await apiClient.patch(`/ventas/${id}/orden-impresion`, { ordenImpresion });
+                await apiClient.put(`/ventas/${id}/orden-impresion`, { ordenImpresion });
                 showToast('Orden de impresión actualizada.');
                 await cargarVentas(true); // Recargar para aplicar ordenamiento (silencioso)
             } catch (err) {
@@ -517,7 +517,7 @@ function renderVentasTable(filterQuery = '') {
                 if (!id1 || !id2 || id1 === id2) return;
 
                 try {
-                    await apiClient.patch('/ventas/orden-impresion/swap', { id1, id2 });
+                    await apiClient.post('/ventas/orden-impresion/swap', { id1, id2 });
                     showToast('Orden de impresión intercambiada exitosamente.');
                 } catch (err) {
                     showToast(err.message || 'Error al intercambiar orden.', 'error');

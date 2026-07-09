@@ -21,10 +21,12 @@ router.post('/', ventaController.create);
 // Actualizar el estado activo/inactivo (active) de una venta
 router.put('/:id', validateParams(['id']), ventaController.updateStatus);
 
-// Actualizar el orden de impresión de una venta
+// Actualizar el orden de impresión de una venta (admite PUT y PATCH)
+router.put('/:id/orden-impresion', validateParams(['id']), ventaController.updateOrdenImpresion);
 router.patch('/:id/orden-impresion', validateParams(['id']), ventaController.updateOrdenImpresion);
 
-// Intercambiar orden de impresión entre dos ventas
+// Intercambiar orden de impresión entre dos ventas (admite POST y PATCH)
+router.post('/orden-impresion/swap', ventaController.swapOrdenImpresion);
 router.patch('/orden-impresion/swap', ventaController.swapOrdenImpresion);
 
 module.exports = router;
