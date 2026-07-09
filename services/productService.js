@@ -186,7 +186,7 @@ exports.deleteProduct = async (id) => {
         // Agrupar la suma a restar por venta
         const restaPorVenta = {};
         for (const d of detallesAEliminar) {
-            const subtotal = Number.parseFloat(d.precio) * Number.parseInt(d.cantidad, 10);
+            const subtotal = Number.parseFloat(d.precio) * Number.parseFloat(d.cantidad);
             restaPorVenta[d.ventaId] = (restaPorVenta[d.ventaId] || 0) + subtotal;
         }
 

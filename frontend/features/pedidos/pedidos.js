@@ -6,6 +6,32 @@ function formatCurrency(value) {
     return Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function sortVentasPorOrdenImpresion(ventasParaOrdenar = []) {
+    return [...ventasParaOrdenar].sort((a, b) => {
+        const aActivo = Boolean(a.activo);
+        const bActivo = Boolean(b.activo);
+
+        if (aActivo !== bActivo) {
+            return aActivo ? -1 : 1;
+        }
+
+        const aOrden = Number.isFinite(Number(a.ordenImpresion)) ? Number(a.ordenImpresion) : Infinity;
+        const bOrden = Number.isFinite(Number(b.ordenImpresion)) ? Number(b.ordenImpresion) : Infinity;
+
+        if (aOrden !== bOrden) {
+            return aOrden - bOrden;
+        }
+
+        const aFecha = new Date(a.fechaEmision || 0).getTime();
+        const bFecha = new Date(b.fechaEmision || 0).getTime();
+        if (aFecha !== bFecha) {
+            return bFecha - aFecha;
+        }
+
+        return Number(b.id || 0) - Number(a.id || 0);
+    });
+}
+
 function getLocalDateStr() {
     const today = new Date();
     const year = today.getFullYear();
@@ -371,7 +397,7 @@ function renderVentasTable(filterQuery = '') {
                id.includes(query);
     });
 
-    currentRenderedVentas = ventasFiltradas;
+    currentRenderedVentas = sortVentasPorOrdenImpresion(ventasFiltradas);
 
     if (ventasFiltradas.length === 0) {
         if (query) {
@@ -390,24 +416,9 @@ function renderVentasTable(filterQuery = '') {
         return;
     }
 
-    // Ordenar: Activos (activo = true) primero, Cancelados (activo = false) después
-    ventasFiltradas.sort((a, b) => {
-        if (a.activo && !b.activo) return -1;
-        if (!a.activo && b.activo) return 1;
-        
-        if (a.activo && b.activo) {
-            const aOrden = a.ordenImpresion !== null && a.ordenImpresion !== undefined ? a.ordenImpresion : Infinity;
-            const bOrden = b.ordenImpresion !== null && b.ordenImpresion !== undefined ? b.ordenImpresion : Infinity;
-            
-            if (aOrden !== bOrden) return aOrden - bOrden;
-            // Si son iguales o ambos null, por fecha (más nuevo primero)
-            return new Date(b.fechaEmision) - new Date(a.fechaEmision);
-        }
-        
-        return 0;
-    });
+    const ventasOrdenadas = sortVentasPorOrdenImpresion(ventasFiltradas);
 
-    ventasFiltradas.forEach(venta => {
+    ventasOrdenadas.forEach(venta => {
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
         const estadoBadge = venta.activo 
             ? '<span class="badge bg-success">Activo</span>'
@@ -537,8 +548,8 @@ async function agregarProductoTemporal() {
     const productName = document.getElementById('productoSelect').value.trim();
     const cantidad = parseFloat(document.getElementById('productoCantidad').value);
 
-    if (isNaN(cantidad) || cantidad < 1 || !Number.isInteger(cantidad)) {
-        showToast('Por favor, ingrese una cantidad entera mayor o igual a 1.', 'error');
+    if (isNaN(cantidad) || cantidad < 0.5 || (cantidad * 2) % 1 !== 0) {
+        showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5 (ej: 0.5, 1, 1.5, 2...).', 'error');
         return;
     }
 
@@ -640,7 +651,7 @@ function renderDetallesTemporales() {
                 </div>
             </td>
             <td>
-                <input type="number" min="1" step="1" class="form-control text-center mx-auto new-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
+                <input type="number" min="0.5" step="0.5" class="form-control text-center mx-auto new-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
             </td>
             <td>$${formatCurrency(d.subtotal)}</td>
             <td>
@@ -685,14 +696,14 @@ function renderDetallesTemporales() {
     document.querySelectorAll('.new-item-qty').forEach(input => {
         input.addEventListener('change', () => {
             const index = parseInt(input.getAttribute('data-index'), 10);
-            const val = parseInt(input.value, 10);
-            if (!isNaN(val) && val >= 1) {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val >= 0.5 && (val * 2) % 1 === 0) {
                 detallesTemporales[index].cantidad = val;
                 detallesTemporales[index].subtotal = parseFloat((val * detallesTemporales[index].precio).toFixed(2));
                 renderDetallesTemporales();
             } else {
-                if (!isNaN(val) && val < 1) {
-                    showToast('La cantidad debe ser al menos 1.', 'error');
+                if (!isNaN(val)) {
+                    showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5.', 'error');
                 }
                 input.value = detallesTemporales[index].cantidad;
             }
@@ -762,8 +773,8 @@ async function agregarProductoEdicion() {
     const productName = document.getElementById('editProductoSelect').value.trim();
     const cantidad = parseFloat(document.getElementById('editProductoCantidad').value);
 
-    if (isNaN(cantidad) || cantidad < 1 || !Number.isInteger(cantidad)) {
-        showToast('Por favor, ingrese una cantidad entera mayor o igual a 1.', 'error');
+    if (isNaN(cantidad) || cantidad < 0.5 || (cantidad * 2) % 1 !== 0) {
+        showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5 (ej: 0.5, 1, 1.5, 2...).', 'error');
         return;
     }
 
@@ -853,7 +864,7 @@ function renderDetallesEdicion() {
                 </div>
             </td>
             <td>
-                <input type="number" min="1" step="1" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
+                <input type="number" min="0.5" step="0.5" class="form-control text-center mx-auto edit-item-qty" style="width: 80px; height: 32px !important; padding: 0.2rem !important; font-size: 0.95rem !important;" data-index="${idx}" value="${d.cantidad}" onfocus="this.select()" onclick="this.select()">
             </td>
             <td>$${formatCurrency(d.subtotal)}</td>
             <td>
@@ -899,13 +910,13 @@ function renderDetallesEdicion() {
         input.addEventListener('change', () => {
             const index = parseInt(input.getAttribute('data-index'), 10);
             const val = parseFloat(input.value);
-            if (!isNaN(val) && val >= 1 && Number.isInteger(val)) {
+            if (!isNaN(val) && val >= 0.5 && (val * 2) % 1 === 0) {
                 detallesEdicion[index].cantidad = val;
                 detallesEdicion[index].subtotal = parseFloat((val * detallesEdicion[index].precio).toFixed(2));
                 renderDetallesEdicion();
             } else {
-                if (!isNaN(val) && (!Number.isInteger(val) || val < 1)) {
-                    showToast('La cantidad debe ser un número entero mayor o igual a 1.', 'error');
+                if (!isNaN(val)) {
+                    showToast('La cantidad debe ser al menos 0.5 y en incrementos de 0.5.', 'error');
                 }
                 input.value = detallesEdicion[index].cantidad;
             }
@@ -1032,6 +1043,36 @@ function waitImagesAndPrint(elementId = 'printSection') {
     });
 }
 
+function getPrintableHtmlFromPreview(container) {
+    if (!container) return '';
+    const printableRoot = container.querySelector('[data-print-root]') || container;
+    return printableRoot.innerHTML;
+}
+
+function renderPreviewContent(html) {
+    const previewBody = document.getElementById('previewPrintBody');
+    if (!previewBody) {
+        return null;
+    }
+
+    previewBody.innerHTML = '';
+    previewBody.style.display = 'block';
+    previewBody.style.overflow = 'visible';
+    previewBody.style.alignItems = 'flex-start';
+    previewBody.style.justifyContent = 'flex-start';
+    previewBody.style.width = '100%';
+    previewBody.style.maxWidth = '800px';
+    previewBody.style.margin = '0 auto';
+    previewBody.style.paddingBottom = '24px';
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'preview-printable-content';
+    contentWrapper.setAttribute('data-print-root', 'true');
+    contentWrapper.innerHTML = html;
+    previewBody.appendChild(contentWrapper);
+    return contentWrapper;
+}
+
 // New function to show preview before printing
 function previewAndPrint(elementId = 'printSection') {
     const source = document.getElementById(elementId);
@@ -1039,12 +1080,14 @@ function previewAndPrint(elementId = 'printSection') {
         console.warn('Preview source not found');
         return;
     }
-    const previewBody = document.getElementById('previewPrintBody');
-    if (!previewBody) {
-        console.warn('Preview modal body not found');
+
+    const sourceHtml = source.innerHTML.trim();
+    if (!sourceHtml) {
+        console.warn('Preview source is empty');
         return;
     }
-    previewBody.innerHTML = source.innerHTML;
+
+    renderPreviewContent(sourceHtml);
     const previewModalEl = document.getElementById('previewPrintModal');
     if (previewModalEl) {
         const previewModal = bootstrap.Modal.getOrCreateInstance(previewModalEl);
@@ -1057,13 +1100,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPrintFromPreview = document.getElementById('btnPrintFromPreview');
     if (btnPrintFromPreview) {
         btnPrintFromPreview.addEventListener('click', () => {
-            // Copy preview content to the dedicated print section
             const previewSection = document.getElementById('previewPrintBody');
             const printSection = document.getElementById('printSection');
             if (previewSection && printSection) {
-                printSection.innerHTML = previewSection.innerHTML;
-                
-                // Trigger printing using waitImagesAndPrint on the printSection
+                printSection.innerHTML = getPrintableHtmlFromPreview(previewSection);
                 waitImagesAndPrint('printSection');
             }
         });
@@ -1087,11 +1127,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const updateZoom = () => {
+            const zoomTarget = previewPrintBody.querySelector('.preview-printable-content');
             zoomLevelText.textContent = Math.round(currentZoom * 100) + '%';
-            previewPrintBody.style.transform = `scale(${currentZoom})`;
-            previewPrintBody.style.transformOrigin = 'top center';
-            // Adjust container spacing to prevent overlap if scaled heavily
-            previewPrintBody.style.marginBottom = (currentZoom > 1) ? `${(currentZoom - 1) * 100}%` : '0';
+            if (zoomTarget) {
+                zoomTarget.style.transform = `scale(${currentZoom})`;
+                zoomTarget.style.transformOrigin = 'top center';
+                zoomTarget.style.marginBottom = (currentZoom > 1) ? `${(currentZoom - 1) * 100}%` : '0';
+            }
         };
 
         btnZoomIn.addEventListener('click', () => {
@@ -1210,7 +1252,7 @@ function imprimirResumenDiario() {
  * Agrupa todos los pedidos activos de hoy y genera una sola sección de impresión con saltos de página entre cada uno.
  */
 function generarTodosLosPedidosHtml() {
-    const activeVentas = ventas.filter(v => v.activo);
+    const activeVentas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
     if (activeVentas.length === 0) {
         showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');
         return false;
@@ -1793,7 +1835,7 @@ function updateImprimirEmpleadoSelect() {
 function updateImprimirClienteSelect() {
     const select = document.getElementById('selectImprimirCliente');
     if (!select) return;
-    const activeVentas = ventas.filter(v => v.activo);
+    const activeVentas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
     select.innerHTML = '<option value="">-- Seleccione un Pedido --</option>' + 
         activeVentas.map(v => `<option value="${v.id}">${v.clienteNombre || 'Cliente Desconocido'} - $${Number(v.total).toFixed(2)}</option>`).join('');
 }
