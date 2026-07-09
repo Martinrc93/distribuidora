@@ -173,8 +173,13 @@ function mostrarDetallePedidoEmpleado(pedidoId) {
     } else {
         pedido.detalles.forEach(d => {
             const product = productos.find(p => p.id === d.productoId);
+            let brand = '';
+            if (product && product.marca) {
+                brand = product.marca.trim();
+                brand = brand.charAt(0).toUpperCase() + brand.slice(1);
+            }
             const productName = product 
-                ? `${escapeHtml(product.nombre)} (${escapeHtml(product.marca)})` 
+                ? `${escapeHtml(brand)} - ${escapeHtml(product.nombre)}` 
                 : `Producto #${d.productoId}`;
             
             const tr = document.createElement('tr');

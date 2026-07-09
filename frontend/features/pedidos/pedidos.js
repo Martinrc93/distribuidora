@@ -6,6 +6,13 @@ function formatCurrency(value) {
     return Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatProductName(product) {
+    if (!product) return 'Producto Desconocido';
+    const brand = product.marca || '';
+    const formattedBrand = brand ? brand.trim().charAt(0).toUpperCase() + brand.trim().slice(1) : '';
+    return formattedBrand ? `${formattedBrand} - ${product.nombre}` : product.nombre;
+}
+
 function sortVentasPorOrdenImpresion(ventasParaOrdenar = []) {
     return [...ventasParaOrdenar].sort((a, b) => {
         const aActivo = Boolean(a.activo);
@@ -401,7 +408,8 @@ function renderVentasTable(filterQuery = '') {
                id.includes(query);
     });
 
-    currentRenderedVentas = sortVentasPorOrdenImpresion(ventasFiltradas);
+    const ventasOrdenadas = sortVentasPorOrdenImpresion(ventasFiltradas);
+    currentRenderedVentas = ventasOrdenadas;
 
     if (ventasFiltradas.length === 0) {
         if (query) {
@@ -419,8 +427,6 @@ function renderVentasTable(filterQuery = '') {
         }
         return;
     }
-
-    const ventasOrdenadas = sortVentasPorOrdenImpresion(ventasFiltradas);
 
     ventasOrdenadas.forEach(venta => {
         const clienteName = venta.clienteNombre || 'Cliente Desconocido';
@@ -477,7 +483,7 @@ function renderVentasTable(filterQuery = '') {
                 await cargarVentas(true); // Recargar para aplicar ordenamiento (silencioso)
             } catch (err) {
                 showToast(err.message || 'Error al actualizar orden.', 'error');
-                renderVentasTable(filterQuery); // Revertir a la vista original
+                renderVentasTable(document.getElementById('pedidoSearchInput')?.value || ''); // Revertir a la vista original
             }
         });
     });
@@ -600,10 +606,10 @@ async function agregarProductoTemporal() {
             detallesTemporales.push({
                 productoId: product.id,
                 precioId: priceRecord.id,
-                nombre: product.nombre,
-                precio: priceRecord.precio,
+                nombre: formatProductName(product),
+                precio: parseFloat(priceRecord.precio),
                 cantidad: cantidad,
-                subtotal: parseFloat((cantidad * priceRecord.precio).toFixed(2))
+                subtotal: parseFloat((cantidad * parseFloat(priceRecord.precio)).toFixed(2))
             });
         }
 
@@ -611,7 +617,7 @@ async function agregarProductoTemporal() {
         
         // Limpiar inputs de producto y volver el foco al buscador
         document.getElementById('productoSelect').value = '';
-        document.getElementById('productoCantidad').value = '1';
+        document.getElementById('productoCantidad').value = '';
         document.getElementById('productoSelect').focus();
     } catch (error) {
         console.error('Error al agregar producto al pedido:', error);
@@ -819,10 +825,10 @@ async function agregarProductoEdicion() {
             detallesEdicion.push({
                 productoId: product.id,
                 precioId: priceRecord.id,
-                nombre: `${product.nombre} (${product.marca})`,
-                precio: priceRecord.precio,
+                nombre: formatProductName(product),
+                precio: parseFloat(priceRecord.precio),
                 cantidad: cantidad,
-                subtotal: parseFloat((cantidad * priceRecord.precio).toFixed(2))
+                subtotal: parseFloat((cantidad * parseFloat(priceRecord.precio)).toFixed(2))
             });
         }
 
@@ -830,7 +836,7 @@ async function agregarProductoEdicion() {
         
         // Limpiar inputs
         document.getElementById('editProductoSelect').value = '';
-        document.getElementById('editProductoCantidad').value = '1';
+        document.getElementById('editProductoCantidad').value = '';
         document.getElementById('editProductoSelect').focus();
     } catch (error) {
         console.error('Error al agregar producto al pedido en edición:', error);
@@ -929,6 +935,60 @@ function renderDetallesEdicion() {
 }
 
 /**
+ * Genera el layout HTML común para impresiones de comprobantes y reportes.
+ */
+function generarLayoutImpresionHtml({ reciboLabel, metaLines = [], folio, fecha, headers = [], bodyHtml = '', footerHtml = '' }) {
+    const escapedReciboLabel = reciboLabel ? `<p class="recibo-label">${escapeHtml(reciboLabel)}</p>` : '';
+    const escapedMetaLines = metaLines.map(line => `<p class="info-line">${escapeHtml(line)}</p>`).join('');
+    
+    let metaSectionHtml = '';
+    if (folio && fecha) {
+        metaSectionHtml = `<span>Folio: <span>${escapeHtml(folio)}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${escapeHtml(fecha)}</span></span>`;
+    } else if (fecha) {
+        metaSectionHtml = `<span>Fecha: <span>${escapeHtml(fecha)}</span></span>`;
+    } else if (folio) {
+        metaSectionHtml = `<span>Folio: <span>${escapeHtml(folio)}</span></span>`;
+    }
+
+    const headersHtml = headers.map(h => {
+        const text = escapeHtml(h.text || '');
+        const className = h.class ? ` class="${escapeHtml(h.class)}"` : '';
+        const style = h.style ? ` style="${escapeHtml(h.style)}"` : '';
+        return `<th${className}${style}>${text}</th>`;
+    }).join('');
+
+    return `
+        <div class="header-container">
+            <div class="header-left">
+                ${escapedReciboLabel}
+                <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
+                <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
+                ${escapedMetaLines}
+            </div>
+            <div class="header-right">
+                <img src="../../assets/logo.png" alt="Logo Cigarrillo">
+            </div>
+        </div>
+        
+        <div class="meta-section">
+            ${metaSectionHtml}
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    ${headersHtml}
+                </tr>
+            </thead>
+            <tbody>
+                ${bodyHtml}
+                ${footerHtml}
+            </tbody>
+        </table>
+    `;
+}
+
+/**
  * Agrupa todos los pedidos activos de hoy y genera el ticket consolidado para depósito.
  */
 function generarConsolidadoHtml() {
@@ -939,8 +999,8 @@ function generarConsolidadoHtml() {
         if (!venta.activo) return;
         
         venta.detalles.forEach(d => {
-            const product = productos.find(p => p.id === d.productoId);
-            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
+            const product = productos.find(p => Number(p.id) === Number(d.productoId));
+            const productName = product ? formatProductName(product) : `Producto #${d.productoId}`;
             
             if (consolidado[productName]) {
                 consolidado[productName] += d.cantidad;
@@ -951,7 +1011,7 @@ function generarConsolidadoHtml() {
     });
 
     const items = Object.entries(consolidado).map(([nombre, cantidad]) => {
-        const product = productos.find(p => `${p.nombre} (${p.marca})` === nombre);
+        const product = productos.find(p => formatProductName(p) === nombre);
         const marca = product ? product.marca : '';
         return { nombre, cantidad, marca };
     });
@@ -980,41 +1040,27 @@ function generarConsolidadoHtml() {
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
-        printSection.innerHTML = `
-            <div class="header-container">
-                <div class="header-left">
-                    <p class="recibo-label">Recibo de venta</p>
-                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
-                    <p class="info-line">Cliente: CONSOLIDADO DE CARGA</p>
-                    <p class="info-line">Depósito General</p>
-                </div>
-                <div class="header-right">
-                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
-                </div>
-            </div>
-            
-            <div class="meta-section">
-                <span>Folio: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
-            </div>
+        const bodyHtml = items.map(item => `
+            <tr>
+                <td># ${escapeHtml(item.nombre.toUpperCase())}</td>
+                <td class="cant-cell">${escapeHtml(String(item.cantidad))}</td>
+            </tr>
+        `).join('');
 
-            <table>
-                <thead>
-                    <tr>
-                        <th class="col-producto">PRODUCTO</th>
-                        <th class="col-cantidad" style="text-align: center;">CANTIDAD</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${items.map(item => `
-                        <tr>
-                            <td># ${item.nombre.toUpperCase()}</td>
-                            <td class="cant-cell">${item.cantidad}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+        printSection.innerHTML = generarLayoutImpresionHtml({
+            reciboLabel: 'Recibo de venta',
+            metaLines: [
+                'Cliente: CONSOLIDADO DE CARGA',
+                'Depósito General'
+            ],
+            folio: folioStr,
+            fecha: formattedDate,
+            headers: [
+                { text: 'PRODUCTO', class: 'col-producto' },
+                { text: 'CANTIDAD', class: 'col-cantidad', style: 'text-align: center;' }
+            ],
+            bodyHtml
+        });
         return true;
     }
     return false;
@@ -1222,44 +1268,33 @@ function generarResumenDiarioHtml() {
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
-        printSection.innerHTML = `
-            <div class="header-container">
-                <div class="header-left">
-                    <p class="recibo-label">Resumen Diario de Clientes</p>
-                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
-                    <p class="info-line">Reporte: TOTALES A PAGAR POR CLIENTE</p>
-                </div>
-                <div class="header-right">
-                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
-                </div>
-            </div>
-            
-            <div class="meta-section">
-                <span>Fecha: <span>${formattedDate}</span></span>
-            </div>
+        const bodyHtml = items.map(item => `
+            <tr>
+                <td>${escapeHtml(item.cliente.toUpperCase())}</td>
+                <td class="text-right">$${escapeHtml(formatCurrency(item.total))}</td>
+            </tr>
+        `).join('');
 
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 70%;">CLIENTE</th>
-                        <th class="text-right" style="width: 30%;">TOTAL A PAGAR</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${items.map(item => `
-                        <tr>
-                            <td>${item.cliente.toUpperCase()}</td>
-                            <td class="text-right">$${formatCurrency(item.total)}</td>
-                        </tr>
-                    `).join('')}
-                    <tr style="border-top: 2px solid #000; font-weight: bold;">
-                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL GENERAL:</td>
-                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${formatCurrency(totalGeneral)}</td>
-                    </tr>
-                </tbody>
-            </table>
+        const footerHtml = `
+            <tr style="border-top: 2px solid #000; font-weight: bold;">
+                <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL GENERAL:</td>
+                <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${escapeHtml(formatCurrency(totalGeneral))}</td>
+            </tr>
         `;
+
+        printSection.innerHTML = generarLayoutImpresionHtml({
+            reciboLabel: 'Resumen Diario de Clientes',
+            metaLines: [
+                'Reporte: TOTALES A PAGAR POR CLIENTE'
+            ],
+            fecha: formattedDate,
+            headers: [
+                { text: 'CLIENTE', style: 'width: 70%;' },
+                { text: 'TOTAL A PAGAR', class: 'text-right', style: 'width: 30%;' }
+            ],
+            bodyHtml,
+            footerHtml
+        });
         return true;
     }
     return false;
@@ -1298,14 +1333,14 @@ function generarTodosLosPedidosHtml() {
         const folioStr = venta.id.toString().padStart(6, '0');
 
         const detailsHtml = venta.detalles.map(d => {
-            const product = productos.find(p => p.id === d.productoId);
-            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
+            const product = productos.find(p => Number(p.id) === Number(d.productoId));
+            const productName = product ? formatProductName(product) : `Producto #${d.productoId}`;
             return `
                 <tr>
-                    <td>${productName.toUpperCase()}</td>
-                    <td class="text-center">${d.cantidad}</td>
-                    <td class="text-right">$${formatCurrency(d.precio)}</td>
-                    <td class="text-right">$${formatCurrency(d.subtotal)}</td>
+                    <td>${escapeHtml(productName.toUpperCase())}</td>
+                    <td class="text-center">${escapeHtml(String(d.cantidad))}</td>
+                    <td class="text-right">$${escapeHtml(formatCurrency(d.precio))}</td>
+                    <td class="text-right">$${escapeHtml(formatCurrency(d.subtotal))}</td>
                 </tr>
             `;
         }).join('');
@@ -1313,41 +1348,29 @@ function generarTodosLosPedidosHtml() {
         const totalStr = formatCurrency(venta.total);
         combinedHtml += `
             <div class="ticket-pedido-print" style="padding-bottom: 20px;">
-                <div class="header-container">
-                    <div class="header-left">
-                        <p class="recibo-label">Comprobante de Pedido</p>
-                        <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                        <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
-                        <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
-                        ${clienteDireccion ? `<p class="info-line">Dirección: ${clienteDireccion.toUpperCase()}</p>` : ''}
-                        <p class="info-line">Vendedor: ${empleadoName}</p>
-                    </div>
-                    <div class="header-right">
-                        <img src="../../assets/logo.png" alt="Logo Cigarrillo">
-                    </div>
-                </div>
-                
-                <div class="meta-section">
-                    <span>Pedido N°: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
-                </div>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 50%;">PRODUCTO</th>
-                            <th class="text-center" style="width: 15%;">CANTIDAD</th>
-                            <th class="text-right" style="width: 17%;">PRECIO UNIT.</th>
-                            <th class="text-right" style="width: 18%;">SUBTOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${detailsHtml}
+                ${generarLayoutImpresionHtml({
+                    reciboLabel: 'Comprobante de Pedido',
+                    metaLines: [
+                        `Cliente: ${clienteName.toUpperCase()}`,
+                        ...(clienteDireccion ? [`Dirección: ${clienteDireccion.toUpperCase()}`] : []),
+                        `Vendedor: ${empleadoName}`
+                    ],
+                    folio: folioStr,
+                    fecha: formattedDate,
+                    headers: [
+                        { text: 'PRODUCTO', style: 'width: 50%;' },
+                        { text: 'CANTIDAD', class: 'text-center', style: 'width: 15%;' },
+                        { text: 'PRECIO UNIT.', class: 'text-right', style: 'width: 17%;' },
+                        { text: 'SUBTOTAL', class: 'text-right', style: 'width: 18%;' }
+                    ],
+                    bodyHtml: detailsHtml,
+                    footerHtml: `
                         <tr style="border-top: 2px solid #000; font-weight: bold;">
                             <td colspan="3" class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL A PAGAR:</td>
-                            <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${totalStr}</td>
+                            <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${escapeHtml(totalStr)}</td>
                         </tr>
-                    </tbody>
-                </table>
+                    `
+                })}
             </div>
         `;
     });
@@ -1380,8 +1403,8 @@ function generarEmpleadoHtml(empleadoId) {
 
     employeeVentas.forEach(venta => {
         venta.detalles.forEach(d => {
-            const product = productos.find(p => p.id === d.productoId);
-            const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
+            const product = productos.find(p => Number(p.id) === Number(d.productoId));
+            const productName = product ? formatProductName(product) : `Producto #${d.productoId}`;
             
             if (consolidado[productName]) {
                 consolidado[productName] += d.cantidad;
@@ -1392,7 +1415,7 @@ function generarEmpleadoHtml(empleadoId) {
     });
 
     const items = Object.entries(consolidado).map(([nombre, cantidad]) => {
-        const product = productos.find(p => `${p.nombre} (${p.marca})` === nombre);
+        const product = productos.find(p => formatProductName(p) === nombre);
         const marca = product ? product.marca : '';
         return { nombre, cantidad, marca };
     });
@@ -1421,41 +1444,27 @@ function generarEmpleadoHtml(empleadoId) {
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
-        printSection.innerHTML = `
-            <div class="header-container">
-                <div class="header-left">
-                    <p class="recibo-label">Detalle por Empleado</p>
-                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
-                    <p class="info-line">Empleado: ${employeeName.toUpperCase()}</p>
-                    <p class="info-line">Consolidado de Carga Asignada</p>
-                </div>
-                <div class="header-right">
-                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
-                </div>
-            </div>
-            
-            <div class="meta-section">
-                <span>Folio: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
-            </div>
+        const bodyHtml = items.map(item => `
+            <tr>
+                <td># ${escapeHtml(item.nombre.toUpperCase())}</td>
+                <td class="cant-cell">${escapeHtml(String(item.cantidad))}</td>
+            </tr>
+        `).join('');
 
-            <table>
-                <thead>
-                    <tr>
-                        <th class="col-producto">PRODUCTO</th>
-                        <th class="col-cantidad" style="text-align: center;">CANTIDAD</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${items.map(item => `
-                        <tr>
-                            <td># ${item.nombre.toUpperCase()}</td>
-                            <td class="cant-cell">${item.cantidad}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+        printSection.innerHTML = generarLayoutImpresionHtml({
+            reciboLabel: 'Detalle por Empleado',
+            metaLines: [
+                `Empleado: ${employeeName.toUpperCase()}`,
+                'Consolidado de Carga Asignada'
+            ],
+            folio: folioStr,
+            fecha: formattedDate,
+            headers: [
+                { text: 'PRODUCTO', class: 'col-producto' },
+                { text: 'CANTIDAD', class: 'col-cantidad', style: 'text-align: center;' }
+            ],
+            bodyHtml
+        });
         return true;
     }
     return false;
@@ -1495,14 +1504,14 @@ function generarClienteHtml(ventaId) {
     const folioStr = venta.id.toString().padStart(6, '0');
 
     const detailsHtml = venta.detalles.map(d => {
-        const product = productos.find(p => p.id === d.productoId);
-        const productName = product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`;
+        const product = productos.find(p => Number(p.id) === Number(d.productoId));
+        const productName = product ? formatProductName(product) : `Producto #${d.productoId}`;
         return `
             <tr>
-                <td>${productName.toUpperCase()}</td>
-                <td class="text-center">${d.cantidad}</td>
-                <td class="text-right">$${formatCurrency(d.precio)}</td>
-                <td class="text-right">$${formatCurrency(d.subtotal)}</td>
+                <td>${escapeHtml(productName.toUpperCase())}</td>
+                <td class="text-center">${escapeHtml(String(d.cantidad))}</td>
+                <td class="text-right">$${escapeHtml(formatCurrency(d.precio))}</td>
+                <td class="text-right">$${escapeHtml(formatCurrency(d.subtotal))}</td>
             </tr>
         `;
     }).join('');
@@ -1511,43 +1520,29 @@ function generarClienteHtml(ventaId) {
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
-        printSection.innerHTML = `
-            <div class="header-container">
-                <div class="header-left">
-                    <p class="recibo-label">Comprobante de Pedido</p>
-                    <h1>${escapeHtml(configuracionNegocio.nombre_negocio)}</h1>
-                    <p class="info-line"><strong>${escapeHtml(configuracionNegocio.info_contacto)}</strong></p>
-                    <p class="info-line">Cliente: ${clienteName.toUpperCase()}</p>
-                    ${clienteDireccion ? `<p class="info-line">Dirección: ${clienteDireccion.toUpperCase()}</p>` : ''}
-                    <p class="info-line">Vendedor: ${empleadoName}</p>
-                </div>
-                <div class="header-right">
-                    <img src="../../assets/logo.png" alt="Logo Cigarrillo">
-                </div>
-            </div>
-            
-            <div class="meta-section">
-                <span>Pedido N°: <span>${folioStr}</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Fecha: <span>${formattedDate}</span></span>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 50%;">PRODUCTO</th>
-                        <th class="text-center" style="width: 15%;">CANTIDAD</th>
-                        <th class="text-right" style="width: 17%;">PRECIO UNIT.</th>
-                        <th class="text-right" style="width: 18%;">SUBTOTAL</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${detailsHtml}
-                    <tr style="border-top: 2px solid #000; font-weight: bold;">
-                        <td colspan="3" class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL A PAGAR:</td>
-                        <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${totalStr}</td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
+        printSection.innerHTML = generarLayoutImpresionHtml({
+            reciboLabel: 'Comprobante de Pedido',
+            metaLines: [
+                `Cliente: ${clienteName.toUpperCase()}`,
+                ...(clienteDireccion ? [`Dirección: ${clienteDireccion.toUpperCase()}`] : []),
+                `Vendedor: ${empleadoName}`
+            ],
+            folio: folioStr,
+            fecha: formattedDate,
+            headers: [
+                { text: 'PRODUCTO', style: 'width: 50%;' },
+                { text: 'CANTIDAD', class: 'text-center', style: 'width: 15%;' },
+                { text: 'PRECIO UNIT.', class: 'text-right', style: 'width: 17%;' },
+                { text: 'SUBTOTAL', class: 'text-right', style: 'width: 18%;' }
+            ],
+            bodyHtml: detailsHtml,
+            footerHtml: `
+                <tr style="border-top: 2px solid #000; font-weight: bold;">
+                    <td colspan="3" class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px;">TOTAL A PAGAR:</td>
+                    <td class="text-right" style="border: none !important; padding-top: 15px; font-size: 15px; font-weight: bold;">$${escapeHtml(totalStr)}</td>
+                </tr>
+            `
+        });
         return { success: true, clienteId: venta.clienteId, folioStr };
     }
     return false;
@@ -1785,8 +1780,8 @@ async function repetirUltimoPedido() {
         const nuevosDetalles = [];
 
         for (const d of ultimoPedido.detalles) {
-            const product = productos.find(p => p.id === d.productoId);
-            const productName = product ? product.nombre : `Producto #${d.productoId}`;
+            const product = productos.find(p => Number(p.id) === Number(d.productoId));
+            const productName = product ? formatProductName(product) : `Producto #${d.productoId}`;
 
             let price = d.precio;
             let precioId = d.precioId;
@@ -1814,7 +1809,7 @@ async function repetirUltimoPedido() {
                 nombre: productName,
                 precio: parseFloat(price),
                 cantidad: d.cantidad,
-                subtotal: parseFloat((d.cantidad * price).toFixed(2))
+                subtotal: parseFloat((d.cantidad * parseFloat(price)).toFixed(2))
             });
         }
 
@@ -2075,9 +2070,9 @@ function inicializarEventos() {
                 verPedidoDetallesBody.innerHTML = '<tr><td colspan="4" class="text-secondary py-3">No hay productos registrados en este pedido</td></tr>';
             } else {
                 venta.detalles.forEach(d => {
-                    const product = productos.find(p => p.id === d.productoId);
+                    const product = productos.find(p => Number(p.id) === Number(d.productoId));
                     const productName = product 
-                        ? `${escapeHtml(product.nombre)} (${escapeHtml(product.marca)})` 
+                        ? escapeHtml(formatProductName(product)) 
                         : `Producto #${d.productoId}`;
                     
                     const tr = document.createElement('tr');
@@ -2115,12 +2110,12 @@ function inicializarEventos() {
 
             // Clonar los detalles de la venta en nuestro listado de edición
             detallesEdicion = venta.detalles.map(d => {
-                const product = productos.find(p => p.id === d.productoId);
+                const product = productos.find(p => Number(p.id) === Number(d.productoId));
                 return {
                     productoId: d.productoId,
                     precioId: d.precioId,
-                    nombre: product ? `${product.nombre} (${product.marca})` : `Producto #${d.productoId}`,
-                    precio: d.precio,
+                    nombre: product ? formatProductName(product) : `Producto #${d.productoId}`,
+                    precio: parseFloat(d.precio),
                     cantidad: d.cantidad,
                     subtotal: d.subtotal
                 };
@@ -2136,7 +2131,7 @@ function inicializarEventos() {
                 editProductInput.value = '';
                 editProductInput.comboboxOptions = productos.map(p => p.nombre);
             }
-            document.getElementById('editProductoCantidad').value = '1';
+            document.getElementById('editProductoCantidad').value = '';
 
             renderDetallesEdicion();
         });

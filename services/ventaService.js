@@ -6,6 +6,7 @@ const Price = require('../models/price.js');
 const Product = require('../models/product.js');
 const Empleado = require('../models/empleado.js');
 const Cliente = require('../models/cliente.js');
+const Marca = require('../models/marca.js');
 const detalleService = require('./detalleService.js');
 const productService = require('./productService.js');
 
@@ -116,6 +117,37 @@ exports.createVenta = async (ventaData) => {
             }
         }
 
+        // Pre-fetch all products with their brands to sort and reuse
+        const productIds = ventaData.detalles.map(d => d.productoId);
+        const products = await Product.findAll({
+            where: { id: productIds },
+            include: [{ model: Marca, as: 'marca' }],
+            transaction: t,
+            paranoid: false
+        });
+
+        const productMap = {};
+        for (const p of products) {
+            productMap[p.id] = p;
+        }
+
+        // Sort details: brand name ASC, then product name ASC
+        ventaData.detalles.sort((a, b) => {
+            const prodA = productMap[a.productoId];
+            const prodB = productMap[b.productoId];
+            
+            const brandA = (prodA && prodA.marca && prodA.marca.nombre) ? prodA.marca.nombre.toLowerCase() : '';
+            const brandB = (prodB && prodB.marca && prodB.marca.nombre) ? prodB.marca.nombre.toLowerCase() : '';
+            
+            const brandCompare = brandA.localeCompare(brandB, 'es', { sensitivity: 'base' });
+            if (brandCompare !== 0) return brandCompare;
+            
+            const nameA = (prodA && prodA.nombre) ? prodA.nombre.toLowerCase() : '';
+            const nameB = (prodB && prodB.nombre) ? prodB.nombre.toLowerCase() : '';
+            
+            return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+        });
+
         // 1. Crear la cabecera de la Venta con total y ganancia iniciales en 0
         const nuevaVenta = await Venta.create({
             empleadoId: ventaData.empleadoId,
@@ -144,7 +176,7 @@ exports.createVenta = async (ventaData) => {
             }
 
             // Obtener el costo del producto para el cálculo de la ganancia
-            const product = await Product.findByPk(item.productoId, { transaction: t, paranoid: false });
+            const product = productMap[item.productoId];
             if (!product) {
                 throw new Error(`El producto con ID ${item.productoId} no existe.`);
             }
@@ -221,6 +253,37 @@ exports.updateVenta = async (id, activo, detalles = null) => {
 
         // 2. Si se envían nuevos detalles, actualizarlos de forma atómica
         if (detalles) {
+            // Pre-fetch all products with their brands to sort and reuse
+            const productIds = detalles.map(d => d.productoId);
+            const products = await Product.findAll({
+                where: { id: productIds },
+                include: [{ model: Marca, as: 'marca' }],
+                transaction: t,
+                paranoid: false
+            });
+
+            const productMap = {};
+            for (const p of products) {
+                productMap[p.id] = p;
+            }
+
+            // Sort details: brand name ASC, then product name ASC
+            detalles.sort((a, b) => {
+                const prodA = productMap[a.productoId];
+                const prodB = productMap[b.productoId];
+                
+                const brandA = (prodA && prodA.marca && prodA.marca.nombre) ? prodA.marca.nombre.toLowerCase() : '';
+                const brandB = (prodB && prodB.marca && prodB.marca.nombre) ? prodB.marca.nombre.toLowerCase() : '';
+                
+                const brandCompare = brandA.localeCompare(brandB, 'es', { sensitivity: 'base' });
+                if (brandCompare !== 0) return brandCompare;
+                
+                const nameA = (prodA && prodA.nombre) ? prodA.nombre.toLowerCase() : '';
+                const nameB = (prodB && prodB.nombre) ? prodB.nombre.toLowerCase() : '';
+                
+                return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+            });
+
             // Eliminar detalles previos de la venta
             await Detalle.destroy({
                 where: { ventaId: id },
@@ -241,7 +304,7 @@ exports.updateVenta = async (id, activo, detalles = null) => {
                 }
 
                 // Obtener el costo del producto para el cálculo de la ganancia
-                const product = await Product.findByPk(item.productoId, { transaction: t, paranoid: false });
+                const product = productMap[item.productoId];
                 if (!product) {
                     throw new Error(`El producto con ID ${item.productoId} no existe.`);
                 }
@@ -456,53 +519,71 @@ exports.getAll = async (page = 1, limit = 100, dia = '', fechaMin = '', fechaMax
  * @param {number|null} numero Número de orden de impresión o null para quitarlo.
  */
 exports.updateOrdenImpresion = async (id, numero) => {
-    const venta = await Venta.findByPk(id);
-    if (!venta) return null;
-
-    if (numero !== null) {
-        const year = venta.fechaEmision.getFullYear();
-        const month = String(venta.fechaEmision.getMonth() + 1).padStart(2, '0');
-        const day = String(venta.fechaEmision.getDate()).padStart(2, '0');
-        
-        const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
-        const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
-
-        const existing = await Venta.findOne({
-            where: {
-                ordenImpresion: numero,
-                activo: true,
-                id: { [Op.ne]: id },
-                fechaEmision: {
-                    [Op.between]: [startOfDay, endOfDay]
-                }
-            }
-        });
-        if (existing) {
-            // Si el número ya existe, los intercambiamos automáticamente en lugar de tirar error
-            await exports.swapOrdenImpresion(id, existing.id);
-        } else {
-            await venta.update({ ordenImpresion: numero });
+    const t = await sequelize.transaction();
+    try {
+        const venta = await Venta.findByPk(id, { transaction: t });
+        if (!venta) {
+            await t.rollback();
+            return null;
         }
-    } else {
-        await venta.update({ ordenImpresion: numero });
+
+        if (numero !== null) {
+            const year = venta.fechaEmision.getFullYear();
+            const month = String(venta.fechaEmision.getMonth() + 1).padStart(2, '0');
+            const day = String(venta.fechaEmision.getDate()).padStart(2, '0');
+            
+            const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000`);
+            const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999`);
+
+            const existing = await Venta.findOne({
+                where: {
+                    ordenImpresion: numero,
+                    activo: true,
+                    id: { [Op.ne]: id },
+                    fechaEmision: {
+                        [Op.between]: [startOfDay, endOfDay]
+                    }
+                },
+                transaction: t
+            });
+            if (existing) {
+                // Si el número ya existe, los intercambiamos automáticamente en lugar de tirar error
+                await exports.swapOrdenImpresion(id, existing.id, t);
+            } else {
+                await venta.update({ ordenImpresion: numero }, { transaction: t });
+            }
+        } else {
+            await venta.update({ ordenImpresion: numero }, { transaction: t });
+        }
+        
+        await t.commit();
+
+        return await Venta.findByPk(id, {
+            include: [
+                { model: Detalle, as: 'detalles' },
+                { model: Empleado, as: 'empleado' },
+                { model: Cliente, as: 'cliente' }
+            ]
+        });
+    } catch (error) {
+        await t.rollback();
+        throw error;
     }
-    
-    return await Venta.findByPk(id, {
-        include: [
-            { model: Detalle, as: 'detalles' },
-            { model: Empleado, as: 'empleado' },
-            { model: Cliente, as: 'cliente' }
-        ]
-    });
 };
 
 /**
  * Intercambia los valores de ordenImpresion entre dos ventas.
  * @param {number} id1 ID de la primera venta.
  * @param {number} id2 ID de la segunda venta.
+ * @param {object|null} transaction Transacción opcional.
  */
-exports.swapOrdenImpresion = async (id1, id2) => {
-    const t = await sequelize.transaction();
+exports.swapOrdenImpresion = async (id1, id2, transaction = null) => {
+    let t = transaction;
+    let localTransaction = false;
+    if (!t) {
+        t = await sequelize.transaction();
+        localTransaction = true;
+    }
 
     try {
         const venta1 = await Venta.findByPk(id1, { transaction: t });
@@ -563,10 +644,14 @@ exports.swapOrdenImpresion = async (id1, id2) => {
         await venta2.update({ ordenImpresion: orden1 }, { transaction: t });
         await venta1.update({ ordenImpresion: orden2 }, { transaction: t });
 
-        await t.commit();
+        if (localTransaction) {
+            await t.commit();
+        }
         return true;
     } catch (error) {
-        await t.rollback();
+        if (localTransaction) {
+            await t.rollback();
+        }
         throw error;
     }
 };

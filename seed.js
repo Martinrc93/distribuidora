@@ -82,7 +82,7 @@ async function ejecutarSembrado() {
         const costo = parseFloat((Math.random() * 400 + 100).toFixed(2));
 
         const producto = await Product.create({
-          nombre: `${marca.nombre.toUpperCase()} - Producto ${j}`,
+          nombre: `Producto ${j}`,
           marcaId: marca.id,
           costo: costo
         });

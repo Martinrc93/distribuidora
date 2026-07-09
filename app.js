@@ -17,6 +17,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes.js');
 const configuracionRoutes = require('./routes/configuracionRoutes.js');
 const { initWhatsApp } = require('./services/whatsappService.js');
 const sequelize = require('./config/db/dataBase.js');
+const { Op } = require('sequelize');
 const Product = require('./models/product.js');
 const Empleado = require('./models/empleado.js');
 const Price = require('./models/price.js');
@@ -101,6 +102,43 @@ const serverReady = new Promise((resolve) => {
 app.serverReady = serverReady;
 
 if (process.env.NODE_ENV !== 'test') {
+  const purgarRegistrosObsoletos = async () => {
+    const modelsToPurge = [
+      { name: 'Detalle', model: Detalle },
+      { name: 'Venta', model: Venta },
+      { name: 'Price', model: Price },
+      { name: 'Product', model: Product },
+      { name: 'Cliente', model: Cliente },
+      { name: 'Empleado', model: Empleado },
+      { name: 'Marca', model: Marca },
+      { name: 'Configuracion', model: Configuracion }
+    ];
+
+    try {
+      const limitDate = new Date();
+      limitDate.setDate(limitDate.getDate() - 60);
+      console.log(`Iniciando purga automática de registros obsoletos (deletedAt anterior a 60 días: ${limitDate.toISOString()})...`);
+
+      for (const { name, model } of modelsToPurge) {
+        const count = await model.destroy({
+          where: {
+            deletedAt: {
+              [Op.lt]: limitDate
+            }
+          },
+          force: true,
+          paranoid: false
+        });
+        if (count > 0) {
+          console.log(`[Auto-Purge] Modelo ${name}: se purgaron ${count} registros obsoletos.`);
+        }
+      }
+      console.log('[Auto-Purge] Purga automática finalizada.');
+    } catch (error) {
+      console.error('[Auto-Purge] Error en la purga automática de registros:', error);
+    }
+  };
+
   const migrateDatabase = async () => {
     const tables = ['Clientes', 'Empleados', 'Products', 'Ventas', 'Detalles', 'Prices', 'Marcas', 'Users', 'Configuraciones'];
     for (const table of tables) {
@@ -131,6 +169,7 @@ if (process.env.NODE_ENV !== 'test') {
     .then(() => migrateDatabase())
     .then(() => sequelize.sync({ force: false }))
     .then(() => verificarYCrearListasPrecios())
+    .then(() => purgarRegistrosObsoletos())
     .then(() => {
       console.log('Conexión a SQLite establecida y modelos sincronizados.');
       if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !process.env.NODE_ENV) {
