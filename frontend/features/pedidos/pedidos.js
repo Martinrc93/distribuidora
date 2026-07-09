@@ -1585,12 +1585,35 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
             
             // html2pdf requiere visibilidad temporal en el DOM
             element.classList.remove('d-none');
+
+            // Esperar a que el navegador pinte el contenido inyectado y las imágenes
+            // se carguen. Sin este paso, html2canvas puede capturar un elemento vacío
+            // generando un PDF en blanco.
+            await new Promise(resolve => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        const images = element.querySelectorAll('img');
+                        if (images.length === 0) {
+                            resolve();
+                            return;
+                        }
+                        const imagePromises = Array.from(images).map(img => {
+                            if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                            return new Promise(r => {
+                                img.onload = r;
+                                img.onerror = r;
+                            });
+                        });
+                        Promise.all(imagePromises).then(resolve);
+                    });
+                });
+            });
             
             const opt = {
                 margin:       [0.5, 0.5, 0.5, 0.5],
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
