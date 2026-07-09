@@ -29,10 +29,10 @@ function sortVentasPorOrdenImpresion(ventasParaOrdenar = []) {
         const aFecha = new Date(a.fechaEmision || 0).getTime();
         const bFecha = new Date(b.fechaEmision || 0).getTime();
         if (aFecha !== bFecha) {
-            return bFecha - aFecha;
+            return aFecha - bFecha;
         }
 
-        return Number(b.id || 0) - Number(a.id || 0);
+        return Number(a.id || 0) - Number(b.id || 0);
     });
 }
 
