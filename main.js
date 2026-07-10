@@ -1,3 +1,6 @@
+// Configurar zona horaria antes de cualquier otra cosa
+require('./config/timezone.js');
+
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');

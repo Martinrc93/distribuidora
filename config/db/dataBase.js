@@ -9,7 +9,7 @@ const storagePath = process.env.NODE_ENV === 'test'
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: storagePath,
-  logging: console.log, // Desactiva logs SQL (opcional)
+  logging: false, // Desactiva logs SQL (opcional)
   retry: {
     max: 10,
     match: [/SQLITE_BUSY/],

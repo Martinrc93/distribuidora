@@ -3,6 +3,15 @@
 // Ha sido testeado y es compatible con Sequelize versión 6.37.8.
 // Si se actualiza Sequelize a una versión mayor (ej. v7), verificar la compatibilidad de esta solución.
 
+// Asegurar que la zona horaria del proceso Node.js coincida exactamente con la del sistema
+if (!process.env.TZ) {
+    try {
+        process.env.TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (e) {
+        console.error('Error al detectar la zona horaria del sistema:', e);
+    }
+}
+
 try {
     const { DataTypes } = require('sequelize');
 
