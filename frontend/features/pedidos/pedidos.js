@@ -522,7 +522,7 @@ function renderVentasTable(filterQuery = '') {
                 } catch (err) {
                     showToast(err.message || 'Error al intercambiar orden.', 'error');
                 } finally {
-                    await cargarVentas();
+                    await cargarVentas(true);
                 }
             }
         });
@@ -1643,8 +1643,16 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
                 element.innerHTML = capturedHtml;
             }
             
-            // html2pdf requiere visibilidad temporal en el DOM
+            // Guardar estilos inline originales y estado del display del body
+            const originalStyle = element.getAttribute('style') || '';
+            const originalBodyDisplay = document.body.style.display;
+
+            // Para evitar conflictos con el display: flex del body que deforma y corta el renderizado
+            // del PDF, y evitar lienzos en blanco por posicionamientos absolutos/fixed,
+            // cambiamos temporalmente el display de body a 'block' y mantenemos el printSection
+            // visible en su flujo natural.
             element.classList.remove('d-none');
+            document.body.style.display = 'block';
 
             // Esperar a que el navegador pinte el contenido inyectado y las imágenes
             // se carguen. Sin este paso, html2canvas puede capturar un elemento vacío
@@ -1673,12 +1681,17 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
                 margin:       [0.5, 0.5, 0.5, 0.5],
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                html2canvas:  { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] }
             };
 
             const pdfBase64DataUri = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+            
+            // Reestablecer clases y estilos originales inmediatamente tras la captura
             element.classList.add('d-none');
+            element.setAttribute('style', originalStyle);
+            document.body.style.display = originalBodyDisplay;
 
             newBtnConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando...';
 
@@ -2165,7 +2178,7 @@ function inicializarEventos() {
                 
                 showToast('Pedido actualizado correctamente.');
                 modalEditarPedido.hide();
-                await cargarVentas();
+                await cargarVentas(true);
             } catch (error) {
                 console.error('Error al actualizar pedido:', error);
                 showToast(error.message || 'Hubo un error al actualizar el pedido.', 'error');

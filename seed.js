@@ -76,7 +76,7 @@ async function ejecutarSembrado() {
 
     for (let i = 0; i < marcas.length; i++) {
       const marca = marcas[i];
-      const cantProductos = Math.floor(Math.random() * 6) + 5; // 5 a 10 productos
+      const cantProductos = Math.floor(Math.random() * 6) + 7; // 7 a 12 productos (asegura >= 70 productos en total)
 
       for (let j = 1; j <= cantProductos; j++) {
         const costo = parseFloat((Math.random() * 400 + 100).toFixed(2));
@@ -174,8 +174,8 @@ async function ejecutarSembrado() {
         activo: true
       });
 
-      // Elegir entre 1 y 4 productos aleatorios distintos para este pedido
-      const cantItems = Math.floor(Math.random() * 4) + 1;
+      // Elegir entre 1 y 4 productos aleatorios distintos para este pedido (o 50 para el primer pedido)
+      const cantItems = i === 1 ? 50 : (Math.floor(Math.random() * 4) + 1);
       const productosElegidos = [];
       while (productosElegidos.length < cantItems) {
         const prod = productosCreados[Math.floor(Math.random() * productosCreados.length)];

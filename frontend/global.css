@@ -337,13 +337,13 @@ body {
 /* Print Report Styles */
 @media print {
     @page {
-        margin: 1.6cm;
+        margin: 0;
     }
     body {
         background: white !important;
         color: black !important;
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 1.6cm !important;
         display: block !important;
     }
 

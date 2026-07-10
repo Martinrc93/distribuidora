@@ -412,7 +412,7 @@ async function actualizarProducto() {
 
         showToast('Producto actualizado exitosamente');
         modalEditarProducto.hide();
-        await cargarProductos(); // Recargar la tabla
+        await cargarProductos(currentPage); // Recargar la tabla en la página actual
     } catch (error) {
         console.error('Error al actualizar producto:', error);
         showToast('Hubo un error al actualizar el producto: ' + error.message, 'error');

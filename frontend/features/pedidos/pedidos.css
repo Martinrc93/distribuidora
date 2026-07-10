@@ -1,4 +1,29 @@
-/* Estilos comunes de tablas removidos (movidos a global.css) */
+#printSection, .preview-printable-content {
+    background-color: white !important;
+    color: black !important;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Salto de página para tickets individuales cuando se imprimen o exportan múltiples pedidos (Screen y Print) */
+.ticket-pedido-print {
+    page-break-inside: avoid !important;
+    break-inside: avoid-page !important;
+}
+.ticket-pedido-print:not(:last-child) {
+    page-break-after: always !important;
+    break-after: page !important;
+}
+
+/* Evitar que las filas de la tabla se corten a la mitad en la paginación */
+#printSection table tr, .preview-printable-content table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+#printSection thead, .preview-printable-content thead {
+    display: table-header-group !important;
+}
 
 /* Estilos de Impresión Consolidado para Depósito */
 @media print {
@@ -9,14 +34,9 @@
     #printSection {
         display: block !important;
         position: static !important;
-        width: 100%;
+        width: 100% !important;
         padding: 0 !important;
         margin: 0 !important;
-    }
-    /* Salto de página para todos los tickets excepto el último, para evitar hoja en blanco al final */
-    .ticket-pedido-print:not(:last-child) {
-        page-break-after: always !important;
-        break-after: page !important;
     }
     .ticket-pedido-print {
         border-bottom: none !important;
@@ -25,8 +45,8 @@
     }
 }
 
-/* Estilos de Maquetación del Ticket (se aplican tanto en Impresión como en PDF en pantalla) */
-#printSection, .preview-printable-content {
+/* Estilos de Maquetación del Ticket (se aplican en pantalla) */
+.preview-printable-content {
     background-color: white !important;
     color: black !important;
     padding: 20px;
