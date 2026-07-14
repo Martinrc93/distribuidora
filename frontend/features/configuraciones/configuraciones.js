@@ -32,12 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
     configForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        const submitBtn = configForm.querySelector('button[type="submit"]');
+
         const updates = {
             nombre_negocio: inputNombreComercio.value,
             info_contacto: inputInfoContacto.value
         };
 
         try {
+            if (submitBtn) submitBtn.disabled = true;
             const response = await fetch('/configuraciones/bulk', {
                 method: 'PUT',
                 headers: {
@@ -54,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error saving configurations:', error);
             showToast('Error de conexión', 'danger');
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
         }
     });
 

@@ -280,6 +280,7 @@ async function guardarProducto() {
     }
 
     try {
+        if (btnGuardarProducto) btnGuardarProducto.disabled = true;
         console.log('Creando producto:', { nombre, marca, costo });
         const resp = await productosService.create({
             nombre,
@@ -313,6 +314,8 @@ async function guardarProducto() {
     } catch (error) {
         console.error('Error al crear producto:', error);
         showToast('Hubo un error al crear el producto: ' + error.message, 'error');
+    } finally {
+        if (btnGuardarProducto) btnGuardarProducto.disabled = false;
     }
 }
 
@@ -354,6 +357,7 @@ async function actualizarProducto() {
     }
 
     try {
+        if (btnActualizarProducto) btnActualizarProducto.disabled = true;
         console.log('Actualizando producto:', { id, nombre, marca, costo });
 
         // Construir array de precios a enviar (solo los definidos)
@@ -416,6 +420,8 @@ async function actualizarProducto() {
     } catch (error) {
         console.error('Error al actualizar producto:', error);
         showToast('Hubo un error al actualizar el producto: ' + error.message, 'error');
+    } finally {
+        if (btnActualizarProducto) btnActualizarProducto.disabled = false;
     }
 }
 
@@ -497,7 +503,10 @@ async function cargarMarcas() {
                         return;
                     }
 
+                    const saveBtn = li.querySelector('.btn-guardar-cambio-marca');
+
                     try {
+                        if (saveBtn) saveBtn.disabled = true;
                         console.log('Actualizando marca:', id, 'a', nuevoNombre);
                         await marcasService.update(id, { nombre: nuevoNombre });
                         await cargarMarcas(); // Recargar la lista
@@ -505,6 +514,7 @@ async function cargarMarcas() {
                     } catch (error) {
                         console.error('Error al actualizar marca:', error);
                         showToast('Hubo un error al actualizar la marca.', 'error');
+                        if (saveBtn) saveBtn.disabled = false;
                     }
                 });
             });
@@ -668,7 +678,10 @@ async function guardarMarca(e) {
         return;
     }
 
+    const submitBtn = formAgregarBrand ? formAgregarBrand.querySelector('button[type="submit"]') : null;
+
     try {
+        if (submitBtn) submitBtn.disabled = true;
         console.log('Creando marca:', nombre);
         await marcasService.create({ nombre });
         nombreInput.value = '';
@@ -678,6 +691,8 @@ async function guardarMarca(e) {
     } catch (error) {
         console.error('Error al crear marca:', error);
         showToast('Hubo un error al registrar la marca.', 'error');
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
     }
 }
 

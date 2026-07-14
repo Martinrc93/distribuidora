@@ -319,6 +319,7 @@ async function guardarEmpleado() {
     }
 
     try {
+        if (btnGuardarEmpleado) btnGuardarEmpleado.disabled = true;
         console.log('Creando empleado:', { nombre, apellido, estado });
         
         // Convertir estado a booleano
@@ -337,6 +338,8 @@ async function guardarEmpleado() {
     } catch (error) {
         console.error('Error al crear empleado:', error);
         showToast('Hubo un error al registrar el empleado.', 'error');
+    } finally {
+        if (btnGuardarEmpleado) btnGuardarEmpleado.disabled = false;
     }
 }
 
@@ -356,6 +359,7 @@ async function actualizarEmpleado() {
     }
 
     try {
+        if (btnActualizarEmpleado) btnActualizarEmpleado.disabled = true;
         console.log('Actualizando empleado:', { id, nombre, apellido, estado });
         
         // Convertir estado a booleano
@@ -373,6 +377,8 @@ async function actualizarEmpleado() {
     } catch (error) {
         console.error('Error al actualizar empleado:', error);
         showToast('Hubo un error al actualizar el empleado.', 'error');
+    } finally {
+        if (btnActualizarEmpleado) btnActualizarEmpleado.disabled = false;
     }
 }
 

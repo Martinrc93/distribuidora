@@ -407,6 +407,7 @@ async function guardarCliente() {
     }
 
     try {
+        if (btnGuardarCliente) btnGuardarCliente.disabled = true;
         console.log('Creando cliente:', { nombre, direccion, contacto, listaPreciosId });
         await clientesService.create({
             nombre,
@@ -422,6 +423,8 @@ async function guardarCliente() {
     } catch (error) {
         console.error('Error al crear cliente:', error);
         showToast('Hubo un error al registrar el cliente.', 'error');
+    } finally {
+        if (btnGuardarCliente) btnGuardarCliente.disabled = false;
     }
 }
 
@@ -450,6 +453,7 @@ async function actualizarCliente() {
     }
 
     try {
+        if (btnActualizarCliente) btnActualizarCliente.disabled = true;
         console.log('Actualizando cliente:', { id, nombre, direccion, contacto, listaPreciosId });
         await clientesService.update(id, {
             nombre,
@@ -464,6 +468,8 @@ async function actualizarCliente() {
     } catch (error) {
         console.error('Error al actualizar cliente:', error);
         showToast('Hubo un error al actualizar el cliente.', 'error');
+    } finally {
+        if (btnActualizarCliente) btnActualizarCliente.disabled = false;
     }
 }
 
