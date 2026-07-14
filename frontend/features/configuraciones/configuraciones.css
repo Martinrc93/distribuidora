@@ -31,3 +31,7 @@
     border-color: #ffffff !important;
 }
 
+/* Color azul eléctrico para el ícono de actualización */
+.card-updates .fa-sync-alt {
+    color: #00d2ff !important;
+}
