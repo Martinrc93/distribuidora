@@ -8,6 +8,7 @@
     "seed": "node seed.js",
     "electron:start": "electron .",
     "electron:build": "electron-builder build --win",
+    "release": "electron-builder --publish always",
     "test": "jest",
     "db:clear": "node clean-db.js",
     "db:init-listas": "node init-listas.js",
@@ -25,6 +26,7 @@
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "electron-updater": "^6.8.9",
     "express": "^5.2.1",
     "qrcode-terminal": "^0.12.0",
     "sequelize": "^6.37.8",
@@ -56,6 +58,11 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Distribuidora",
       "include": "build/installer.nsh"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "martinrc93",
+      "repo": "distribuidora"
     },
     "files": [
       "**/*",

@@ -64,7 +64,8 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true
+      sandbox: true,
+      preload: path.join(__dirname, 'preload.js')
     },
     title: 'Distribuidora',
     icon: path.join(__dirname, 'frontend/assets/logo.png')
@@ -102,6 +103,10 @@ function createWindow() {
       app.quit();
     }
   });
+
+  // Inicializar gestor de actualizaciones automáticas
+  const updateManager = require('./services/updateManager.js');
+  updateManager.initialize(mainWindow);
 
   mainWindow.on('closed', function () {
     mainWindow = null;

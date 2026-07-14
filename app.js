@@ -38,6 +38,18 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Middleware de modo mantenimiento para bloquear escrituras
+app.use((req, res, next) => {
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+      return res.status(503).json({
+        error: 'El sistema está preparando una actualización automática. No se permiten nuevas operaciones en este momento.'
+      });
+    }
+  }
+  next();
+});
+
 // Servir archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, 'frontend')));
 
@@ -179,10 +191,11 @@ if (process.env.NODE_ENV !== 'test') {
       // Inicializar cliente de WhatsApp
       initWhatsApp();
 
-      app.listen(port, '127.0.0.1', () => {
+      const server = app.listen(port, '127.0.0.1', () => {
         console.log(`Servidor corriendo en http://127.0.0.1:${port}`);
         resolveServerReady();
       });
+      app.serverInstance = server;
     })
     .catch(err => {
       console.error('Error al conectar o sincronizar la base de datos:', err);
