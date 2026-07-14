@@ -46,11 +46,19 @@
             </header>
 
             <section class="table-container">
-                <!-- Buscador y Rango de Fechas -->
+                <!-- Buscador, Filtro Empleado y Rango de Fechas -->
                 <div class="search-container mb-4">
-                    <div class="position-relative w-100" style="max-width: 400px;">
-                        <i class="fas fa-search search-icon position-absolute text-secondary" style="left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
-                        <input type="text" id="pedidoSearchInput" class="form-control" placeholder="Buscar por cliente..." style="padding-left: 40px;">
+                    <div class="d-flex gap-2 flex-wrap w-100" style="max-width: 650px;">
+                        <div class="position-relative flex-grow-1" style="min-width: 250px;">
+                            <i class="fas fa-search search-icon position-absolute text-secondary" style="left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                            <input type="text" id="pedidoSearchInput" class="form-control" placeholder="Buscar por cliente..." style="padding-left: 40px;">
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="filtroEmpleadoSelect" class="text-secondary mb-0" style="font-size: 0.85rem; font-weight: 500; white-space: nowrap;">Empleado:</label>
+                            <select id="filtroEmpleadoSelect" class="form-select" style="width: 180px; height: 42px; background-color: #0b111c; color: white; border: 1px solid var(--border-color); border-radius: 8px;">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="d-flex align-items-center gap-2 flex-wrap ms-auto date-filter-group mt-2 mt-md-0">

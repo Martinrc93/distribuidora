@@ -173,5 +173,29 @@ describe('Venta ordenImpresion Integration Tests', () => {
             expect(response.status).toBe(404);
             expect(response.body.error).toMatch(/no existen/i);
         });
+
+        test('should reject swapping ordenImpresion between different employees', async () => {
+            const empleado2 = await Empleado.create({
+                nombre: 'Otro',
+                apellido: 'Emp',
+                activo: true
+            });
+
+            const ventaOtroEmpleado = await Venta.create({
+                total: 150,
+                ganancia: 30,
+                clienteId: cliente.id,
+                empleadoId: empleado2.id,
+                activo: true,
+                fecha_emision: new Date()
+            });
+
+            const response = await request(app)
+                .patch('/ventas/orden-impresion/swap')
+                .send({ id1: venta1.id, id2: ventaOtroEmpleado.id });
+
+            expect(response.status).toBe(500);
+            expect(response.body.error).toContain('diferentes empleados');
+        });
     });
 });

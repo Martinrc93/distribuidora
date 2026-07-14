@@ -528,6 +528,7 @@ exports.updateOrdenImpresion = async (id, numero) => {
                 where: {
                     ordenImpresion: numero,
                     activo: true,
+                    empleadoId: venta.empleadoId,
                     id: { [Op.ne]: id },
                     fechaEmision: {
                         [Op.between]: [startOfDay, endOfDay]
@@ -590,6 +591,12 @@ exports.swapOrdenImpresion = async (id1, id2, transaction = null) => {
             throw err;
         }
 
+        if (venta1.empleadoId !== venta2.empleadoId) {
+            const err = new Error('No se puede cambiar el orden entre pedidos de diferentes empleados.');
+            err.isClientError = true;
+            throw err;
+        }
+
         const orden1 = venta1.ordenImpresion;
         const orden2 = venta2.ordenImpresion;
 
@@ -645,26 +652,38 @@ exports.normalizarOrdenesDia = async (fecha, transaction = null) => {
             }
         }
 
-        // 2. Ordenar las activas por su ordenImpresion actual (e id/fecha como desempate)
-        const ventasActivas = ventasDia.filter(v => v.activo);
-        ventasActivas.sort((a, b) => {
-            const aOrden = a.ordenImpresion !== null ? a.ordenImpresion : Infinity;
-            const bOrden = b.ordenImpresion !== null ? b.ordenImpresion : Infinity;
-            if (aOrden !== bOrden) return aOrden - bOrden;
-            
-            const aFecha = new Date(a.fechaEmision).getTime();
-            const bFecha = new Date(b.fechaEmision).getTime();
-            if (aFecha !== bFecha) return aFecha - bFecha;
-            
-            return a.id - b.id;
-        });
+        // 2. Agrupar por empleadoId
+        const ventasPorEmpleado = {};
+        for (const v of ventasDia) {
+            if (v.activo) {
+                if (!ventasPorEmpleado[v.empleadoId]) {
+                    ventasPorEmpleado[v.empleadoId] = [];
+                }
+                ventasPorEmpleado[v.empleadoId].push(v);
+            }
+        }
 
-        // 3. Re-asignar valores correlativos desde 1
-        for (let i = 0; i < ventasActivas.length; i++) {
-            const v = ventasActivas[i];
-            const nuevoOrden = i + 1;
-            if (v.ordenImpresion !== nuevoOrden) {
-                await Venta.update({ ordenImpresion: nuevoOrden }, { where: { id: v.id }, transaction: t });
+        // 3. Ordenar y re-asignar correlativos por empleado
+        for (const empId of Object.keys(ventasPorEmpleado)) {
+            const ventasActivas = ventasPorEmpleado[empId];
+            ventasActivas.sort((a, b) => {
+                const aOrden = a.ordenImpresion !== null ? a.ordenImpresion : Infinity;
+                const bOrden = b.ordenImpresion !== null ? b.ordenImpresion : Infinity;
+                if (aOrden !== bOrden) return aOrden - bOrden;
+                
+                const aFecha = new Date(a.fechaEmision).getTime();
+                const bFecha = new Date(b.fechaEmision).getTime();
+                if (aFecha !== bFecha) return aFecha - bFecha;
+                
+                return a.id - b.id;
+            });
+
+            for (let i = 0; i < ventasActivas.length; i++) {
+                const v = ventasActivas[i];
+                const nuevoOrden = i + 1;
+                if (v.ordenImpresion !== nuevoOrden) {
+                    await Venta.update({ ordenImpresion: nuevoOrden }, { where: { id: v.id }, transaction: t });
+                }
             }
         }
 

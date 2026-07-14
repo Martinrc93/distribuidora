@@ -14,12 +14,24 @@ function formatProductName(product) {
 }
 
 function sortVentasPorOrdenImpresion(ventasParaOrdenar = []) {
+    const empSelect = document.getElementById('filtroEmpleadoSelect');
+    const hasEmployeeFilter = empSelect && empSelect.value !== '';
+
     return [...ventasParaOrdenar].sort((a, b) => {
         const aActivo = Boolean(a.activo);
         const bActivo = Boolean(b.activo);
 
         if (aActivo !== bActivo) {
             return aActivo ? -1 : 1;
+        }
+
+        // Si no hay filtro por empleado activo, agrupamos primero por empleado
+        if (!hasEmployeeFilter) {
+            const aEmp = `${a.empleadoNombre || ''} ${a.empleadoApellido || ''}`.trim().toLowerCase();
+            const bEmp = `${b.empleadoNombre || ''} ${b.empleadoApellido || ''}`.trim().toLowerCase();
+            if (aEmp !== bEmp) {
+                return aEmp.localeCompare(bEmp, 'es', { sensitivity: 'base' });
+            }
         }
 
         const aOrden = (a.ordenImpresion !== null && a.ordenImpresion !== undefined && a.ordenImpresion !== '') 
@@ -223,6 +235,19 @@ async function cargarDatosAuxiliares() {
             configuracionNegocio = respConfig.data;
         }
 
+        // Poblar el selector de filtro por empleado
+        const filtroEmpleadoSelect = document.getElementById('filtroEmpleadoSelect');
+        if (filtroEmpleadoSelect) {
+            filtroEmpleadoSelect.innerHTML = '<option value="">Todos</option>' + 
+                empleados.filter(e => e.activo).map(e => `<option value="${e.id}">${e.nombre} ${e.apellido}</option>`).join('');
+            
+            filtroEmpleadoSelect.addEventListener('change', () => {
+                const searchInput = document.getElementById('pedidoSearchInput');
+                const query = searchInput ? searchInput.value : '';
+                renderVentasTable(query);
+            });
+        }
+
         // Inicializar comboboxes de búsqueda interactivos
         inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.activo).map(e => `${e.nombre} ${e.apellido}`));
         inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre), (selectedClientName) => {
@@ -390,8 +415,17 @@ function renderVentasTable(filterQuery = '') {
     tablaPedidos.innerHTML = '';
     const query = filterQuery.toLowerCase().trim();
 
-    // Filtrar localmente en base al query
+    // Obtener el empleado seleccionado en el filtro
+    const empSelect = document.getElementById('filtroEmpleadoSelect');
+    const selectedEmpId = empSelect ? empSelect.value : '';
+
+    // Filtrar localmente en base al query y al empleado seleccionado
     const ventasFiltradas = ventas.filter(venta => {
+        // Filtrar por empleado primero
+        if (selectedEmpId && String(venta.empleadoId) !== String(selectedEmpId)) {
+            return false;
+        }
+
         if (!query) return true;
         const clienteName = (venta.clienteNombre || '').toLowerCase();
         const vendedorName = (venta.empleadoNombre || '').toLowerCase();
@@ -435,9 +469,16 @@ function renderVentasTable(filterQuery = '') {
             : '<span class="badge bg-danger">Cancelado</span>';
             
         const valorVisible = (venta.ordenImpresion !== null && venta.ordenImpresion < 1000000) ? venta.ordenImpresion : '';
+        
+        // Habilitar input de orden únicamente si se filtró por un empleado específico
         const inputOrden = venta.activo 
-            ? `<input type="number" min="1" class="form-control text-center mx-auto input-orden-impresion" style="width: 70px; height: 32px; padding: 0.2rem; font-size: 0.95rem; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-id="${venta.id}" value="${valorVisible}" placeholder="-">`
+            ? `<input type="number" min="1" class="form-control text-center mx-auto input-orden-impresion" style="width: 70px; height: 32px; padding: 0.2rem; font-size: 0.95rem; background-color: #0f1623; color: white; border: 1px solid var(--border-color);" data-id="${venta.id}" value="${valorVisible}" placeholder="-" ${selectedEmpId ? '' : 'disabled title="Seleccione un empleado para ordenar"'}>`
             : '-';
+
+        // Habilitar drag handle únicamente si se filtró por un empleado específico
+        const dragHandleHtml = selectedEmpId
+            ? `<td><i class="fas fa-grip-vertical drag-handle" style="cursor: grab; color: #6c757d; padding: 0.5rem;"></i></td>`
+            : `<td><i class="fas fa-grip-vertical" style="cursor: not-allowed; color: #4b5563; opacity: 0.3; padding: 0.5rem;" title="Seleccione un empleado para reordenar"></i></td>`;
 
         const fila = document.createElement('tr');
         fila.innerHTML = `
@@ -460,7 +501,7 @@ function renderVentasTable(filterQuery = '') {
                     <i class="fab fa-whatsapp"></i>
                 </button>
             </td>
-            <td><i class="fas fa-grip-vertical drag-handle" style="cursor: grab; color: #6c757d; padding: 0.5rem;"></i></td>
+            ${dragHandleHtml}
         `;
         fila.dataset.id = venta.id;
         tablaPedidos.appendChild(fila);
@@ -494,6 +535,8 @@ function renderVentasTable(filterQuery = '') {
     const hasActiveFilters = query !== '' || 
         (fechaMinEl && fechaMinEl.value !== '' && fechaMinEl.value !== todayStr) ||
         (fechaMaxEl && fechaMaxEl.value !== '' && fechaMaxEl.value !== todayStr);
+
+    const shouldDisableSorting = hasActiveFilters || !selectedEmpId;
 
     if (!sortableInstance && typeof Sortable !== 'undefined') {
         sortableInstance = new Sortable(tablaPedidos, {
@@ -529,13 +572,15 @@ function renderVentasTable(filterQuery = '') {
     }
 
     if (sortableInstance) {
-        sortableInstance.option('disabled', hasActiveFilters);
+        sortableInstance.option('disabled', shouldDisableSorting);
         const dragHandles = document.querySelectorAll('.drag-handle');
-        if (hasActiveFilters) {
+        if (shouldDisableSorting) {
             dragHandles.forEach(el => {
                 el.style.opacity = '0.3';
                 el.style.cursor = 'not-allowed';
-                el.title = 'Reordenamiento deshabilitado por filtros activos';
+                el.title = !selectedEmpId 
+                    ? 'Seleccione un empleado para reordenar' 
+                    : 'Reordenamiento deshabilitado por filtros activos';
             });
         } else {
             dragHandles.forEach(el => {
@@ -994,9 +1039,15 @@ function generarLayoutImpresionHtml({ reciboLabel, metaLines = [], folio, fecha,
 function generarConsolidadoHtml() {
     const consolidado = {};
     
-    // Sumar cantidades por producto únicamente para ventas activas
+    // Obtener el empleado seleccionado en el filtro
+    const empSelect = document.getElementById('filtroEmpleadoSelect');
+    const selectedEmpId = empSelect ? empSelect.value : '';
+    const selectedEmp = selectedEmpId ? empleados.find(e => String(e.id) === String(selectedEmpId)) : null;
+
+    // Sumar cantidades por producto únicamente para ventas activas (y del empleado filtrado si aplica)
     ventas.forEach(venta => {
         if (!venta.activo) return;
+        if (selectedEmpId && String(venta.empleadoId) !== String(selectedEmpId)) return;
         
         venta.detalles.forEach(d => {
             const product = productos.find(p => Number(p.id) === Number(d.productoId));
@@ -1036,7 +1087,7 @@ function generarConsolidadoHtml() {
 
     const formattedDate = getRangoFechasFormateado();
     const today = new Date();
-    const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
+    const folioStr = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}${selectedEmpId ? `-EMP${selectedEmpId}` : ''}`;
 
     const printSection = document.getElementById('printSection');
     if (printSection) {
@@ -1047,12 +1098,19 @@ function generarConsolidadoHtml() {
             </tr>
         `).join('');
 
-        printSection.innerHTML = generarLayoutImpresionHtml({
-            reciboLabel: 'Recibo de venta',
-            metaLines: [
+        const metaLines = selectedEmp
+            ? [
+                `Cliente: CONSOLIDADO DE CARGA (${selectedEmp.nombre} ${selectedEmp.apellido})`,
+                'Depósito por Empleado'
+              ]
+            : [
                 'Cliente: CONSOLIDADO DE CARGA',
                 'Depósito General'
-            ],
+              ];
+
+        printSection.innerHTML = generarLayoutImpresionHtml({
+            reciboLabel: 'Recibo de venta',
+            metaLines: metaLines,
             folio: folioStr,
             fecha: formattedDate,
             headers: [
@@ -1237,8 +1295,18 @@ function generarResumenDiarioHtml() {
     const resumen = {};
     let totalGeneral = 0;
 
+    // Obtener el empleado seleccionado en el filtro
+    const empSelect = document.getElementById('filtroEmpleadoSelect');
+    const selectedEmpId = empSelect ? empSelect.value : '';
+    const selectedEmp = selectedEmpId ? empleados.find(e => String(e.id) === String(selectedEmpId)) : null;
+
+    let filteredVentas = ventas.filter(v => v.activo);
+    if (selectedEmpId) {
+        filteredVentas = filteredVentas.filter(v => String(v.empleadoId) === String(selectedEmpId));
+    }
+
     // Obtener las ventas activas ordenadas según el orden de impresión (igual que en la pestaña pedidos)
-    const ventasOrdenadas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
+    const ventasOrdenadas = sortVentasPorOrdenImpresion(filteredVentas);
     const ordenClientes = [];
 
     ventasOrdenadas.forEach(venta => {
@@ -1282,10 +1350,12 @@ function generarResumenDiarioHtml() {
             </tr>
         `;
 
+        const empNameLabel = selectedEmp ? ` - Vendedor: ${selectedEmp.nombre} ${selectedEmp.apellido}` : '';
+
         printSection.innerHTML = generarLayoutImpresionHtml({
-            reciboLabel: 'Resumen Diario de Clientes',
+            reciboLabel: `Resumen Diario de Clientes${empNameLabel}`,
             metaLines: [
-                'Reporte: TOTALES A PAGAR POR CLIENTE'
+                `Reporte: TOTALES A PAGAR POR CLIENTE${selectedEmp ? ` (Vendedor: ${selectedEmp.nombre} ${selectedEmp.apellido})` : ''}`
             ],
             fecha: formattedDate,
             headers: [
@@ -1310,7 +1380,16 @@ function imprimirResumenDiario() {
  * Agrupa todos los pedidos activos de hoy y genera una sola sección de impresión con saltos de página entre cada uno.
  */
 function generarTodosLosPedidosHtml() {
-    const activeVentas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
+    // Obtener el empleado seleccionado en el filtro
+    const empSelect = document.getElementById('filtroEmpleadoSelect');
+    const selectedEmpId = empSelect ? empSelect.value : '';
+
+    let filteredVentas = ventas.filter(v => v.activo);
+    if (selectedEmpId) {
+        filteredVentas = filteredVentas.filter(v => String(v.empleadoId) === String(selectedEmpId));
+    }
+
+    const activeVentas = sortVentasPorOrdenImpresion(filteredVentas);
     if (activeVentas.length === 0) {
         showToast('No hay pedidos activos registrados en el rango seleccionado.', 'error');
         return false;
@@ -1860,13 +1939,19 @@ function updateImprimirEmpleadoSelect() {
         activeEmployees.map(e => `<option value="${e.id}">${e.nombre} ${e.apellido}</option>`).join('');
 }
 
-/**
- * Llena el combo select del modal de cliente con pedidos activos de hoy.
- */
 function updateImprimirClienteSelect() {
     const select = document.getElementById('selectImprimirCliente');
     if (!select) return;
-    const activeVentas = sortVentasPorOrdenImpresion(ventas.filter(v => v.activo));
+    
+    const empSelect = document.getElementById('filtroEmpleadoSelect');
+    const selectedEmpId = empSelect ? empSelect.value : '';
+
+    let filteredVentas = ventas.filter(v => v.activo);
+    if (selectedEmpId) {
+        filteredVentas = filteredVentas.filter(v => String(v.empleadoId) === String(selectedEmpId));
+    }
+
+    const activeVentas = sortVentasPorOrdenImpresion(filteredVentas);
     select.innerHTML = '<option value="">-- Seleccione un Pedido --</option>' + 
         activeVentas.map(v => `<option value="${v.id}">${v.clienteNombre || 'Cliente Desconocido'} - $${Number(v.total).toFixed(2)}</option>`).join('');
 }
