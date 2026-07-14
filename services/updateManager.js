@@ -53,73 +53,7 @@ autoUpdater.on('error', (err) => {
     sendStatus('error', { message: err.message || 'Error en el sistema de actualizaciones' });
 });
 
-// Lógica de simulación en desarrollo (si process.env.SIMULATE_UPDATE === 'true' o !app.isPackaged)
-function runMockCheck() {
-    sendStatus('checking');
-    setTimeout(() => {
-        downloadedVersion = '1.0.1';
-        sendStatus('available', { version: '1.0.1', releaseNotes: 'Simulación de actualización con mejoras visuales y de rendimiento.' });
-    }, 1500);
-}
 
-function runMockDownload() {
-    sendStatus('downloading', { percent: 0, transferred: 0, total: 100 });
-    let percent = 0;
-    const interval = setInterval(() => {
-        percent += 20;
-        sendStatus('downloading', { percent, transferred: percent, total: 100 });
-        if (percent >= 100) {
-            clearInterval(interval);
-            sendStatus('downloaded', { version: '1.0.1' });
-        }
-    }, 600);
-}
-
-async function runMockInstall() {
-    if (isUpdateOperationRunning) return;
-    isUpdateOperationRunning = true;
-    
-    try {
-        sendStatus('preparing');
-        process.env.MAINTENANCE_MODE = 'true';
-        await new Promise(r => setTimeout(r, 1000));
-        
-        sendStatus('backup-running');
-        await new Promise(r => setTimeout(r, 1500));
-        
-        sendStatus('backup-validating');
-        await new Promise(r => setTimeout(r, 1000));
-        
-        sendStatus('closing-database');
-        await new Promise(r => setTimeout(r, 1000));
-        
-        sendStatus('installing');
-        await new Promise(r => setTimeout(r, 1000));
-        
-        // Simular primer inicio guardando pending-update.json
-        const pendingUpdatePath = path.join(app.getPath('userData'), 'pending-update.json');
-        fs.writeFileSync(pendingUpdatePath, JSON.stringify({
-            status: 'ready-to-install',
-            previousVersion: app.getVersion(),
-            targetVersion: '1.0.1',
-            createdAt: new Date().toISOString()
-        }), 'utf8');
-        
-        // Re-iniciar Express en el puerto 3000
-        process.env.MAINTENANCE_MODE = 'false';
-        sendStatus('completed');
-        
-        // En simulación forzamos un reinicio de la ventana cargando de nuevo el index
-        setTimeout(() => {
-            app.relaunch();
-            app.exit(0);
-        }, 1500);
-    } catch (err) {
-        isUpdateOperationRunning = false;
-        process.env.MAINTENANCE_MODE = 'false';
-        sendStatus('error', { message: err.message });
-    }
-}
 
 async function doRealInstall() {
     if (isUpdateOperationRunning) return;
@@ -258,7 +192,7 @@ function initialize(windowRef) {
         const res = {
             lastResult: process.env.LAST_UPDATE_RESULT || null,
             lastVersion: process.env.LAST_UPDATE_VERSION || null,
-            simulated: !app.isPackaged
+            simulated: false
         };
         // Borrar después del primer consumo
         delete process.env.LAST_UPDATE_RESULT;
@@ -267,42 +201,27 @@ function initialize(windowRef) {
     });
     
     ipcMain.handle('update:check', async () => {
-        if (!app.isPackaged) {
-            runMockCheck();
-            return { simulated: true };
-        } else {
-            try {
-                await autoUpdater.checkForUpdates();
-                return { success: true };
-            } catch (err) {
-                sendStatus('error', { message: err.message });
-                return { error: err.message };
-            }
+        try {
+            await autoUpdater.checkForUpdates();
+            return { success: true };
+        } catch (err) {
+            sendStatus('error', { message: err.message });
+            return { error: err.message };
         }
     });
     
     ipcMain.handle('update:download', async () => {
-        if (!app.isPackaged) {
-            runMockDownload();
-            return { simulated: true };
-        } else {
-            try {
-                await autoUpdater.downloadUpdate();
-                return { success: true };
-            } catch (err) {
-                sendStatus('error', { message: err.message });
-                return { error: err.message };
-            }
+        try {
+            await autoUpdater.downloadUpdate();
+            return { success: true };
+        } catch (err) {
+            sendStatus('error', { message: err.message });
+            return { error: err.message };
         }
     });
     
     ipcMain.handle('update:install', async () => {
-        if (!app.isPackaged) {
-            await runMockInstall();
-            return { simulated: true };
-        } else {
-            return await doRealInstall();
-        }
+        return await doRealInstall();
     });
 }
 
