@@ -160,9 +160,9 @@ async function doRealInstall() {
         
         // 5. Ejecutar instalador en un proceso desprendido (ejecutable aparte)
         if (downloadedFilePath && fs.existsSync(downloadedFilePath)) {
-            console.log(`Ejecutando actualizador externo en modo CLI silencioso (/S): ${downloadedFilePath}`);
+            console.log(`Ejecutando actualizador externo en modo CLI silencioso (/S --force-run): ${downloadedFilePath}`);
             const { spawn } = require('child_process');
-            const child = spawn(downloadedFilePath, ['/S'], {
+            const child = spawn(downloadedFilePath, ['/S', '--force-run'], {
                 detached: true,
                 stdio: 'ignore'
             });

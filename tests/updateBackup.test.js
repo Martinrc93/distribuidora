@@ -234,8 +234,8 @@ describe('System Update, Backup and Maintenance Integration Tests', () => {
         expect(pendingData.status).toBe('ready-to-install');
         expect(pendingData.targetVersion).toBe('2.0.0');
 
-        // Verificar llamada de spawn con /S
-        expect(mockSpawn).toHaveBeenCalledWith(mockInstallerPath, ['/S'], expect.any(Object));
+        // Verificar llamada de spawn con /S --force-run
+        expect(mockSpawn).toHaveBeenCalledWith(mockInstallerPath, ['/S', '--force-run'], expect.any(Object));
 
         // 3. Simular reinicio y verificación de la actualización exitosa
         electron.app.getVersion = () => '2.0.0';
