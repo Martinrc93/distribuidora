@@ -25,6 +25,18 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+        shell: powershell
+
+      - name: Pre-create GitHub Release Draft
+        run: gh release create "v${{ env.VERSION }}" --draft --title "v${{ env.VERSION }}" --notes "Release v${{ env.VERSION }}" || echo "El borrador de la versión v${{ env.VERSION }} ya existe."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and Publish Release
         run: npm run release
         env:
