@@ -1,37 +1,177 @@
-/* configuraciones.css - Estilos específicos para la vista de configuraciones */
+/* configuraciones.css - Estilos premium y responsivos para la vista de configuraciones */
+
 .config-container {
-    max-width: 800px;
+    max-width: 850px;
+    width: 100%;
     margin: 0 auto;
 }
 
-.form-control:focus {
-    background-color: #2d2d2d;
-    color: #fff;
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 0.25rem rgba(96, 165, 250, 0.25);
+/* Tarjetas Premium */
+.config-card {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    overflow: hidden;
 }
 
-/* Hacer que todo el texto dentro de la sección de actualizaciones sea blanco */
-.card-updates, 
-.card-updates *,
-.card-updates .text-secondary,
-.card-updates .text-warning,
-.card-updates .text-info,
-.card-updates .text-success,
-.card-updates .text-danger,
-.card-updates #availableVersion,
-.card-updates #updateStatusText {
+/* Encabezados de Tarjeta */
+.config-card-header {
+    background-color: rgba(255, 255, 255, 0.01) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 1.5rem !important;
+}
+
+.config-card-header h4 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+}
+
+/* Iconos de cabecera con color característico */
+.config-card-header .fa-print {
+    color: #60a5fa;
+}
+.config-card-header .fa-database {
+    color: #34d399;
+}
+.config-card-header .fa-sync-alt {
+    color: #00d2ff;
+}
+
+/* Formulario e Inputs */
+.config-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.config-input {
+    background-color: #0d131f !important;
+    border: 1px solid #1e293b !important;
+    color: #f8fafc !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.config-input::placeholder {
+    color: #475569 !important;
+}
+
+.config-input:focus {
+    background-color: #0d131f !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Botones Premium */
+.btn-save-config {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
     color: #ffffff !important;
+    padding: 0.75rem 1.75rem !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+    transition: all 0.25s ease !important;
 }
 
-/* Hacer que el botón deshabilitado se vea blanco y con opacidad completa */
-.card-updates #btnCheckUpdates:disabled {
+.btn-save-config:hover {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45) !important;
+}
+
+.btn-save-config:active {
+    transform: translateY(1px);
+}
+
+.btn-export-db {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-export-db:hover {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
     color: #ffffff !important;
-    opacity: 1 !important;
-    border-color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25) !important;
 }
 
-/* Color azul eléctrico para el ícono de actualización */
-.card-updates .fa-sync-alt {
-    color: #00d2ff !important;
+.btn-export-db:active {
+    transform: translateY(1px);
+}
+
+.btn-import-db {
+    background-color: rgba(239, 68, 68, 0.05) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-import-db:hover {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3) !important;
+}
+
+.btn-import-db:active {
+    transform: translateY(1px);
+}
+
+.btn-check-updates {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease !important;
+}
+
+.btn-check-updates:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.btn-check-updates:disabled {
+    background-color: rgba(255, 255, 255, 0.01) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    color: #64748b !important;
+    transform: none !important;
+    opacity: 0.6 !important;
+}
+
+/* Modificaciones de espaciado y divisores */
+@media (min-width: 768px) {
+    .border-start-md {
+        border-left: 1px solid var(--border-color) !important;
+        padding-left: 2rem !important;
+    }
 }

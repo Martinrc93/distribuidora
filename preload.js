@@ -14,3 +14,9 @@ contextBridge.exposeInMainWorld('updates', {
         };
     }
 });
+
+contextBridge.exposeInMainWorld('database', {
+    export: () => ipcRenderer.invoke('database:export'),
+    import: () => ipcRenderer.invoke('database:import')
+});
+

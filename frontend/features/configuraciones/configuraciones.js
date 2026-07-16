@@ -1,5 +1,5 @@
 // configuraciones.js
-import { showToast } from '../../utils/ui.js';
+import { showToast, showCustomConfirm } from '../../utils/ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const configForm = document.getElementById('configForm');
@@ -64,18 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Configuración del sistema de actualizaciones
     const installedVersionEl = document.getElementById('installedVersion');
-    const availableVersionEl = document.getElementById('availableVersion');
     const updateStatusTextEl = document.getElementById('updateStatusText');
     const downloadProgressContainer = document.getElementById('downloadProgressContainer');
     const downloadProgressBar = document.getElementById('downloadProgressBar');
     const downloadProgressText = document.getElementById('downloadProgressText');
     const downloadProgressBytes = document.getElementById('downloadProgressBytes');
-    const releaseNotesContainer = document.getElementById('releaseNotesContainer');
-    const releaseNotesContent = document.getElementById('releaseNotesContent');
-
     const btnCheckUpdates = document.getElementById('btnCheckUpdates');
-    const btnDownloadUpdate = document.getElementById('btnDownloadUpdate');
-    const btnInstallUpdate = document.getElementById('btnInstallUpdate');
 
     if (window.updates) {
         // Cargar versión instalada
@@ -93,46 +87,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(err => console.error('Error al obtener resultado de actualización:', err));
 
         // Escuchar cambios de estado
-        window.updates.onStatus((data) => {
+        window.updates.onStatus(async (data) => {
             console.log('Update status update:', data);
             
-            // Reestablecer estados por defecto de botones
+            // Reestablecer estados por defecto
             btnCheckUpdates.classList.remove('d-none');
-            btnDownloadUpdate.classList.add('d-none');
-            btnInstallUpdate.classList.add('d-none');
             downloadProgressContainer.classList.add('d-none');
 
             switch (data.status) {
                 case 'checking':
-                    updateStatusTextEl.className = 'fw-semibold text-info';
+                    updateStatusTextEl.className = 'fw-semibold text-info mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Buscando actualizaciones...';
                     btnCheckUpdates.disabled = true;
                     break;
 
                 case 'available':
-                    updateStatusTextEl.className = 'fw-semibold text-success';
+                    updateStatusTextEl.className = 'fw-semibold text-success mt-2';
                     updateStatusTextEl.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i> Nueva versión disponible: v${data.version}`;
-                    availableVersionEl.textContent = `v${data.version}`;
-                    availableVersionEl.className = 'fw-bold text-success';
                     btnCheckUpdates.disabled = false;
-                    btnDownloadUpdate.classList.remove('d-none');
                     
-                    if (data.releaseNotes) {
-                        releaseNotesContainer.classList.remove('d-none');
-                        releaseNotesContent.textContent = data.releaseNotes;
+                    // Preguntar si desea actualizar
+                    const confirm = await showCustomConfirm(
+                        `Hay una nueva versión disponible del sistema (v${data.version}).\n\n` +
+                        `¿Querés descargarla y actualizar ahora?\n\n` +
+                        `(Nota: La aplicación se cerrará automáticamente para iniciar el actualizador).`
+                    );
+                    if (confirm) {
+                        window.updates.download();
+                    } else {
+                        updateStatusTextEl.className = 'fw-semibold text-secondary mt-2';
+                        updateStatusTextEl.innerHTML = `<i class="fas fa-check-circle me-1"></i> Actualización v${data.version} disponible (instalación pospuesta).`;
                     }
                     break;
 
                 case 'not-available':
-                    updateStatusTextEl.className = 'fw-semibold text-secondary';
+                    updateStatusTextEl.className = 'fw-semibold text-secondary mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-check-circle me-1"></i> Ya tienes la versión más reciente instalada.';
-                    availableVersionEl.textContent = 'No hay actualizaciones';
-                    availableVersionEl.className = 'fw-bold text-secondary';
                     btnCheckUpdates.disabled = false;
                     break;
 
                 case 'downloading':
-                    updateStatusTextEl.className = 'fw-semibold text-warning';
+                    updateStatusTextEl.className = 'fw-semibold text-warning mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Descargando actualización...';
                     btnCheckUpdates.disabled = true;
                     downloadProgressContainer.classList.remove('d-none');
@@ -148,57 +143,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
 
                 case 'downloaded':
-                    updateStatusTextEl.className = 'fw-semibold text-success';
-                    updateStatusTextEl.innerHTML = '<i class="fas fa-file-download me-1"></i> Descarga completa. Listo para instalar.';
-                    btnCheckUpdates.disabled = false;
-                    btnInstallUpdate.classList.remove('d-none');
+                    updateStatusTextEl.className = 'fw-semibold text-success mt-2';
+                    updateStatusTextEl.innerHTML = '<i class="fas fa-file-download me-1"></i> Descarga completa. Instalando actualizador...';
+                    btnCheckUpdates.disabled = true;
+                    
+                    // Ejecutar instalación automáticamente ya que el usuario confirmó
+                    window.updates.install();
                     break;
 
                 case 'preparing':
-                    updateStatusTextEl.className = 'fw-semibold text-warning';
+                    updateStatusTextEl.className = 'fw-semibold text-warning mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Preparando actualización y modo mantenimiento...';
                     btnCheckUpdates.disabled = true;
-                    btnInstallUpdate.disabled = true;
                     break;
 
                 case 'backup-running':
-                    updateStatusTextEl.className = 'fw-semibold text-warning';
+                    updateStatusTextEl.className = 'fw-semibold text-warning mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-database me-1"></i> <i class="fas fa-spinner fa-spin me-1"></i> Creando backup seguro de la base de datos...';
                     btnCheckUpdates.disabled = true;
-                    btnInstallUpdate.disabled = true;
                     break;
 
                 case 'backup-validating':
-                    updateStatusTextEl.className = 'fw-semibold text-warning';
+                    updateStatusTextEl.className = 'fw-semibold text-warning mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-check-double me-1"></i> <i class="fas fa-spinner fa-spin me-1"></i> Validando integridad del backup...';
                     btnCheckUpdates.disabled = true;
-                    btnInstallUpdate.disabled = true;
                     break;
 
                 case 'closing-database':
-                    updateStatusTextEl.className = 'fw-semibold text-warning';
+                    updateStatusTextEl.className = 'fw-semibold text-warning mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-plug me-1"></i> <i class="fas fa-spinner fa-spin me-1"></i> Cerrando conexiones de base de datos...';
                     btnCheckUpdates.disabled = true;
-                    btnInstallUpdate.disabled = true;
                     break;
 
                 case 'installing':
-                    updateStatusTextEl.className = 'fw-semibold text-success';
-                    updateStatusTextEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Instalando actualización... La aplicación se reiniciará.';
+                    updateStatusTextEl.className = 'fw-semibold text-success mt-2';
+                    updateStatusTextEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Instalando actualización... La aplicación se cerrará.';
                     btnCheckUpdates.disabled = true;
-                    btnInstallUpdate.disabled = true;
                     break;
 
                 case 'completed':
-                    updateStatusTextEl.className = 'fw-semibold text-success';
+                    updateStatusTextEl.className = 'fw-semibold text-success mt-2';
                     updateStatusTextEl.innerHTML = '<i class="fas fa-check-circle me-1"></i> ¡Actualización completada! Reiniciando...';
                     break;
 
                 case 'error':
-                    updateStatusTextEl.className = 'fw-semibold text-danger';
+                    updateStatusTextEl.className = 'fw-semibold text-danger mt-2';
                     updateStatusTextEl.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> Error: ${data.message}`;
                     btnCheckUpdates.disabled = false;
-                    btnInstallUpdate.disabled = false;
                     break;
             }
         });
@@ -207,24 +198,62 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCheckUpdates.addEventListener('click', () => {
             window.updates.check();
         });
-
-        btnDownloadUpdate.addEventListener('click', () => {
-            window.updates.download();
-        });
-
-        btnInstallUpdate.addEventListener('click', async () => {
-            const confirm = await showCustomConfirm('¿Deseas iniciar la instalación? Se creará un backup y la aplicación se reiniciará automáticamente.');
-            if (confirm) {
-                window.updates.install();
-            }
-        });
     } else {
         // Fuera de Electron
         if (updateStatusTextEl) {
-            updateStatusTextEl.className = 'fw-semibold text-warning';
+            updateStatusTextEl.className = 'fw-semibold text-warning mt-2';
             updateStatusTextEl.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Las actualizaciones automáticas no están disponibles en el navegador web.';
         }
         if (btnCheckUpdates) btnCheckUpdates.disabled = true;
+    }
+
+    // Gestión de Copias de Seguridad de la Base de Datos
+    const btnExportDb = document.getElementById('btnExportDb');
+    const btnImportDb = document.getElementById('btnImportDb');
+
+    if (window.database) {
+        btnExportDb.addEventListener('click', async () => {
+            try {
+                btnExportDb.disabled = true;
+                const result = await window.database.export();
+                if (result.success) {
+                    showToast('Base de datos exportada con éxito.', 'success');
+                } else if (result.message !== 'Operación cancelada') {
+                    showToast(`Error al exportar: ${result.message}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error al exportar base de datos:', error);
+                showToast('Error interno al exportar la base de datos.', 'danger');
+            } finally {
+                btnExportDb.disabled = false;
+            }
+        });
+
+        btnImportDb.addEventListener('click', async () => {
+            const confirm = await showCustomConfirm(
+                '¿Estás seguro de que deseas importar la base de datos? Se sobrescribirán todos los datos actuales y la aplicación se reiniciará automáticamente.'
+            );
+            if (!confirm) return;
+
+            try {
+                btnImportDb.disabled = true;
+                const result = await window.database.import();
+                if (result && !result.success) {
+                    if (result.message !== 'Operación cancelada') {
+                        showToast(`Error al importar: ${result.message}`, 'danger');
+                    }
+                }
+            } catch (error) {
+                console.error('Error al importar base de datos:', error);
+                showToast('Error interno al importar la base de datos.', 'danger');
+            } finally {
+                btnImportDb.disabled = false;
+            }
+        });
+    } else {
+        // Fuera de Electron (desarrollo en navegador)
+        if (btnExportDb) btnExportDb.disabled = true;
+        if (btnImportDb) btnImportDb.disabled = true;
     }
 
     // Iniciar

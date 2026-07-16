@@ -1,7 +1,7 @@
 // Configurar zona horaria antes de cualquier otra cosa
 require('./config/timezone.js');
 
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -108,6 +108,53 @@ function createWindow() {
   const updateManager = require('./services/updateManager.js');
   updateManager.initialize(mainWindow);
 
+  // Inicializar gestor de copias de seguridad de la base de datos
+  const dbBackupManager = require('./services/dbBackupManager.js');
+  
+  ipcMain.removeHandler('database:export');
+  ipcMain.handle('database:export', async () => {
+    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+      title: 'Exportar Base de Datos',
+      defaultPath: path.join(app.getPath('desktop'), `backup-distribuidora-${new Date().toISOString().split('T')[0]}.sqlite`),
+      filters: [
+        { name: 'SQLite Database', extensions: ['sqlite', 'db'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+    if (canceled || !filePath) return { success: false, message: 'Operación cancelada' };
+    
+    try {
+      await dbBackupManager.exportDatabase(filePath);
+      return { success: true, filePath };
+    } catch (err) {
+      console.error('Error exportando base de datos:', err);
+      return { success: false, message: err.message };
+    }
+  });
+
+  ipcMain.removeHandler('database:import');
+  ipcMain.handle('database:import', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Importar Base de Datos',
+      defaultPath: app.getPath('desktop'),
+      filters: [
+        { name: 'SQLite Database', extensions: ['sqlite', 'db'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+    if (canceled || filePaths.length === 0) return { success: false, message: 'Operación cancelada' };
+    
+    const sourcePath = filePaths[0];
+    try {
+      await dbBackupManager.importDatabase(sourcePath);
+      return { success: true };
+    } catch (err) {
+      console.error('Error importando base de datos:', err);
+      return { success: false, message: err.message };
+    }
+  });
+
   mainWindow.on('closed', function () {
     mainWindow = null;
   });
@@ -150,6 +197,9 @@ app.on('activate', function () {
 let isQuitting = false;
 
 app.on('before-quit', (event) => {
+  if (process.env.IS_UPDATING === 'true') {
+    return;
+  }
   if (!isQuitting) {
     event.preventDefault();
     isQuitting = true;

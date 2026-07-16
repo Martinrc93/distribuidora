@@ -23,24 +23,24 @@
             </header>
 
             <section class="config-container mt-4">
-                <div class="card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);">
-                    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 1.5rem;">
+                <div class="card config-card">
+                    <div class="card-header config-card-header">
                         <h4 class="mb-0"><i class="fas fa-print me-2"></i>Configuración de Impresión</h4>
                     </div>
                     <div class="card-body p-4">
                         <form id="configForm">
                             <div class="row g-4">
                                 <div class="col-12">
-                                    <label for="nombre_negocio" class="form-label text-secondary">Nombre del Comercio</label>
-                                    <input type="text" class="form-control bg-dark text-white border-secondary" id="nombre_negocio" placeholder="Ej: Distribuidora El Sol">
+                                    <label for="nombre_negocio" class="form-label config-label">Nombre del Comercio</label>
+                                    <input type="text" class="form-control config-input" id="nombre_negocio" placeholder="Ej: Distribuidora El Sol">
                                 </div>
                                 <div class="col-12">
-                                    <label for="info_contacto" class="form-label text-secondary">Información de Contacto</label>
-                                    <input type="text" class="form-control bg-dark text-white border-secondary" id="info_contacto" placeholder="Ej: LORENA 1150222520">
+                                    <label for="info_contacto" class="form-label config-label">Información de Contacto</label>
+                                    <input type="text" class="form-control config-input" id="info_contacto" placeholder="Ej: LORENA 1150222520">
                                 </div>
                             </div>
                             <div class="mt-4 d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary px-4 py-2" style="background-color: #2563eb; border: none; border-radius: 6px;">
+                                <button type="submit" class="btn btn-save-config">
                                     <i class="fas fa-save me-2"></i> Guardar Cambios
                                 </button>
                             </div>
@@ -49,24 +49,44 @@
                 </div>
             </section>
 
-            <section class="config-container mt-4 mb-5">
-                <div class="card card-updates" style="background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);">
-                    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 1.5rem;">
-                        <h4 class="mb-0"><i class="fas fa-sync-alt me-2" style="color: #00d2ff;"></i>Actualizaciones del Sistema</h4>
+            <section class="config-container mt-4">
+                <div class="card config-card">
+                    <div class="card-header config-card-header">
+                        <h4 class="mb-0"><i class="fas fa-database me-2"></i>Base de Datos</h4>
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-4">
                             <div class="col-md-6">
+                                <h5 class="h6 mb-2 text-white">Exportar Copia de Seguridad</h5>
+                                <p class="small text-secondary mb-3">Descarga una copia completa de la base de datos para resguardar tus clientes, productos, marcas y ventas.</p>
+                                <button id="btnExportDb" class="btn btn-export-db px-4 py-2">
+                                    <i class="fas fa-file-export me-2"></i> Exportar base de datos
+                                </button>
+                            </div>
+                            <div class="col-md-6 border-start-md" style="border-color: var(--border-color) !important;">
+                                <h5 class="h6 mb-2 text-white">Importar Copia de Seguridad</h5>
+                                <p class="small text-secondary mb-3">Reemplaza los datos actuales del sistema con una copia previamente exportada. <span class="text-warning fw-semibold">Esta acción es irreversible y reiniciará el programa.</span></p>
+                                <button id="btnImportDb" class="btn btn-import-db px-4 py-2">
+                                    <i class="fas fa-file-import me-2"></i> Importar base de datos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="config-container mt-4 mb-5">
+                <div class="card config-card">
+                    <div class="card-header config-card-header">
+                        <h4 class="mb-0"><i class="fas fa-sync-alt me-2"></i>Actualizaciones del Sistema</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4 align-items-center">
+                            <div class="col-md-8">
                                 <p class="mb-1 text-secondary">Versión Instalada</p>
-                                <h5 id="installedVersion" class="fw-bold">-</h5>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-1 text-secondary">Versión Disponible</p>
-                                <h5 id="availableVersion" class="fw-bold text-secondary">No buscado aún</h5>
-                            </div>
-                            <div class="col-12">
-                                <p class="mb-1 text-secondary">Estado del Sistema</p>
-                                <div id="updateStatusText" class="fw-semibold text-info"><i class="fas fa-info-circle me-1"></i>Listo para comprobar</div>
+                                <h5 id="installedVersion" class="fw-bold fs-4">-</h5>
+                                
+                                <div id="updateStatusText" class="fw-semibold text-info mt-2"><i class="fas fa-info-circle me-1"></i>Listo para comprobar</div>
                                 
                                 <div id="downloadProgressContainer" class="mt-3 d-none">
                                     <div class="progress bg-dark" style="height: 10px; border-radius: 5px;">
@@ -78,25 +98,11 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div id="releaseNotesContainer" class="col-12 d-none">
-                                <div class="p-3 bg-dark border border-secondary rounded">
-                                    <h6 class="text-secondary mb-2">Notas de esta versión:</h6>
-                                    <div id="releaseNotesContent" style="font-size: 0.9rem; max-height: 150px; overflow-y: auto; white-space: pre-wrap;"></div>
-                                </div>
+                            <div class="col-md-4 text-md-end">
+                                <button id="btnCheckUpdates" class="btn btn-check-updates">
+                                    <i class="fas fa-search me-2"></i> Buscar Actualizaciones
+                                </button>
                             </div>
-                        </div>
-                        
-                        <div class="mt-4 d-flex gap-2 justify-content-end">
-                            <button id="btnCheckUpdates" class="btn btn-outline-light px-4 py-2" style="border-radius: 6px;">
-                                <i class="fas fa-search me-2"></i> Buscar Actualizaciones
-                            </button>
-                            <button id="btnDownloadUpdate" class="btn btn-primary px-4 py-2 d-none" style="background-color: #10b981; border: none; border-radius: 6px;">
-                                <i class="fas fa-download me-2"></i> Descargar
-                            </button>
-                            <button id="btnInstallUpdate" class="btn btn-warning px-4 py-2 d-none" style="color: #000; font-weight: 600; border: none; border-radius: 6px;">
-                                <i class="fas fa-check-double me-2"></i> Crear backup e instalar
-                            </button>
                         </div>
                     </div>
                 </div>

@@ -7,6 +7,7 @@ const sequelize = require('../config/db/dataBase.js');
 let mainWindow = null;
 let currentStatus = 'idle';
 let downloadedVersion = '';
+let downloadedFilePath = '';
 let downloadPercent = 0;
 let isUpdateOperationRunning = false;
 
@@ -46,6 +47,7 @@ autoUpdater.on('download-progress', (progressObj) => {
 
 autoUpdater.on('update-downloaded', (info) => {
     downloadedVersion = info.version;
+    downloadedFilePath = info.downloadedFile || '';
     sendStatus('downloaded', { version: info.version });
 });
 
@@ -62,10 +64,39 @@ async function doRealInstall() {
     try {
         sendStatus('preparing');
         process.env.MAINTENANCE_MODE = 'true';
+        process.env.IS_UPDATING = 'true';
         
         // Esperar 2 segundos para cerrar transacciones pendientes
         await new Promise(r => setTimeout(r, 2000));
         
+        sendStatus('closing-database');
+        // 1. Cerrar Express para no recibir más peticiones
+        try {
+            const expressApp = require('../app.js');
+            if (expressApp.serverInstance) {
+                await new Promise((resolve) => {
+                    expressApp.serverInstance.close((err) => {
+                        if (err) console.error('Error al cerrar Express:', err);
+                        resolve();
+                    });
+                });
+            }
+        } catch (e) {
+            console.error('Error cerrando Express:', e);
+        }
+        
+        // 2. Cerrar WhatsApp ( Puppeteer/Chromium )
+        try {
+            const whatsappService = require('./whatsappService.js');
+            await whatsappService.logoutAndDestroy();
+        } catch (e) {
+            console.error('Error cerrando WhatsApp:', e);
+        }
+        
+        // 3. Cerrar Sequelize para volcar WAL a la base de datos principal y liberar el archivo
+        await sequelize.close();
+        
+        // 4. Crear backup de base de datos
         sendStatus('backup-running');
         const dbPath = process.env.DB_PATH || path.join(app.getPath('userData'), 'database.sqlite');
         const backupsDir = path.join(app.getPath('userData'), 'backups');
@@ -78,7 +109,7 @@ async function doRealInstall() {
         const backupFileName = `database-backup-${timestamp}.sqlite`;
         const backupPath = path.join(backupsDir, backupFileName);
         
-        // Copiar base
+        // Copiar archivo SQLite ahora que está cerrado y en estado consistente
         fs.copyFileSync(dbPath, backupPath);
         
         sendStatus('backup-validating');
@@ -115,10 +146,6 @@ async function doRealInstall() {
             console.error('Error limpiando backups antiguos:', e);
         }
         
-        sendStatus('closing-database');
-        // Cerrar Sequelize
-        await sequelize.close();
-        
         // Registrar actualización pendiente
         const pendingUpdatePath = path.join(app.getPath('userData'), 'pending-update.json');
         fs.writeFileSync(pendingUpdatePath, JSON.stringify({
@@ -129,33 +156,51 @@ async function doRealInstall() {
             createdAt: new Date().toISOString()
         }), 'utf8');
         
-        // Cerrar express y whatsapp
-        try {
-            const expressApp = require('../app.js');
-            if (expressApp.serverInstance) {
-                expressApp.serverInstance.close();
-            }
-        } catch (e) {
-            console.error('Error cerrando Express:', e);
-        }
-        
-        try {
-            const whatsappService = require('./whatsappService.js');
-            await whatsappService.logoutAndDestroy();
-        } catch (e) {
-            console.error('Error cerrando WhatsApp:', e);
-        }
-        
         sendStatus('installing');
-        // Instalar actualización
-        setTimeout(() => {
-            autoUpdater.quitAndInstall(false, true);
-        }, 1000);
         
+        // 5. Ejecutar instalador en un proceso desprendido (ejecutable aparte)
+        if (downloadedFilePath && fs.existsSync(downloadedFilePath)) {
+            console.log(`Ejecutando actualizador externo en modo CLI silencioso (/S): ${downloadedFilePath}`);
+            const { spawn } = require('child_process');
+            const child = spawn(downloadedFilePath, ['/S'], {
+                detached: true,
+                stdio: 'ignore'
+            });
+            child.unref();
+            
+            // Salir de la app inmediatamente para liberar el archivo de la base de datos y ejecutables
+            setTimeout(() => {
+                app.exit(0);
+            }, 1000);
+        } else {
+            console.warn('No se encontró downloadedFilePath. Usando autoUpdater.quitAndInstall() como fallback.');
+            setTimeout(() => {
+                autoUpdater.quitAndInstall(false, true);
+            }, 1000);
+        }
     } catch (err) {
+        console.error('Error durante la preparación de la instalación:', err);
         isUpdateOperationRunning = false;
         process.env.MAINTENANCE_MODE = 'false';
+        process.env.IS_UPDATING = 'false';
         sendStatus('error', { message: err.message });
+        
+        try {
+            const { dialog } = require('electron');
+            dialog.showErrorBox(
+                'Fallo en la Actualización',
+                `No se pudo procesar la actualización debido a un problema con la base de datos:\n\n${err.message}\n\nLa aplicación se reiniciará para restaurar el estado original.`
+            );
+        } catch (e) {
+            console.error('Error al mostrar cuadro de diálogo de fallo:', e);
+        }
+        
+        try {
+            app.relaunch();
+            app.exit(0);
+        } catch (e) {
+            console.error('Error al reiniciar la aplicación tras fallo:', e);
+        }
         throw err;
     }
 }
