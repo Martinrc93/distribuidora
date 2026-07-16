@@ -11,8 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i class="fas fa-times"></i>
             </button>
             <div class="sidebar-header">
-                <h2>Distribuidora</h2>
-                <p>Gestión de Productos, Empleados y Pedidos</p>
+                <h2>Pipipuch</h2>
             </div>
 
             <nav class="sidebar-nav">
@@ -60,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mobileHeader.className = 'mobile-header';
     mobileHeader.innerHTML = `
         <div class="mobile-header-brand">
-            <h2>Distribuidora</h2>
+            <h2>Pipipuch</h2>
         </div>
         <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Abrir menú">
             <i class="fas fa-bars"></i>

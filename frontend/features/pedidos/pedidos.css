@@ -187,13 +187,13 @@
     text-align: center;
 }
 
-/* Buscador de Pedidos */
+/* Buscador de Pedidos (Diseño Responsive Premium) */
 .search-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 1rem;
     width: 100%;
 }
 .search-container .form-control {
@@ -218,6 +218,155 @@
 }
 .search-container:focus-within .search-icon {
     color: var(--accent-glow) !important;
+}
+
+/* Grupos Flexibles para Responsive */
+.search-main-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex-grow: 1;
+    min-width: 250px;
+}
+
+.employee-filter-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.employee-filter-wrapper select {
+    width: 180px;
+    height: 42px;
+    background-color: #0b111c;
+    color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0 0.75rem;
+    outline: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.employee-filter-wrapper select:focus {
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+.search-date-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.date-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-input-wrapper input[type="date"] {
+    width: 150px;
+    height: 42px !important;
+    color-scheme: dark;
+    background-color: #0f1623;
+    color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.date-input-wrapper input[type="date"]:focus {
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+#btnFechaHoy {
+    height: 42px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0 1.25rem;
+    position: static;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+}
+
+/* Media Query para pantallas medianas (Tablets / Laptops chicas) */
+@media (max-width: 1199.98px) {
+    .search-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .search-main-group {
+        width: 100%;
+    }
+    
+    .search-date-group {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-start;
+        margin-top: 0.25rem;
+    }
+}
+
+/* Media Query para dispositivos móviles */
+@media (max-width: 767.98px) {
+    .search-main-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-input-wrapper {
+        width: 100%;
+    }
+    
+    .employee-filter-wrapper {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .employee-filter-wrapper select {
+        flex-grow: 1;
+        width: auto;
+    }
+    
+    .search-date-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        width: 100%;
+    }
+    
+    .date-input-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        width: 100%;
+    }
+    
+    .date-input-wrapper label {
+        font-size: 0.8rem;
+    }
+    
+    .date-input-wrapper input[type="date"] {
+        width: 100% !important;
+    }
+    
+    #btnFechaHoy {
+        grid-column: span 2;
+        width: 100%;
+        margin-top: 0.25rem;
+    }
 }
 
 /* Estilos para separar múltiples pedidos en pantalla */
