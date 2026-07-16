@@ -56,17 +56,21 @@
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-4">
-                            <div class="col-md-6">
-                                <h5 class="h6 mb-2 text-white">Exportar Copia de Seguridad</h5>
-                                <p class="small text-secondary mb-3">Descarga una copia completa de la base de datos para resguardar tus clientes, productos, marcas y ventas.</p>
-                                <button id="btnExportDb" class="btn btn-export-db px-4 py-2">
+                            <div class="col-md-6 d-flex flex-column justify-content-between">
+                                <div class="mb-3">
+                                    <h5 class="h6 mb-2 text-white">Exportar Copia de Seguridad</h5>
+                                    <p class="small text-secondary mb-0">Descarga una copia completa de la base de datos para resguardar tus clientes, productos, marcas y ventas.</p>
+                                </div>
+                                <button id="btnExportDb" class="btn btn-export-db px-4 py-2 align-self-start">
                                     <i class="fas fa-file-export me-2"></i> Exportar base de datos
                                 </button>
                             </div>
-                            <div class="col-md-6 border-start-md" style="border-color: var(--border-color) !important;">
-                                <h5 class="h6 mb-2 text-white">Importar Copia de Seguridad</h5>
-                                <p class="small text-secondary mb-3">Reemplaza los datos actuales del sistema con una copia previamente exportada. <span class="text-warning fw-semibold">Esta acción es irreversible y reiniciará el programa.</span></p>
-                                <button id="btnImportDb" class="btn btn-import-db px-4 py-2">
+                            <div class="col-md-6 border-start-md d-flex flex-column justify-content-between" style="border-color: var(--border-color) !important;">
+                                <div class="mb-3">
+                                    <h5 class="h6 mb-2 text-white">Importar Copia de Seguridad</h5>
+                                    <p class="small text-secondary mb-0">Reemplaza los datos actuales del sistema con una copia previamente exportada. <span class="text-warning fw-semibold">Esta acción es irreversible y reiniciará el programa.</span></p>
+                                </div>
+                                <button id="btnImportDb" class="btn btn-import-db px-4 py-2 align-self-start">
                                     <i class="fas fa-file-import me-2"></i> Importar base de datos
                                 </button>
                             </div>
