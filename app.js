@@ -53,15 +53,6 @@ app.use((req, res, next) => {
 // Servir archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Servir la documentación de Swagger en /api-docs únicamente en desarrollo/test
-if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !process.env.NODE_ENV) {
-  try {
-    const { swaggerUi, swaggerDocs } = require('./config/swagger.js');
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-  } catch (err) {
-    console.warn('No se pudo inicializar Swagger:', err.message);
-  }
-}
 
 app.use('/users', userRoutes);
 app.use('/products', productRoutes);
