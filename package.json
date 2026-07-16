@@ -62,7 +62,8 @@
     "publish": {
       "provider": "github",
       "owner": "martinrc93",
-      "repo": "distribuidora"
+      "repo": "distribuidora",
+      "releaseType": "draft"
     },
     "files": [
       "**/*",
