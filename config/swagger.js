@@ -8,7 +8,7 @@ const swaggerOptions = {
     openapi: '3.0.0',
     info: {
       title: 'API Distribuidora',
-      version: '1.0.3',
+      version: '1.0.4',
       description: 'Documentación interactiva de la API para la Distribuidora',
     },
     servers: [
