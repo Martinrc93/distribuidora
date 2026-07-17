@@ -165,6 +165,19 @@ if (process.env.NODE_ENV !== 'test') {
         console.error(`Error al verificar/migrar la tabla ${table}:`, err);
       }
     }
+
+    try {
+      console.log('Migración: Alineando fecha_emision con createdAt en la tabla Ventas...');
+      await sequelize.query(`
+        UPDATE \`Ventas\` 
+        SET \`fecha_emision\` = \`createdAt\` 
+        WHERE \`fecha_emision\` IS NOT NULL 
+          AND \`createdAt\` IS NOT NULL 
+          AND \`fecha_emision\` != \`createdAt\`;
+      `);
+    } catch (err) {
+      console.error('Error al alinear fecha_emision con createdAt:', err);
+    }
   };
 
   // Inicializar pragmas de forma segura antes de migrar

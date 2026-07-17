@@ -12,7 +12,7 @@ Venta.init({
     fechaEmision: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: DataTypes.NOW, // Por defecto la fecha y hora actuales
+        defaultValue: () => new Date(), // Por defecto la fecha y hora actuales en hora local de la app
         field: 'fecha_emision'       // Nombre de columna física en la base de datos
     },
     total: {
