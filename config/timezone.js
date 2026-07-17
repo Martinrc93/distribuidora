@@ -31,16 +31,17 @@ try {
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`;
     };
 
-    // 2. Sobrescribir el parser de SQLite directamente en el parserStore para evitar problemas de empaquetado ASAR
-    let parserStore;
+    // 2. Sobrescribir el parser de SQLite directamente en el parserStore de Sequelize.
+    // Interceptamos la creación del wrapper del parserStore en require.cache para asegurar que
+    // cualquier conexión obtenga siempre nuestro parser personalizado para DATETIME,
+    // impidiendo que inicializaciones o refrescos de Sequelize dialect pisen la configuración.
     try {
-        parserStore = require('sequelize/lib/dialects/parserStore')('sqlite');
-    } catch (err) {
-        console.warn('ADVERTENCIA: No se pudo requerir "sequelize/lib/dialects/parserStore". Es posible que la versión de Sequelize sea incompatible con esta configuración de zona horaria local.', err);
-    }
-
-    if (parserStore) {
-        const originalParse = parserStore.get('DATETIME');
+        const modulePath = require.resolve('sequelize/lib/dialects/parserStore');
+        const originalFactory = require(modulePath);
+        
+        // Creamos nuestro customParse referenciando la función original por si acaso
+        const originalStore = originalFactory('sqlite');
+        const originalParse = originalStore.get('DATETIME');
 
         const customParse = function(value, options) {
             if (typeof value === 'string') {
@@ -52,12 +53,32 @@ try {
             return originalParse ? originalParse(value, options) : new Date(value);
         };
 
-        parserStore.refresh({
+        // Sobrescribimos el factory en la cache de módulos
+        require.cache[modulePath].exports = function(dialect) {
+            const store = originalFactory(dialect);
+            if (dialect === 'sqlite') {
+                const originalGet = store.get;
+                store.get = function(type) {
+                    if (type === 'DATETIME') {
+                        return customParse;
+                    }
+                    return originalGet.call(this, type);
+                };
+            }
+            return store;
+        };
+
+        // También aplicamos el refresh en la instancia actual por si ya se cargó en algún lado
+        const currentStore = require('sequelize/lib/dialects/parserStore')('sqlite');
+        currentStore.refresh({
             types: {
                 sqlite: ['DATETIME']
             },
             parse: customParse
         });
+
+    } catch (err) {
+        console.warn('ADVERTENCIA: No se pudo configurar el interceptor de "sequelize/lib/dialects/parserStore". Es posible que la versión de Sequelize sea incompatible.', err);
     }
 } catch (e) {
     console.error('Error al configurar la alineación de zona horaria local:', e);
