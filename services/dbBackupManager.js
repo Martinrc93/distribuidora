@@ -153,6 +153,7 @@ async function importDatabase(sourcePath) {
     }
     
     // 5. Reiniciar aplicación Electron
+    process.env.MAINTENANCE_MODE = 'false';
     app.relaunch();
     app.exit(0);
 }
