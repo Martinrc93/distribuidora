@@ -1,6 +1,6 @@
 {
   "name": "distribuidora",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "",
   "main": "main.js",
   "scripts": {
@@ -34,7 +34,7 @@
     "whatsapp-web.js": "^1.34.7"
   },
   "devDependencies": {
-    "electron": "^42.7.1",
+    "electron": "^42.6.1",
     "electron-builder": "^26.15.3",
     "jest": "^30.4.2",
     "supertest": "^7.2.2",
@@ -62,7 +62,8 @@
     "publish": {
       "provider": "github",
       "owner": "martinrc93",
-      "repo": "distribuidora"
+      "repo": "distribuidora",
+      "releaseType": "draft"
     },
     "files": [
       "**/*",
