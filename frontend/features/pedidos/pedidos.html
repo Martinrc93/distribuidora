@@ -260,11 +260,19 @@
                         <input type="hidden" id="editPedidoId">
                         
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="editPedidoCliente" class="form-label text-secondary">Cliente</label>
-                                <input type="text" class="form-control" id="editPedidoCliente" readonly disabled>
+                                <select class="form-select" id="editPedidoCliente">
+                                    <!-- Dinámico -->
+                                </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label for="editPedidoEmpleado" class="form-label text-secondary">Empleado a cargo</label>
+                                <select class="form-select" id="editPedidoEmpleado">
+                                    <!-- Dinámico -->
+                                </select>
+                            </div>
+                            <div class="col-md-4">
                                 <label for="editPedidoEstado" class="form-label text-secondary">Estado del Pedido</label>
                                 <select class="form-select" id="editPedidoEstado">
                                     <option value="activo">Activo</option>

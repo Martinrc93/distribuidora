@@ -197,5 +197,57 @@ describe('Venta ordenImpresion Integration Tests', () => {
             expect(response.status).toBe(500);
             expect(response.body.error).toContain('diferentes empleados');
         });
+
+        test('should allow changing employee assigned to a sale via PUT /ventas/:id', async () => {
+            const empleadoNuevo = await Empleado.create({
+                nombre: 'Nuevo',
+                apellido: 'Empleado',
+                activo: true
+            });
+
+            const response = await request(app)
+                .put(`/ventas/${venta1.id}`)
+                .send({
+                    activo: true,
+                    empleadoId: empleadoNuevo.id,
+                    detalles: [
+                        { productoId: 1, precioId: 1, cantidad: 2.0, precio: 100.0 }
+                    ]
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.empleadoId).toBe(empleadoNuevo.id);
+            expect(response.body.empleadoNombre).toBe('Nuevo');
+            expect(response.body.empleadoApellido).toBe('Empleado');
+
+            const updatedVenta = await Venta.findByPk(venta1.id);
+            expect(updatedVenta.empleadoId).toBe(empleadoNuevo.id);
+        });
+
+        test('should allow changing client assigned to a sale via PUT /ventas/:id', async () => {
+            const clienteNuevo = await Cliente.create({
+                nombre: 'Nuevo Cliente',
+                direccion: 'Nueva Dir',
+                contacto: '456',
+                listaPreciosId: 1
+            });
+
+            const response = await request(app)
+                .put(`/ventas/${venta1.id}`)
+                .send({
+                    activo: true,
+                    clienteId: clienteNuevo.id,
+                    detalles: [
+                        { productoId: 1, precioId: 1, cantidad: 2.0, precio: 100.0 }
+                    ]
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.clienteId).toBe(clienteNuevo.id);
+            expect(response.body.clienteNombre).toBe('Nuevo Cliente');
+
+            const updatedVenta = await Venta.findByPk(venta1.id);
+            expect(updatedVenta.clienteId).toBe(clienteNuevo.id);
+        });
     });
 });

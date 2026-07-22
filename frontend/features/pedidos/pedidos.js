@@ -139,6 +139,7 @@ let modalEditarPedido = null;
 let btnActualizarPedido = null;
 let editPedidoId = null;
 let editPedidoEstado = null;
+let editPedidoEmpleado = null;
 let editPedidoCliente = null;
 let editPedidoTotalLabel = null;
 let editPedidoDetallesBody = null;
@@ -183,6 +184,7 @@ function inicializarElementos() {
     btnActualizarPedido = document.getElementById('btnActualizarPedido');
     editPedidoId = document.getElementById('editPedidoId');
     editPedidoEstado = document.getElementById('editPedidoEstado');
+    editPedidoEmpleado = document.getElementById('editPedidoEmpleado');
     editPedidoCliente = document.getElementById('editPedidoCliente');
     editPedidoTotalLabel = document.getElementById('editPedidoTotalLabel');
     editPedidoDetallesBody = document.getElementById('editPedidoDetallesBody');
@@ -2203,8 +2205,39 @@ function inicializarEventos() {
             currentClienteEdicion = clientes.find(c => c.id === venta.clienteId);
 
             editPedidoId.value = venta.id;
-            editPedidoCliente.value = venta.clienteNombre || 'Cliente Desconocido';
             editPedidoEstado.value = venta.activo ? 'activo' : 'inactivo';
+
+            if (editPedidoCliente) {
+                editPedidoCliente.innerHTML = '';
+                const clientesDisponibles = [...clientes];
+                if (venta.clienteId && !clientesDisponibles.some(c => Number(c.id) === Number(venta.clienteId))) {
+                    clientesDisponibles.push({ id: venta.clienteId, nombre: venta.clienteNombre || `Cliente #${venta.clienteId}` });
+                }
+                clientesDisponibles.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
+                clientesDisponibles.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.nombre;
+                    if (Number(c.id) === Number(venta.clienteId)) {
+                        opt.selected = true;
+                    }
+                    editPedidoCliente.appendChild(opt);
+                });
+            }
+
+            if (editPedidoEmpleado) {
+                editPedidoEmpleado.innerHTML = '';
+                const empsDisponibles = empleados.filter(e => e.activo || Number(e.id) === Number(venta.empleadoId));
+                empsDisponibles.forEach(e => {
+                    const opt = document.createElement('option');
+                    opt.value = e.id;
+                    opt.textContent = `${e.nombre} ${e.apellido}`.trim();
+                    if (Number(e.id) === Number(venta.empleadoId)) {
+                        opt.selected = true;
+                    }
+                    editPedidoEmpleado.appendChild(opt);
+                });
+            }
 
             // Clonar los detalles de la venta en nuestro listado de edición
             detallesEdicion = venta.detalles.map(d => {
@@ -2235,11 +2268,33 @@ function inicializarEventos() {
         });
     }
 
+    if (editPedidoCliente) {
+        editPedidoCliente.addEventListener('change', () => {
+            const selectedCliId = parseInt(editPedidoCliente.value, 10);
+            const foundClient = clientes.find(c => Number(c.id) === Number(selectedCliId));
+            if (foundClient) {
+                currentClienteEdicion = foundClient;
+            }
+        });
+    }
+
     // Al hacer click en guardar cambios del pedido en edición
     if (btnActualizarPedido) {
         btnActualizarPedido.addEventListener('click', async () => {
             const id = editPedidoId.value;
             const activo = editPedidoEstado.value === 'activo';
+            const nuevoEmpleadoId = editPedidoEmpleado ? parseInt(editPedidoEmpleado.value, 10) : null;
+            const nuevoClienteId = editPedidoCliente ? parseInt(editPedidoCliente.value, 10) : null;
+
+            if (!nuevoClienteId || isNaN(nuevoClienteId)) {
+                showToast('Debe seleccionar un cliente válido.', 'error');
+                return;
+            }
+
+            if (!nuevoEmpleadoId || isNaN(nuevoEmpleadoId)) {
+                showToast('Debe seleccionar un empleado a cargo válido.', 'error');
+                return;
+            }
 
             if (detallesEdicion.length === 0) {
                 showToast('Debe tener al menos un producto agregado al pedido.', 'error');
@@ -2248,6 +2303,8 @@ function inicializarEventos() {
 
             const payload = {
                 activo,
+                empleadoId: nuevoEmpleadoId,
+                clienteId: nuevoClienteId,
                 detalles: detallesEdicion.map(d => ({
                     productoId: d.productoId,
                     precioId: d.precioId,

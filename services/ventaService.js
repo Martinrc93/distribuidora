@@ -215,8 +215,10 @@ exports.createVenta = async (ventaData) => {
  * @param {number} id ID de la venta.
  * @param {boolean} activo Nuevo estado activo.
  * @param {Array} detalles Listado opcional de nuevos detalles [{productoId, precioId, cantidad}].
+ * @param {number|null} empleadoId ID del nuevo empleado a cargo opcional.
+ * @param {number|null} clienteId ID del nuevo cliente opcional.
  */
-exports.updateVenta = async (id, activo, detalles = null) => {
+exports.updateVenta = async (id, activo, detalles = null, empleadoId = null, clienteId = null) => {
     const t = await sequelize.transaction({ type: 'IMMEDIATE' });
 
     try {
@@ -225,9 +227,39 @@ exports.updateVenta = async (id, activo, detalles = null) => {
             await t.rollback();
             return null;
         }
-        // 1. Actualizar el estado activo e inicializar o limpiar ordenImpresion
+        // 1. Actualizar el estado activo, empleadoId, clienteId e inicializar o limpiar ordenImpresion
         const oldActivo = venta.activo;
+        const oldEmpleadoId = venta.empleadoId;
+        const oldClienteId = venta.clienteId;
         let nextOrdenImpresion = venta.ordenImpresion;
+        let targetEmpleadoId = oldEmpleadoId;
+        let targetClienteId = oldClienteId;
+
+        if (empleadoId !== null && empleadoId !== undefined) {
+            const empIdNum = Number.parseInt(empleadoId, 10);
+            if (!Number.isNaN(empIdNum) && empIdNum > 0 && empIdNum !== oldEmpleadoId) {
+                const emp = await Empleado.findByPk(empIdNum, { transaction: t });
+                if (!emp) {
+                    throw new Error(`El empleado con ID ${empIdNum} no existe.`);
+                }
+                targetEmpleadoId = empIdNum;
+                if (activo) {
+                    nextOrdenImpresion = 0;
+                }
+            }
+        }
+
+        if (clienteId !== null && clienteId !== undefined) {
+            const cliIdNum = Number.parseInt(clienteId, 10);
+            if (!Number.isNaN(cliIdNum) && cliIdNum > 0 && cliIdNum !== oldClienteId) {
+                const cli = await Cliente.findByPk(cliIdNum, { transaction: t });
+                if (!cli) {
+                    throw new Error(`El cliente con ID ${cliIdNum} no existe.`);
+                }
+                targetClienteId = cliIdNum;
+            }
+        }
+
         if (activo !== oldActivo) {
             if (!activo) {
                 nextOrdenImpresion = null;
@@ -235,7 +267,7 @@ exports.updateVenta = async (id, activo, detalles = null) => {
                 nextOrdenImpresion = 0; // reactivado se carga como primero
             }
         }
-        await venta.update({ activo, ordenImpresion: nextOrdenImpresion }, { transaction: t });
+        await venta.update({ activo, empleadoId: targetEmpleadoId, clienteId: targetClienteId, ordenImpresion: nextOrdenImpresion }, { transaction: t });
 
         // 2. Si se envían nuevos detalles, actualizarlos de forma atómica
         if (detalles) {

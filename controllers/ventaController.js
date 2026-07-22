@@ -52,11 +52,25 @@ exports.create = async (req, res) => {
 exports.updateStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { activo, detalles } = req.body;
+        const { activo, detalles, empleadoId, clienteId } = req.body;
 
         // Validación: el estado activo es obligatorio
         if (activo === undefined || typeof activo !== 'boolean') {
             return res.status(400).json({ error: 'El campo "activo" es obligatorio y debe ser un valor booleano (true/false).' });
+        }
+
+        if (empleadoId !== undefined && empleadoId !== null) {
+            const parsedEmpId = Number.parseInt(empleadoId, 10);
+            if (Number.isNaN(parsedEmpId) || parsedEmpId <= 0) {
+                return res.status(400).json({ error: 'El ID de empleado debe ser un número entero válido mayor a 0.' });
+            }
+        }
+
+        if (clienteId !== undefined && clienteId !== null) {
+            const parsedCliId = Number.parseInt(clienteId, 10);
+            if (Number.isNaN(parsedCliId) || parsedCliId <= 0) {
+                return res.status(400).json({ error: 'El ID de cliente debe ser un número entero válido mayor a 0.' });
+            }
         }
 
         // Si se envían detalles, validarlos
@@ -100,7 +114,7 @@ exports.updateStatus = async (req, res) => {
             }
         }
 
-        const ventaActualizada = await ventaService.updateVenta(id, activo, detalles);
+        const ventaActualizada = await ventaService.updateVenta(id, activo, detalles, empleadoId, clienteId);
         if (!ventaActualizada) {
             return res.status(404).json({ mensaje: 'Venta no encontrada para actualizar' });
         }
