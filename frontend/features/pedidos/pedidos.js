@@ -1473,6 +1473,13 @@ function imprimirTodosLosPedidos() {
     }
 }
 
+function enviarTodosLosPedidosWSP() {
+    if (generarTodosLosPedidosHtml()) {
+        const todayStr = getLocalDateStr();
+        enviarPDFPorWhatsApp('printSection', `todos_los_pedidos_${todayStr}.pdf`, '', 'todos_los_pedidos');
+    }
+}
+
 /**
  * Agrupa los pedidos activos de hoy para un empleado específico y genera su consolidado.
  */
@@ -2056,6 +2063,14 @@ function inicializarEventos() {
         btnOptImprimirTodosLosPedidos.addEventListener('click', (e) => {
             e.preventDefault();
             imprimirTodosLosPedidos();
+        });
+    }
+
+    const btnOptEnviarTodosLosPedidosWSP = document.getElementById('btnOptEnviarTodosLosPedidosWSP');
+    if (btnOptEnviarTodosLosPedidosWSP) {
+        btnOptEnviarTodosLosPedidosWSP.addEventListener('click', (e) => {
+            e.preventDefault();
+            enviarTodosLosPedidosWSP();
         });
     }
 
