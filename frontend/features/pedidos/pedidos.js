@@ -1436,6 +1436,13 @@ function imprimirResumenDiario() {
     }
 }
 
+function enviarResumenDiarioWSP() {
+    if (generarResumenDiarioHtml()) {
+        const todayStr = getLocalDateStr();
+        enviarPDFPorWhatsApp('printSection', `resumen_diario_${todayStr}.pdf`, '', 'resumen_diario');
+    }
+}
+
 /**
  * Agrupa todos los pedidos activos de hoy y genera una sola sección de impresión con saltos de página entre cada uno.
  */
@@ -1521,6 +1528,13 @@ function generarTodosLosPedidosHtml() {
 function imprimirTodosLosPedidos() {
     if (generarTodosLosPedidosHtml()) {
         previewAndPrint();
+    }
+}
+
+function enviarTodosLosPedidosWSP() {
+    if (generarTodosLosPedidosHtml()) {
+        const todayStr = getLocalDateStr();
+        enviarPDFPorWhatsApp('printSection', `todos_los_pedidos_${todayStr}.pdf`, '', 'todos_los_pedidos');
     }
 }
 
@@ -1707,8 +1721,8 @@ function enviarClienteWSP(ventaId) {
  */
 function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = '') {
     const inputNumero = document.getElementById('inputWhatsappNumero');
-    if (context === 'deposito' && !defaultPhone) {
-        defaultPhone = localStorage.getItem('last_wsp_number_deposito') || '';
+    if (context && !defaultPhone) {
+        defaultPhone = localStorage.getItem(`last_wsp_number_${context}`) || '';
     }
     if (inputNumero) {
         inputNumero.value = defaultPhone ? defaultPhone.replace(/[-\s]/g, '') : '';
@@ -1853,8 +1867,8 @@ function enviarPDFPorWhatsApp(elementId, filename, defaultPhone = '', context = 
             }, { signal: abortController.signal });
 
             if (response && response.success) {
-                if (context === 'deposito') {
-                    localStorage.setItem('last_wsp_number_deposito', number);
+                if (context) {
+                    localStorage.setItem(`last_wsp_number_${context}`, number);
                 }
                 showToast('¡Comprobante enviado por WhatsApp con éxito!', 'success');
                 modal.hide();
@@ -2094,11 +2108,27 @@ function inicializarEventos() {
         });
     }
 
+    const btnOptEnviarResumenDiarioWSP = document.getElementById('btnOptEnviarResumenDiarioWSP');
+    if (btnOptEnviarResumenDiarioWSP) {
+        btnOptEnviarResumenDiarioWSP.addEventListener('click', (e) => {
+            e.preventDefault();
+            enviarResumenDiarioWSP();
+        });
+    }
+
     const btnOptImprimirTodosLosPedidos = document.getElementById('btnOptImprimirTodosLosPedidos');
     if (btnOptImprimirTodosLosPedidos) {
         btnOptImprimirTodosLosPedidos.addEventListener('click', (e) => {
             e.preventDefault();
             imprimirTodosLosPedidos();
+        });
+    }
+
+    const btnOptEnviarTodosLosPedidosWSP = document.getElementById('btnOptEnviarTodosLosPedidosWSP');
+    if (btnOptEnviarTodosLosPedidosWSP) {
+        btnOptEnviarTodosLosPedidosWSP.addEventListener('click', (e) => {
+            e.preventDefault();
+            enviarTodosLosPedidosWSP();
         });
     }
 
