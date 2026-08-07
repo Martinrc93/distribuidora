@@ -107,6 +107,8 @@ function getRangoFechasFormateado() {
 
 let fpMin = null;
 let fpMax = null;
+let fpNuevoPedido = null;
+let fpEditPedido = null;
 
 function inicializarFiltroFechas() {
     const todayStr = getLocalDateStr();
@@ -127,6 +129,28 @@ function inicializarFiltroFechas() {
         dateFormat: "Y-m-d",
         defaultDate: todayStr
     });
+
+    if (document.getElementById('nuevoPedidoFecha')) {
+        fpNuevoPedido = flatpickr("#nuevoPedidoFecha", {
+            locale: "es",
+            altInput: true,
+            altInputClass: "form-control form-control-sm bg-dark text-white border-secondary text-center",
+            altFormat: "d/m/Y",
+            dateFormat: "Y-m-d",
+            defaultDate: todayStr
+        });
+    }
+
+    if (document.getElementById('editPedidoFecha')) {
+        fpEditPedido = flatpickr("#editPedidoFecha", {
+            locale: "es",
+            altInput: true,
+            altInputClass: "form-control form-control-sm bg-dark text-white border-secondary text-center",
+            altFormat: "d/m/Y",
+            dateFormat: "Y-m-d",
+            defaultDate: todayStr
+        });
+    }
 }
 
 let sortableInstance = null;
@@ -2243,7 +2267,12 @@ function inicializarEventos() {
 
             const editFechaInput = document.getElementById('editPedidoFecha');
             if (editFechaInput) {
-                editFechaInput.value = parseFechaToInputStr(venta.fechaEmision);
+                const parsedStr = parseFechaToInputStr(venta.fechaEmision);
+                if (fpEditPedido) {
+                    fpEditPedido.setDate(parsedStr, true);
+                } else {
+                    editFechaInput.value = parsedStr;
+                }
             }
 
             if (editPedidoCliente) {
@@ -2386,13 +2415,15 @@ function inicializarEventos() {
         });
     }
 
-    // Botón sumar 1 día a la fecha del pedido en modificación
-    const btnSumarDiaEdit = document.getElementById('btnSumarDiaEditPedido');
-    if (btnSumarDiaEdit) {
-        btnSumarDiaEdit.addEventListener('click', () => {
-            const fechaInput = document.getElementById('editPedidoFecha');
+    function shiftModalDate(fpInstance, inputId, deltaDays) {
+        if (fpInstance) {
+            const current = (fpInstance.selectedDates && fpInstance.selectedDates[0]) ? new Date(fpInstance.selectedDates[0]) : new Date();
+            const nextDate = new Date(current);
+            nextDate.setDate(nextDate.getDate() + deltaDays);
+            fpInstance.setDate(nextDate, true);
+        } else {
+            const fechaInput = document.getElementById(inputId);
             if (!fechaInput) return;
-
             let currentDate;
             if (fechaInput.value && /^\d{4}-\d{2}-\d{2}$/.test(fechaInput.value)) {
                 const [y, m, d] = fechaInput.value.split('-').map(Number);
@@ -2400,27 +2431,38 @@ function inicializarEventos() {
             } else {
                 currentDate = new Date();
             }
-            currentDate.setDate(currentDate.getDate() + 1);
+            currentDate.setDate(currentDate.getDate() + deltaDays);
             fechaInput.value = getLocalDateStr(currentDate);
+        }
+    }
+
+    // Botones de restar/sumar día a la fecha del pedido en modificación
+    const btnRestarDiaEdit = document.getElementById('btnRestarDiaEditPedido');
+    if (btnRestarDiaEdit) {
+        btnRestarDiaEdit.addEventListener('click', () => {
+            shiftModalDate(fpEditPedido, 'editPedidoFecha', -1);
         });
     }
 
-    // Botón sumar 1 día a la fecha del pedido
+    const btnSumarDiaEdit = document.getElementById('btnSumarDiaEditPedido');
+    if (btnSumarDiaEdit) {
+        btnSumarDiaEdit.addEventListener('click', () => {
+            shiftModalDate(fpEditPedido, 'editPedidoFecha', 1);
+        });
+    }
+
+    // Botones de restar/sumar día a la fecha del pedido en creación
+    const btnRestarDia = document.getElementById('btnRestarDiaPedido');
+    if (btnRestarDia) {
+        btnRestarDia.addEventListener('click', () => {
+            shiftModalDate(fpNuevoPedido, 'nuevoPedidoFecha', -1);
+        });
+    }
+
     const btnSumarDia = document.getElementById('btnSumarDiaPedido');
     if (btnSumarDia) {
         btnSumarDia.addEventListener('click', () => {
-            const fechaInput = document.getElementById('nuevoPedidoFecha');
-            if (!fechaInput) return;
-
-            let currentDate;
-            if (fechaInput.value && /^\d{4}-\d{2}-\d{2}$/.test(fechaInput.value)) {
-                const [y, m, d] = fechaInput.value.split('-').map(Number);
-                currentDate = new Date(y, m - 1, d);
-            } else {
-                currentDate = new Date();
-            }
-            currentDate.setDate(currentDate.getDate() + 1);
-            fechaInput.value = getLocalDateStr(currentDate);
+            shiftModalDate(fpNuevoPedido, 'nuevoPedidoFecha', 1);
         });
     }
 
@@ -2431,9 +2473,13 @@ function inicializarEventos() {
         // clientes creados recientemente en la misma sesión
         addModalEl.addEventListener('show.bs.modal', () => {
             recargarClientes();
-            const fechaInput = document.getElementById('nuevoPedidoFecha');
-            if (fechaInput) {
-                fechaInput.value = getLocalDateStr();
+            if (fpNuevoPedido) {
+                fpNuevoPedido.setDate(getLocalDateStr(), true);
+            } else {
+                const fechaInput = document.getElementById('nuevoPedidoFecha');
+                if (fechaInput) {
+                    fechaInput.value = getLocalDateStr();
+                }
             }
         });
 
@@ -2441,9 +2487,13 @@ function inicializarEventos() {
             formAgregarPedido.reset();
             detallesTemporales = [];
             renderDetallesTemporales();
-            const fechaInput = document.getElementById('nuevoPedidoFecha');
-            if (fechaInput) {
-                fechaInput.value = getLocalDateStr();
+            if (fpNuevoPedido) {
+                fpNuevoPedido.setDate(getLocalDateStr(), true);
+            } else {
+                const fechaInput = document.getElementById('nuevoPedidoFecha');
+                if (fechaInput) {
+                    fechaInput.value = getLocalDateStr();
+                }
             }
             // Restablecer las opciones de todos los productos en el combobox
             const productInput = document.getElementById('productoSelect');

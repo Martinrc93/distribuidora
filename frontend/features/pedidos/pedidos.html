@@ -106,14 +106,14 @@
                 <div class="modal-header position-relative d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--border-color);">
                     <h5 class="modal-title text-white m-0" id="addPedidoModalLabel">Crear Nuevo Pedido</h5>
                     
-                    <!-- Fecha actual + Botón para sumar 1 día -->
-                    <div class="input-group input-group-sm" id="pedidoFechaHeaderContainer" style="position: absolute; left: 50%; transform: translateX(-50%); width: auto;">
-                        <span class="input-group-text bg-dark text-secondary border-secondary d-none d-sm-flex" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
-                            <i class="far fa-calendar-alt me-1"></i>Fecha
-                        </span>
-                        <input type="date" id="nuevoPedidoFecha" class="form-control form-control-sm bg-dark text-white border-secondary text-center" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; width: 170px;" title="Fecha del pedido">
-                        <button type="button" id="btnSumarDiaPedido" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" title="Sumar 1 día (+1d)">
-                            <i class="fas fa-plus" style="font-size: 0.7rem;"></i> 1 día
+                    <!-- Navegación de Fecha con flechas izquierda y derecha -->
+                    <div class="input-group input-group-sm modal-header-date-group" id="pedidoFechaHeaderContainer" style="position: absolute; left: 50%; transform: translateX(-50%); width: auto;">
+                        <button type="button" id="btnRestarDiaPedido" class="btn btn-sm date-nav-btn-left d-flex align-items-center justify-content-center" title="Día anterior (-1d)">
+                            <i class="fas fa-chevron-left" style="font-size: 0.8rem;"></i>
+                        </button>
+                        <input type="text" id="nuevoPedidoFecha" class="form-control form-control-sm text-center" title="Fecha del pedido">
+                        <button type="button" id="btnSumarDiaPedido" class="btn btn-sm date-nav-btn-right d-flex align-items-center justify-content-center" title="Día siguiente (+1d)">
+                            <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
                         </button>
                     </div>
 
@@ -267,14 +267,14 @@
                 <div class="modal-header position-relative d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--border-color);">
                     <h5 class="modal-title text-white m-0" id="editPedidoModalLabel">Modificar Pedido</h5>
                     
-                    <!-- Fecha del pedido en edición + Botón para sumar 1 día -->
-                    <div class="input-group input-group-sm" id="editPedidoFechaHeaderContainer" style="position: absolute; left: 50%; transform: translateX(-50%); width: auto;">
-                        <span class="input-group-text bg-dark text-secondary border-secondary d-none d-sm-flex" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
-                            <i class="far fa-calendar-alt me-1"></i>Fecha
-                        </span>
-                        <input type="date" id="editPedidoFecha" class="form-control form-control-sm bg-dark text-white border-secondary text-center" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; width: 170px;" title="Fecha del pedido">
-                        <button type="button" id="btnSumarDiaEditPedido" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" title="Sumar 1 día (+1d)">
-                            <i class="fas fa-plus" style="font-size: 0.7rem;"></i> 1 día
+                    <!-- Navegación de Fecha con flechas izquierda y derecha -->
+                    <div class="input-group input-group-sm modal-header-date-group" id="editPedidoFechaHeaderContainer" style="position: absolute; left: 50%; transform: translateX(-50%); width: auto;">
+                        <button type="button" id="btnRestarDiaEditPedido" class="btn btn-sm date-nav-btn-left d-flex align-items-center justify-content-center" title="Día anterior (-1d)">
+                            <i class="fas fa-chevron-left" style="font-size: 0.8rem;"></i>
+                        </button>
+                        <input type="text" id="editPedidoFecha" class="form-control form-control-sm text-center" title="Fecha del pedido">
+                        <button type="button" id="btnSumarDiaEditPedido" class="btn btn-sm date-nav-btn-right d-flex align-items-center justify-content-center" title="Día siguiente (+1d)">
+                            <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
                         </button>
                     </div>
 

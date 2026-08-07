@@ -380,3 +380,80 @@
     padding-bottom: 0;
     margin-bottom: 0;
 }
+
+/* Estilos para el control de navegación de fechas en encabezado de modales (Segmented Control Pro - 10% ampliado) */
+.modal-header-date-group {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 38px !important;
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 7px !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header-date-group .date-nav-btn-left,
+.modal-header-date-group .date-nav-btn-right {
+    border: none !important;
+    background-color: transparent !important;
+    color: var(--text-secondary, #94a3b8) !important;
+    padding: 0 12px !important;
+    height: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.modal-header-date-group .date-nav-btn-left i,
+.modal-header-date-group .date-nav-btn-right i {
+    font-size: 0.88rem !important;
+}
+
+.modal-header-date-group .date-nav-btn-left {
+    border-right: 1px solid var(--border-color) !important;
+}
+
+.modal-header-date-group .date-nav-btn-right {
+    border-left: 1px solid var(--border-color) !important;
+}
+
+.modal-header-date-group .date-nav-btn-left:hover,
+.modal-header-date-group .date-nav-btn-right:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+.modal-header-date-group .date-nav-btn-left:active,
+.modal-header-date-group .date-nav-btn-right:active {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.modal-header-date-group .flatpickr-input,
+.modal-header-date-group input[type="text"] {
+    border: none !important;
+    background-color: transparent !important;
+    color: #f8fafc !important;
+    border-radius: 0 !important;
+    text-align: center !important;
+    font-size: 0.92rem !important;
+    font-weight: 500 !important;
+    padding: 0 0.5rem !important;
+    width: 140px !important;
+    height: 100% !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+}
+
+.modal-header-date-group .flatpickr-input:focus,
+.modal-header-date-group input[type="text"]:focus {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
