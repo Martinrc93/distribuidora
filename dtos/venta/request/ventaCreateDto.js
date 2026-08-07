@@ -4,10 +4,25 @@
  * que consiste en el ID del empleado y una lista de detalles con su productoId, precioId y cantidad.
  */
 class VentaCreateDto {
-    constructor({ empleadoId, clienteId, detalles, ordenImpresion }) {
+    constructor({ empleadoId, clienteId, detalles, ordenImpresion, fechaEmision }) {
         this.empleadoId = typeof empleadoId === 'number' ? empleadoId : Number.parseInt(empleadoId, 10);
         this.clienteId = typeof clienteId === 'number' ? clienteId : Number.parseInt(clienteId, 10);
         this.ordenImpresion = typeof ordenImpresion === 'number' ? ordenImpresion : (ordenImpresion ? Number.parseInt(ordenImpresion, 10) : null);
+        
+        this.rawFechaEmision = fechaEmision;
+        if (fechaEmision) {
+            if (typeof fechaEmision === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fechaEmision.trim())) {
+                const now = new Date();
+                const [year, month, day] = fechaEmision.trim().split('-').map(Number);
+                this.fechaEmision = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+            } else {
+                const parsedDate = new Date(fechaEmision);
+                this.fechaEmision = isNaN(parsedDate.getTime()) ? null : parsedDate;
+            }
+        } else {
+            this.fechaEmision = null;
+        }
+
         this.detalles = Array.isArray(detalles) 
             ? detalles.map(d => {
                 let parsedCantidad;
@@ -68,6 +83,11 @@ class VentaCreateDto {
             } else if (this.ordenImpresion < 1) {
                 errors.push('El campo "ordenImpresion" debe ser un número positivo mayor a 0.');
             }
+        }
+
+        // 3.5. Validar fechaEmision (si viene)
+        if (this.rawFechaEmision && (!this.fechaEmision || Number.isNaN(this.fechaEmision.getTime()))) {
+            errors.push('El campo "fechaEmision" debe ser una fecha válida (YYYY-MM-DD o ISO).');
         }
 
         // 4. Validar la lista de Detalles

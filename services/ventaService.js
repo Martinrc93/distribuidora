@@ -130,7 +130,8 @@ exports.createVenta = async (ventaData) => {
             ordenImpresion: 0,
             total: 0,
             ganancia: 0,
-            activo: true
+            activo: true,
+            ...(ventaData.fechaEmision ? { fechaEmision: ventaData.fechaEmision } : {})
         }, { transaction: t });
 
         let totalVenta = 0;
@@ -218,7 +219,7 @@ exports.createVenta = async (ventaData) => {
  * @param {number|null} empleadoId ID del nuevo empleado a cargo opcional.
  * @param {number|null} clienteId ID del nuevo cliente opcional.
  */
-exports.updateVenta = async (id, activo, detalles = null, empleadoId = null, clienteId = null) => {
+exports.updateVenta = async (id, activo, detalles = null, empleadoId = null, clienteId = null, fechaEmision = null) => {
     const t = await sequelize.transaction({ type: 'IMMEDIATE' });
 
     try {
@@ -227,13 +228,29 @@ exports.updateVenta = async (id, activo, detalles = null, empleadoId = null, cli
             await t.rollback();
             return null;
         }
-        // 1. Actualizar el estado activo, empleadoId, clienteId e inicializar o limpiar ordenImpresion
+        // 1. Actualizar el estado activo, empleadoId, clienteId, fechaEmision e inicializar o limpiar ordenImpresion
         const oldActivo = venta.activo;
         const oldEmpleadoId = venta.empleadoId;
         const oldClienteId = venta.clienteId;
+        const oldFechaEmision = venta.fechaEmision;
         let nextOrdenImpresion = venta.ordenImpresion;
         let targetEmpleadoId = oldEmpleadoId;
         let targetClienteId = oldClienteId;
+        let targetFechaEmision = oldFechaEmision;
+
+        if (fechaEmision) {
+            let parsedDate;
+            if (typeof fechaEmision === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fechaEmision.trim())) {
+                const oldDate = new Date(oldFechaEmision);
+                const [year, month, day] = fechaEmision.trim().split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day, oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds());
+            } else {
+                parsedDate = new Date(fechaEmision);
+            }
+            if (!isNaN(parsedDate.getTime())) {
+                targetFechaEmision = parsedDate;
+            }
+        }
 
         if (empleadoId !== null && empleadoId !== undefined) {
             const empIdNum = Number.parseInt(empleadoId, 10);
@@ -267,7 +284,7 @@ exports.updateVenta = async (id, activo, detalles = null, empleadoId = null, cli
                 nextOrdenImpresion = 0; // reactivado se carga como primero
             }
         }
-        await venta.update({ activo, empleadoId: targetEmpleadoId, clienteId: targetClienteId, ordenImpresion: nextOrdenImpresion }, { transaction: t });
+        await venta.update({ activo, empleadoId: targetEmpleadoId, clienteId: targetClienteId, ordenImpresion: nextOrdenImpresion, fechaEmision: targetFechaEmision }, { transaction: t });
 
         // 2. Si se envían nuevos detalles, actualizarlos de forma atómica
         if (detalles) {
@@ -363,7 +380,10 @@ exports.updateVenta = async (id, activo, detalles = null, empleadoId = null, cli
         await t.commit();
 
         // 3. Normalizar el orden de impresión de todas las ventas del día (fuera de la transacción)
-        await exports.normalizarOrdenesDia(venta.fechaEmision);
+        await exports.normalizarOrdenesDia(oldFechaEmision);
+        if (targetFechaEmision && new Date(oldFechaEmision).getTime() !== new Date(targetFechaEmision).getTime()) {
+            await exports.normalizarOrdenesDia(targetFechaEmision);
+        }
 
         // Retornar la venta actualizada con todas las relaciones cargadas
         return await Venta.findByPk(id, {

@@ -44,6 +44,21 @@ describe('Venta Quantity Validation Tests', () => {
             expect(dto.detalles[0].cantidad).toBe(1.5);
         });
 
+        test('should parse and validate custom fechaEmision', () => {
+            const dto = new VentaCreateDto({
+                empleadoId: 1,
+                clienteId: 1,
+                fechaEmision: '2026-08-10',
+                detalles: [{ productoId: 1, precioId: 1, cantidad: 1 }]
+            });
+            const validation = dto.validate();
+            expect(validation.isValid).toBe(true);
+            expect(dto.fechaEmision).toBeInstanceOf(Date);
+            expect(dto.fechaEmision.getFullYear()).toBe(2026);
+            expect(dto.fechaEmision.getMonth()).toBe(7);
+            expect(dto.fechaEmision.getDate()).toBe(10);
+        });
+
         test('should reject other decimal quantities (e.g. 1.75)', () => {
             const dto = new VentaCreateDto({
                 empleadoId: 1,

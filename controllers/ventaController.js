@@ -52,11 +52,18 @@ exports.create = async (req, res) => {
 exports.updateStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { activo, detalles, empleadoId, clienteId } = req.body;
+        const { activo, detalles, empleadoId, clienteId, fechaEmision } = req.body;
 
         // Validación: el estado activo es obligatorio
         if (activo === undefined || typeof activo !== 'boolean') {
             return res.status(400).json({ error: 'El campo "activo" es obligatorio y debe ser un valor booleano (true/false).' });
+        }
+
+        if (fechaEmision) {
+            const parsed = new Date(fechaEmision);
+            if (isNaN(parsed.getTime())) {
+                return res.status(400).json({ error: 'El campo "fechaEmision" debe ser una fecha válida (YYYY-MM-DD o ISO).' });
+            }
         }
 
         if (empleadoId !== undefined && empleadoId !== null) {
@@ -114,7 +121,7 @@ exports.updateStatus = async (req, res) => {
             }
         }
 
-        const ventaActualizada = await ventaService.updateVenta(id, activo, detalles, empleadoId, clienteId);
+        const ventaActualizada = await ventaService.updateVenta(id, activo, detalles, empleadoId, clienteId, fechaEmision);
         if (!ventaActualizada) {
             return res.status(404).json({ mensaje: 'Venta no encontrada para actualizar' });
         }

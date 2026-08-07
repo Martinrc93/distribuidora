@@ -55,12 +55,30 @@ function sortVentasPorOrdenImpresion(ventasParaOrdenar = []) {
     });
 }
 
-function getLocalDateStr() {
-    const today = new Date();
+function getLocalDateStr(d = new Date()) {
+    const today = (d instanceof Date && !isNaN(d.getTime())) ? d : new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+function parseFechaToInputStr(fechaStr) {
+    if (!fechaStr) return getLocalDateStr();
+    const str = String(fechaStr).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(str)) {
+        const parts = str.split(' ')[0].split('/');
+        if (parts.length === 3) {
+            const [day, month, year] = parts;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+        return getLocalDateStr(d);
+    }
+    return getLocalDateStr();
 }
 
 function getRangoFechasFormateado() {
@@ -794,11 +812,13 @@ async function guardarPedido() {
 
     const ordenVal = document.getElementById('ordenImpresion')?.value;
     const ordenImpresion = ordenVal ? parseInt(ordenVal, 10) : null;
+    const fechaEmisionVal = document.getElementById('nuevoPedidoFecha')?.value;
 
     const payload = {
         empleadoId: employee.id,
         clienteId: client.id,
         ordenImpresion: ordenImpresion,
+        fechaEmision: fechaEmisionVal || undefined,
         detalles: detallesTemporales.map(d => ({
             productoId: d.productoId,
             precioId: d.precioId,
@@ -814,6 +834,20 @@ async function guardarPedido() {
         
         showToast('Pedido creado exitosamente.');
         modalAgregarPedido.hide();
+
+        if (fechaEmisionVal) {
+            const fechaMinEl = document.getElementById('fechaMinInput');
+            const fechaMaxEl = document.getElementById('fechaMaxInput');
+            if (fechaMinEl && fechaMaxEl && fechaMinEl.value && fechaMaxEl.value) {
+                if (fechaEmisionVal < fechaMinEl.value || fechaEmisionVal > fechaMaxEl.value) {
+                    fechaMinEl.value = fechaEmisionVal;
+                    fechaMaxEl.value = fechaEmisionVal;
+                    if (typeof fpMin !== 'undefined' && fpMin) fpMin.setDate(fechaEmisionVal, false);
+                    if (typeof fpMax !== 'undefined' && fpMax) fpMax.setDate(fechaEmisionVal, false);
+                }
+            }
+        }
+
         await cargarVentas();
     } catch (error) {
         console.error('Error al crear pedido:', error);
@@ -2207,6 +2241,11 @@ function inicializarEventos() {
             editPedidoId.value = venta.id;
             editPedidoEstado.value = venta.activo ? 'activo' : 'inactivo';
 
+            const editFechaInput = document.getElementById('editPedidoFecha');
+            if (editFechaInput) {
+                editFechaInput.value = parseFechaToInputStr(venta.fechaEmision);
+            }
+
             if (editPedidoCliente) {
                 editPedidoCliente.innerHTML = '';
                 const clientesDisponibles = [...clientes];
@@ -2301,10 +2340,13 @@ function inicializarEventos() {
                 return;
             }
 
+            const nuevaFechaEmision = document.getElementById('editPedidoFecha')?.value;
+
             const payload = {
                 activo,
                 empleadoId: nuevoEmpleadoId,
                 clienteId: nuevoClienteId,
+                fechaEmision: nuevaFechaEmision || undefined,
                 detalles: detallesEdicion.map(d => ({
                     productoId: d.productoId,
                     precioId: d.precioId,
@@ -2320,6 +2362,20 @@ function inicializarEventos() {
                 
                 showToast('Pedido actualizado correctamente.');
                 modalEditarPedido.hide();
+
+                if (nuevaFechaEmision) {
+                    const fechaMinEl = document.getElementById('fechaMinInput');
+                    const fechaMaxEl = document.getElementById('fechaMaxInput');
+                    if (fechaMinEl && fechaMaxEl && fechaMinEl.value && fechaMaxEl.value) {
+                        if (nuevaFechaEmision < fechaMinEl.value || nuevaFechaEmision > fechaMaxEl.value) {
+                            fechaMinEl.value = nuevaFechaEmision;
+                            fechaMaxEl.value = nuevaFechaEmision;
+                            if (typeof fpMin !== 'undefined' && fpMin) fpMin.setDate(nuevaFechaEmision, false);
+                            if (typeof fpMax !== 'undefined' && fpMax) fpMax.setDate(nuevaFechaEmision, false);
+                        }
+                    }
+                }
+
                 await cargarVentas(true);
             } catch (error) {
                 console.error('Error al actualizar pedido:', error);
@@ -2330,6 +2386,44 @@ function inicializarEventos() {
         });
     }
 
+    // Botón sumar 1 día a la fecha del pedido en modificación
+    const btnSumarDiaEdit = document.getElementById('btnSumarDiaEditPedido');
+    if (btnSumarDiaEdit) {
+        btnSumarDiaEdit.addEventListener('click', () => {
+            const fechaInput = document.getElementById('editPedidoFecha');
+            if (!fechaInput) return;
+
+            let currentDate;
+            if (fechaInput.value && /^\d{4}-\d{2}-\d{2}$/.test(fechaInput.value)) {
+                const [y, m, d] = fechaInput.value.split('-').map(Number);
+                currentDate = new Date(y, m - 1, d);
+            } else {
+                currentDate = new Date();
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+            fechaInput.value = getLocalDateStr(currentDate);
+        });
+    }
+
+    // Botón sumar 1 día a la fecha del pedido
+    const btnSumarDia = document.getElementById('btnSumarDiaPedido');
+    if (btnSumarDia) {
+        btnSumarDia.addEventListener('click', () => {
+            const fechaInput = document.getElementById('nuevoPedidoFecha');
+            if (!fechaInput) return;
+
+            let currentDate;
+            if (fechaInput.value && /^\d{4}-\d{2}-\d{2}$/.test(fechaInput.value)) {
+                const [y, m, d] = fechaInput.value.split('-').map(Number);
+                currentDate = new Date(y, m - 1, d);
+            } else {
+                currentDate = new Date();
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+            fechaInput.value = getLocalDateStr(currentDate);
+        });
+    }
+
     // Limpiar formulario al cerrar el modal de creación
     const addModalEl = document.getElementById('addPedidoModal');
     if (addModalEl) {
@@ -2337,12 +2431,20 @@ function inicializarEventos() {
         // clientes creados recientemente en la misma sesión
         addModalEl.addEventListener('show.bs.modal', () => {
             recargarClientes();
+            const fechaInput = document.getElementById('nuevoPedidoFecha');
+            if (fechaInput) {
+                fechaInput.value = getLocalDateStr();
+            }
         });
 
         addModalEl.addEventListener('hidden.bs.modal', () => {
             formAgregarPedido.reset();
             detallesTemporales = [];
             renderDetallesTemporales();
+            const fechaInput = document.getElementById('nuevoPedidoFecha');
+            if (fechaInput) {
+                fechaInput.value = getLocalDateStr();
+            }
             // Restablecer las opciones de todos los productos en el combobox
             const productInput = document.getElementById('productoSelect');
             if (productInput) {
