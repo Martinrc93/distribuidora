@@ -412,8 +412,14 @@
                     </button>
                 </div>
 
-                <!-- Filtros de Fecha Globales (Alineados a la derecha) -->
+                <!-- Filtros de Fecha y Empleado (Alineados a la derecha) -->
                 <div class="date-filter-container">
+                    <div class="date-input-group" id="group-empleado-filter">
+                        <label for="select-empleado-finance"><i class="fas fa-user-tie"></i> Empleado:</label>
+                        <select id="select-empleado-finance" class="form-select date-picker-custom" style="min-width: 180px; width: auto; font-size: 0.95rem; cursor: pointer;">
+                            <option value="all">Todos los empleados</option>
+                        </select>
+                    </div>
                     <div class="date-input-group">
                         <label for="globalFechaMin"><i class="fas fa-calendar-alt"></i> Desde:</label>
                         <input type="date" id="globalFechaMin" class="form-control date-picker-custom">
@@ -427,6 +433,11 @@
 
             <!-- TAB 1: FINANZAS Y RENTABILIDAD -->
             <div id="tab-finance" class="dashboard-view active-view">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div id="finance-employee-indicator" class="text-secondary" style="font-size: 0.95rem; font-weight: 500;">
+                        <i class="fas fa-users me-1" style="color: #60a5fa;"></i> Mostrando resultados globales (Todos los empleados)
+                    </div>
+                </div>
                 <div class="stat-card-deck">
                     <div class="stat-card-custom">
                         <div class="stat-card-info">

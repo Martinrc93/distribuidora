@@ -3,11 +3,20 @@ const sequelize = require('../config/db/dataBase');
 /**
  * Obtener estadísticas financieras y rentabilidad.
  */
-exports.getFinanceStats = async (fechaMin, fechaMax) => {
+exports.getFinanceStats = async (fechaMin, fechaMax, empleadoId = null) => {
     const replacements = {
         fechaMin: `${fechaMin} 00:00:00.000`,
         fechaMax: `${fechaMax} 23:59:59.999`
     };
+
+    let empleadoFilterV = '';
+    let empleadoFilterV2 = '';
+
+    if (empleadoId && empleadoId !== 'all' && !isNaN(parseInt(empleadoId, 10))) {
+        replacements.empleadoId = parseInt(empleadoId, 10);
+        empleadoFilterV = ' AND v.empleadoId = :empleadoId ';
+        empleadoFilterV2 = ' AND v2.empleadoId = :empleadoId ';
+    }
 
     // 1. Obtener KPIs generales en una sola consulta evitando duplicación y excluyendo registros eliminados (paranoid)
     const kpiQuery = `
@@ -25,9 +34,10 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
                   AND d.deletedAt IS NULL 
                   AND p.deletedAt IS NULL
                   AND v2.fecha_emision BETWEEN :fechaMin AND :fechaMax
+                  ${empleadoFilterV2}
             ) as totalCostos
         FROM Ventas v
-        WHERE v.activo = 1 AND v.deletedAt IS NULL AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax;
+        WHERE v.activo = 1 AND v.deletedAt IS NULL AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax ${empleadoFilterV};
     `;
     const kpis = await sequelize.query(kpiQuery, { 
         replacements,
@@ -37,13 +47,13 @@ exports.getFinanceStats = async (fechaMin, fechaMax) => {
     // 2. Obtener historial diario
     const historyQuery = `
         SELECT 
-            date(fecha_emision) as fecha,
-            COALESCE(SUM(total), 0) as totalVentas,
-            COALESCE(SUM(ganancia), 0) as totalGanancia,
-            COUNT(id) as cantidadVentas
-        FROM Ventas
-        WHERE activo = 1 AND deletedAt IS NULL AND fecha_emision BETWEEN :fechaMin AND :fechaMax
-        GROUP BY date(fecha_emision)
+            date(v.fecha_emision) as fecha,
+            COALESCE(SUM(v.total), 0) as totalVentas,
+            COALESCE(SUM(v.ganancia), 0) as totalGanancia,
+            COUNT(v.id) as cantidadVentas
+        FROM Ventas v
+        WHERE v.activo = 1 AND v.deletedAt IS NULL AND v.fecha_emision BETWEEN :fechaMin AND :fechaMax ${empleadoFilterV}
+        GROUP BY date(v.fecha_emision)
         ORDER BY fecha ASC;
     `;
     const history = await sequelize.query(historyQuery, { 

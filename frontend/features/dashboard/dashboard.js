@@ -18,12 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputFechaMax = document.getElementById('globalFechaMax');
     const selectProductsLimit = document.getElementById('select-top-products-limit');
     const selectClientsLimit = document.getElementById('select-top-clients-limit');
+    const selectEmpleadoFinance = document.getElementById('select-empleado-finance');
+    const groupEmpleadoFilter = document.getElementById('group-empleado-filter');
+    const financeEmployeeIndicator = document.getElementById('finance-employee-indicator');
     
     // Almacenamos instancias de los gráficos para poder destruirlas y recrearlas limpiamente
     const chartInstances = {
         finance: null,
         brand: null
     };
+
+    let empleadosList = [];
 
     // Formateador de moneda (Pesos Argentinos)
     const currencyFormatter = new Intl.NumberFormat('es-AR', {
@@ -39,6 +44,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
+
+    // --- CARGAR LISTA DE EMPLEADOS PARA EL FILTRO ---
+    async function loadEmployeesList() {
+        if (!selectEmpleadoFinance) return;
+        try {
+            const res = await apiClient.get('/empleados?limit=1000');
+            empleadosList = res?.data || [];
+            selectEmpleadoFinance.innerHTML = '<option value="all">Todos los empleados</option>';
+            empleadosList.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp.id;
+                option.textContent = `${emp.nombre} ${emp.apellido}`;
+                selectEmpleadoFinance.appendChild(option);
+            });
+        } catch (err) {
+            console.error('Error al cargar empleados para el filtro:', err);
+        }
+    }
+
+    loadEmployeesList();
 
     // --- INICIALIZAR FECHAS POR DEFECTO CON FLATPICKR ---
     const today = new Date();
@@ -109,6 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    if (selectEmpleadoFinance) {
+        selectEmpleadoFinance.addEventListener('change', () => {
+            const activeTabButton = document.querySelector('.dashboard-tab.active');
+            if (activeTabButton && activeTabButton.getAttribute('data-tab') === 'tab-finance') {
+                loadFinanceData();
+            }
+        });
+    }
+
     if (selectProductsLimit) {
         selectProductsLimit.addEventListener('change', () => {
             loadPortfolioData(true);
@@ -126,6 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función principal para enrutar la carga de datos
     function loadTabData(tabId) {
+        if (groupEmpleadoFilter) {
+            groupEmpleadoFilter.style.display = (tabId === 'tab-finance') ? 'flex' : 'none';
+        }
         if (tabId === 'tab-finance') {
             loadFinanceData();
         } else if (tabId === 'tab-portfolio') {
@@ -144,9 +181,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Formato de fecha inválido. Utilice AAAA-MM-DD.', 'error');
                 return;
             }
-            const data = await apiClient.get(`/dashboard/finance?fechaMin=${fMin}&fechaMax=${fMax}`);
+
+            const empleadoId = selectEmpleadoFinance ? selectEmpleadoFinance.value : 'all';
+            let url = `/dashboard/finance?fechaMin=${fMin}&fechaMax=${fMax}`;
+            if (empleadoId && empleadoId !== 'all') {
+                url += `&empleadoId=${encodeURIComponent(empleadoId)}`;
+            }
+
+            const data = await apiClient.get(url);
 
             const { kpis, history } = data;
+
+            // Actualizar indicador visual de empleado
+            if (financeEmployeeIndicator) {
+                if (empleadoId && empleadoId !== 'all') {
+                    const empObj = empleadosList.find(e => String(e.id) === String(empleadoId));
+                    const empName = empObj ? `${escapeHtml(empObj.nombre)} ${escapeHtml(empObj.apellido)}` : `Empleado #${empleadoId}`;
+                    financeEmployeeIndicator.innerHTML = `<i class="fas fa-user-tie me-1" style="color: #60a5fa;"></i> Mostrando resultados de: <strong>${empName}</strong>`;
+                } else {
+                    financeEmployeeIndicator.innerHTML = `<i class="fas fa-users me-1" style="color: #60a5fa;"></i> Mostrando resultados globales (Todos los empleados)`;
+                }
+            }
 
             // Rellenar KPIs (sin mostrar decimales, cortando por la coma sin redondear)
             document.getElementById('fin-facturacion').textContent = currencyFormatter.format(kpis.totalFacturado).split(',')[0];

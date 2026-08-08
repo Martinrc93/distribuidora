@@ -22,15 +22,16 @@ const getDefaultDates = () => {
 
 /**
  * Obtener estadísticas financieras y rentabilidad.
- * GET /dashboard/finance?fechaMin=YYYY-MM-DD&fechaMax=YYYY-MM-DD
+ * GET /dashboard/finance?fechaMin=YYYY-MM-DD&fechaMax=YYYY-MM-DD&empleadoId=ID
  */
 exports.getFinanceStats = async (req, res) => {
     try {
         const { defaultFechaMin, defaultFechaMax } = getDefaultDates();
         const fechaMin = req.query.fechaMin || defaultFechaMin;
         const fechaMax = req.query.fechaMax || defaultFechaMax;
+        const empleadoId = req.query.empleadoId || null;
 
-        const stats = await dashboardService.getFinanceStats(fechaMin, fechaMax);
+        const stats = await dashboardService.getFinanceStats(fechaMin, fechaMax, empleadoId);
         res.json(stats);
     } catch (err) {
         res.status(500).json({ error: err.message });

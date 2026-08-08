@@ -235,13 +235,15 @@
     min-width: 250px;
 }
 
-.employee-filter-wrapper {
+.employee-filter-wrapper,
+.brand-filter-wrapper {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.employee-filter-wrapper select {
+.employee-filter-wrapper select,
+.brand-filter-wrapper select {
     width: 180px;
     height: 42px;
     background-color: #0b111c;
@@ -254,7 +256,8 @@
     cursor: pointer;
 }
 
-.employee-filter-wrapper select:focus {
+.employee-filter-wrapper select:focus,
+.brand-filter-wrapper select:focus {
     border-color: var(--accent-glow);
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
 }
@@ -330,12 +333,14 @@
         width: 100%;
     }
     
-    .employee-filter-wrapper {
+    .employee-filter-wrapper,
+    .brand-filter-wrapper {
         width: 100%;
         justify-content: space-between;
     }
     
-    .employee-filter-wrapper select {
+    .employee-filter-wrapper select,
+    .brand-filter-wrapper select {
         flex-grow: 1;
         width: auto;
     }

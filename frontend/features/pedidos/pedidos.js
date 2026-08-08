@@ -292,14 +292,37 @@ async function cargarDatosAuxiliares() {
             });
         }
 
+        // Poblar el selector de filtro por marca
+        const filtroMarcaSelect = document.getElementById('filtroMarcaSelect');
+        if (filtroMarcaSelect) {
+            filtroMarcaSelect.innerHTML = '<option value="">Todas</option>' + 
+                marcas.map(m => `<option value="${escapeHtml(m.nombre)}">${escapeHtml(m.nombre)}</option>`).join('');
+            
+            filtroMarcaSelect.addEventListener('change', () => {
+                const searchInput = document.getElementById('pedidoSearchInput');
+                const query = searchInput ? searchInput.value : '';
+                renderVentasTable(query);
+            });
+        }
+
         // Inicializar comboboxes de búsqueda interactivos
         inicializarCombobox('pedidoEmpleado', empleados.filter(e => e.activo).map(e => `${e.nombre} ${e.apellido}`));
         inicializarCombobox('pedidoCliente', clientes.map(c => c.nombre), (selectedClientName) => {
             actualizarVisibilidadBtnRepetir();
         });
-        inicializarCombobox('editProductoSelect', productos.map(p => p.nombre));
+        inicializarCombobox('editProductoSelect', productos.map(p => p.nombre), (selectedProduct) => {
+            const cantInput = document.getElementById('editProductoCantidad');
+            if (cantInput) {
+                setTimeout(() => {
+                    cantInput.focus();
+                    if (typeof cantInput.select === 'function') {
+                        cantInput.select();
+                    }
+                }, 50);
+            }
+        });
 
-        // Inicializar combobox de marcas con callback para filtrar productos (creación)
+        // Inicializar combobox de marcas con callback para filtrar productos y desplegar automáticamente productos (creación)
         inicializarCombobox('marcaSelect', marcas.map(m => m.nombre), (selectedBrand) => {
             const productInput = document.getElementById('productoSelect');
             if (productInput) {
@@ -310,10 +333,16 @@ async function cargarDatosAuxiliares() {
                     const filtered = productos.filter(p => p.marca === selectedBrand);
                     productInput.comboboxOptions = filtered.map(p => p.nombre);
                 }
+                setTimeout(() => {
+                    productInput.focus();
+                    if (typeof productInput.openCombobox === 'function') {
+                        productInput.openCombobox();
+                    }
+                }, 50);
             }
         });
 
-        // Inicializar combobox de marcas con callback para filtrar productos (edición)
+        // Inicializar combobox de marcas con callback para filtrar productos y desplegar automáticamente productos (edición)
         inicializarCombobox('editMarcaSelect', marcas.map(m => m.nombre), (selectedBrand) => {
             const productInput = document.getElementById('editProductoSelect');
             if (productInput) {
@@ -324,6 +353,12 @@ async function cargarDatosAuxiliares() {
                     const filtered = productos.filter(p => p.marca === selectedBrand);
                     productInput.comboboxOptions = filtered.map(p => p.nombre);
                 }
+                setTimeout(() => {
+                    productInput.focus();
+                    if (typeof productInput.openCombobox === 'function') {
+                        productInput.openCombobox();
+                    }
+                }, 50);
             }
         });
 
@@ -371,8 +406,18 @@ async function cargarDatosAuxiliares() {
             });
         }
 
-        // Inicializar combobox de productos
-        inicializarCombobox('productoSelect', productos.map(p => p.nombre));
+        // Inicializar combobox de productos con callback para transferir el foco al campo de cantidad
+        inicializarCombobox('productoSelect', productos.map(p => p.nombre), (selectedProduct) => {
+            const cantInput = document.getElementById('productoCantidad');
+            if (cantInput) {
+                setTimeout(() => {
+                    cantInput.focus();
+                    if (typeof cantInput.select === 'function') {
+                        cantInput.select();
+                    }
+                }, 50);
+            }
+        });
 
         console.log('Datos auxiliares cargados.');
     } catch (error) {
@@ -459,15 +504,28 @@ function renderVentasTable(filterQuery = '') {
     tablaPedidos.innerHTML = '';
     const query = filterQuery.toLowerCase().trim();
 
-    // Obtener el empleado seleccionado en el filtro
+    // Obtener el empleado y marca seleccionados en los filtros
     const empSelect = document.getElementById('filtroEmpleadoSelect');
     const selectedEmpId = empSelect ? empSelect.value : '';
+    const marcaSelect = document.getElementById('filtroMarcaSelect');
+    const selectedMarca = marcaSelect ? marcaSelect.value.toLowerCase().trim() : '';
 
-    // Filtrar localmente en base al query y al empleado seleccionado
+    // Filtrar localmente en base al query, empleado y marca seleccionados
     const ventasFiltradas = ventas.filter(venta => {
         // Filtrar por empleado primero
         if (selectedEmpId && String(venta.empleadoId) !== String(selectedEmpId)) {
             return false;
+        }
+
+        // Obtener productos correspondientes a la venta
+        const productosVenta = (venta.detalles || []).map(d => {
+            return productos.find(p => Number(p.id) === Number(d.productoId));
+        }).filter(Boolean);
+
+        // Filtrar por marca seleccionada
+        if (selectedMarca) {
+            const tieneMarca = productosVenta.some(p => (p.marca || '').toLowerCase().trim() === selectedMarca);
+            if (!tieneMarca) return false;
         }
 
         if (!query) return true;
@@ -478,19 +536,28 @@ function renderVentasTable(filterQuery = '') {
         const total = String(venta.total || '');
         const id = String(venta.id || '');
 
-        return clienteName.includes(query) || 
+        const coincideVentaDirecta = clienteName.includes(query) || 
                vendedorName.includes(query) || 
                vendedorLastName.includes(query) ||
                fecha.includes(query) ||
                total.includes(query) ||
                id.includes(query);
+
+        if (coincideVentaDirecta) return true;
+
+        // Buscar coincidencia en nombres o marcas de los productos contenidos en la venta
+        return productosVenta.some(p => {
+            const prodNombre = (p.nombre || '').toLowerCase();
+            const prodMarca = (p.marca || '').toLowerCase();
+            return prodNombre.includes(query) || prodMarca.includes(query);
+        });
     });
 
     const ventasOrdenadas = sortVentasPorOrdenImpresion(ventasFiltradas);
     currentRenderedVentas = ventasOrdenadas;
 
     if (ventasFiltradas.length === 0) {
-        if (query) {
+        if (query || selectedMarca) {
             tablaPedidos.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No se encontraron pedidos que coincidan con la búsqueda</td></tr>';
         } else {
             const fechaMinEl = document.getElementById('fechaMinInput');
@@ -575,8 +642,10 @@ function renderVentasTable(filterQuery = '') {
 
     const fechaMinEl = document.getElementById('fechaMinInput');
     const fechaMaxEl = document.getElementById('fechaMaxInput');
+    const marcaSelectEl = document.getElementById('filtroMarcaSelect');
     const todayStr = getLocalDateStr();
     const hasActiveFilters = query !== '' || 
+        (marcaSelectEl && marcaSelectEl.value !== '') ||
         (fechaMinEl && fechaMinEl.value !== '' && fechaMinEl.value !== todayStr) ||
         (fechaMaxEl && fechaMaxEl.value !== '' && fechaMaxEl.value !== todayStr);
 
@@ -704,10 +773,18 @@ async function agregarProductoTemporal() {
 
         renderDetallesTemporales();
         
-        // Limpiar inputs de producto y volver el foco al buscador
-        document.getElementById('productoSelect').value = '';
+        // Limpiar inputs de producto, mantener la marca seleccionada y volver a desplegar la lista de productos
+        const productInput = document.getElementById('productoSelect');
         document.getElementById('productoCantidad').value = '';
-        document.getElementById('productoSelect').focus();
+        if (productInput) {
+            productInput.value = '';
+            setTimeout(() => {
+                productInput.focus();
+                if (typeof productInput.openCombobox === 'function') {
+                    productInput.openCombobox();
+                }
+            }, 50);
+        }
     } catch (error) {
         console.error('Error al agregar producto al pedido:', error);
         showToast('Hubo un error al consultar el precio del producto.', 'error');
@@ -939,10 +1016,18 @@ async function agregarProductoEdicion() {
 
         renderDetallesEdicion();
         
-        // Limpiar inputs
-        document.getElementById('editProductoSelect').value = '';
+        // Limpiar inputs, mantener la marca seleccionada y volver a desplegar la lista de productos
+        const editProductInput = document.getElementById('editProductoSelect');
         document.getElementById('editProductoCantidad').value = '';
-        document.getElementById('editProductoSelect').focus();
+        if (editProductInput) {
+            editProductInput.value = '';
+            setTimeout(() => {
+                editProductInput.focus();
+                if (typeof editProductInput.openCombobox === 'function') {
+                    editProductInput.openCombobox();
+                }
+            }, 50);
+        }
     } catch (error) {
         console.error('Error al agregar producto al pedido en edición:', error);
         showToast('Hubo un error al consultar el precio del producto.', 'error');
@@ -2677,6 +2762,10 @@ function inicializarCombobox(inputId, optionsList, onSelectCallback = null) {
         dropdown.classList.add('d-none');
     }
 
+    // Exponer métodos públicos en el elemento input
+    input.openCombobox = openDropdown;
+    input.closeCombobox = closeDropdown;
+
     input.addEventListener('click', (e) => {
         e.stopPropagation();
         openDropdown();
@@ -2689,6 +2778,19 @@ function inicializarCombobox(inputId, optionsList, onSelectCallback = null) {
     input.addEventListener('input', () => {
         openDropdown();
     });
+
+    if (chevron) {
+        chevron.style.cursor = 'pointer';
+        chevron.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (dropdown.classList.contains('d-none')) {
+                input.focus();
+                openDropdown();
+            } else {
+                closeDropdown();
+            }
+        });
+    }
 
     // Cerrar al hacer click fuera
     document.addEventListener('click', (e) => {
