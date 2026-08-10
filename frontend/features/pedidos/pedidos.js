@@ -936,19 +936,6 @@ async function guardarPedido() {
         showToast('Pedido creado exitosamente.');
         modalAgregarPedido.hide();
 
-        if (fechaEmisionVal) {
-            const fechaMinEl = document.getElementById('fechaMinInput');
-            const fechaMaxEl = document.getElementById('fechaMaxInput');
-            if (fechaMinEl && fechaMaxEl && fechaMinEl.value && fechaMaxEl.value) {
-                if (fechaEmisionVal < fechaMinEl.value || fechaEmisionVal > fechaMaxEl.value) {
-                    fechaMinEl.value = fechaEmisionVal;
-                    fechaMaxEl.value = fechaEmisionVal;
-                    if (typeof fpMin !== 'undefined' && fpMin) fpMin.setDate(fechaEmisionVal, false);
-                    if (typeof fpMax !== 'undefined' && fpMax) fpMax.setDate(fechaEmisionVal, false);
-                }
-            }
-        }
-
         await cargarVentas();
     } catch (error) {
         console.error('Error al crear pedido:', error);
@@ -2506,19 +2493,6 @@ function inicializarEventos() {
                 
                 showToast('Pedido actualizado correctamente.');
                 modalEditarPedido.hide();
-
-                if (nuevaFechaEmision) {
-                    const fechaMinEl = document.getElementById('fechaMinInput');
-                    const fechaMaxEl = document.getElementById('fechaMaxInput');
-                    if (fechaMinEl && fechaMaxEl && fechaMinEl.value && fechaMaxEl.value) {
-                        if (nuevaFechaEmision < fechaMinEl.value || nuevaFechaEmision > fechaMaxEl.value) {
-                            fechaMinEl.value = nuevaFechaEmision;
-                            fechaMaxEl.value = nuevaFechaEmision;
-                            if (typeof fpMin !== 'undefined' && fpMin) fpMin.setDate(nuevaFechaEmision, false);
-                            if (typeof fpMax !== 'undefined' && fpMax) fpMax.setDate(nuevaFechaEmision, false);
-                        }
-                    }
-                }
 
                 await cargarVentas(true);
             } catch (error) {
